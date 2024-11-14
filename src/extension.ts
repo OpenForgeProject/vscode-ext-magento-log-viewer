@@ -10,6 +10,15 @@ export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "magento-log-viewer" is now active!');
 
+	const config = vscode.workspace.getConfiguration();
+	const isMagentoProject = config.get('magentoLogViewer.isMagentoProject', 'Please select');
+
+	if (isMagentoProject === 'Please select') {
+		vscode.window.showInformationMessage('Ist dies ein Magento Projekt?', 'Ja', 'Nein').then(selection => {
+			config.update('magentoLogViewer.isMagentoProject', selection, vscode.ConfigurationTarget.Global);
+		});
+	}
+
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
