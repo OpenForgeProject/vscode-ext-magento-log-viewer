@@ -29,6 +29,11 @@
           "enum": ["Ja", "Nein", "Please select"],
           "default": "Please select",
           "description": "Dies ist ein Magento Projekt"
+        },
+        "magentoLogViewer.magentoRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Pfad zum Magento Root Ordner"
         }
       }
     }
