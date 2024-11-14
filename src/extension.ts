@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { LogViewerProvider } from './logViewer';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -28,11 +29,25 @@ export function activate(context: vscode.ExtensionContext) {
 	const magentoRoot = config.get('magentoLogViewer.magentoRoot', '');
 
 	const logViewerProvider = new LogViewerProvider(magentoRoot);
-	vscode.window.registerTreeDataProvider('logFiles', logViewerProvider);
+	const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
+
 	vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
 	vscode.commands.registerCommand('magento-log-viewer.openFile', (resource) => {
 		vscode.window.showTextDocument(vscode.Uri.file(resource));
 	});
+
+	context.subscriptions.push(treeView);
+
+	// Update the badge count
+	const updateBadge = () => {
+		const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
+		treeView.badge = { value: logFiles.length, tooltip: `${logFiles.length} log files` };
+	};
+
+	logViewerProvider.onDidChangeTreeData(updateBadge);
+	updateBadge();
+
+	vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
 }
 
 // This method is called when your extension is deactivated
