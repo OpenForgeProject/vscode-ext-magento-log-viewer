@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { LogViewerProvider } from './logViewer';
+
 export function activate(context: vscode.ExtensionContext) {
 
 	const config = vscode.workspace.getConfiguration();
@@ -22,6 +24,15 @@ export function activate(context: vscode.ExtensionContext) {
 			config.update('magentoLogViewer.isMagentoProject', selection, vscode.ConfigurationTarget.Global);
 		});
 	}
+
+	const magentoRoot = config.get('magentoLogViewer.magentoRoot', '');
+
+	const logViewerProvider = new LogViewerProvider(magentoRoot);
+	vscode.window.registerTreeDataProvider('logFiles', logViewerProvider);
+	vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
+	vscode.commands.registerCommand('magento-log-viewer.openFile', (resource) => {
+		vscode.window.showTextDocument(vscode.Uri.file(resource));
+	});
 }
 
 // This method is called when your extension is deactivated
