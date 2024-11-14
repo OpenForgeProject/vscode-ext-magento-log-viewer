@@ -36,6 +36,23 @@
           "description": "Pfad zum Magento Root Ordner"
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "magentoLogViewer",
+          "title": "Magento Logs",
+          "icon": "./resources/magento-logfile-viewer-logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "magentoLogViewer": [
+        {
+          "id": "magentoLogViewerView",
+          "name": "Logs"
+        }
+      ]
     }
   },
   "scripts": {

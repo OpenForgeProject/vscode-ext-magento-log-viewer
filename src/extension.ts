@@ -32,6 +32,11 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
+	const logViewerProvider = new MagentoLogViewerProvider(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(MagentoLogViewerProvider.viewType, logViewerProvider)
+	);
+
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
@@ -46,3 +51,38 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
+
+class MagentoLogViewerProvider implements vscode.WebviewViewProvider {
+	public static readonly viewType = 'magentoLogViewerView';
+
+	constructor(private readonly extensionUri: vscode.Uri) {}
+
+	public resolveWebviewView(
+		webviewView: vscode.WebviewView,
+		context: vscode.WebviewViewResolveContext,
+		_token: vscode.CancellationToken
+	) {
+		webviewView.webview.options = {
+			enableScripts: true,
+			localResourceRoots: [this.extensionUri]
+		};
+
+		webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
+	}
+
+	private getHtmlForWebview(webview: vscode.Webview): string {
+		return `
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>Magento Logs</title>
+			</head>
+			<body>
+				<h1>Magento Logs</h1>
+				<div id="logs">Log files will be displayed here.</div>
+			</body>
+			</html>`;
+	}
+}
