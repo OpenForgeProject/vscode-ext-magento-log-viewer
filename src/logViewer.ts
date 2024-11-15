@@ -76,21 +76,21 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   private groupLogEntries(lines: string[]): LogFile[] {
     const grouped: { [key: string]: string[] } = {};
 
-    lines.forEach(line => {
+    lines.forEach((line, index) => {
       const match = line.match(/\.(\w+):/);
       if (match) {
         const level = match[1];
         if (!grouped[level]) {
           grouped[level] = [];
         }
-        grouped[level].push(line);
+        grouped[level].push(`Line ${index + 1}: ${line}`);
       }
     });
 
     const summary = Object.keys(grouped).map(level => {
       const count = grouped[level].length;
       const label = `${level} (${count})`;
-      return new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None)));
+      return new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map(line => new LogFile(line, vscode.TreeItemCollapsibleState.None)));
     });
 
     return summary;
