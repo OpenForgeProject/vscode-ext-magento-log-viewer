@@ -12,7 +12,9 @@ export function activate(context: vscode.ExtensionContext) {
       if (selection === 'Yes') {
         vscode.window.showInformationMessage('Select Magento Root Folder', 'Select Magento Root Folder').then(buttonSelection => {
           if (buttonSelection === 'Select Magento Root Folder') {
-            vscode.window.showOpenDialog({ canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+            vscode.window.showOpenDialog({ defaultUri, canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
               if (folderUri && folderUri[0]) {
                 config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Global).then(() => {
                   vscode.window.showInformationMessage('Magento root folder successfully saved!');
