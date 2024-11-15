@@ -119,7 +119,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
           logFile.iconPath = new vscode.ThemeIcon('info');
           break;
         default:
-          logFile.iconPath = new vscode.ThemeIcon('list');
+          logFile.iconPath = new vscode.ThemeIcon('file');
       }
       return logFile;
     });
