@@ -74,22 +74,24 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   }
 
   private groupLogEntries(lines: string[]): LogFile[] {
-    const grouped: { [key: string]: string[] } = { ERROR: [], WARN: [], INFO: [] };
+    const grouped: { [key: string]: string[] } = {};
+
     lines.forEach(line => {
-      if (line.includes('.ERROR:')) {
-        grouped.ERROR.push(line);
-      } else if (line.includes('.WARN:')) {
-        grouped.WARN.push(line);
-      } else if (line.includes('.INFO:')) {
-        grouped.INFO.push(line);
+      const match = line.match(/\.(\w+):/);
+      if (match) {
+        const level = match[1];
+        if (!grouped[level]) {
+          grouped[level] = [];
+        }
+        grouped[level].push(line);
       }
     });
 
-    const summary = [
-      new LogFile(`ERROR: ${grouped.ERROR.length} entries`, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped.ERROR.map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None))),
-      new LogFile(`WARN: ${grouped.WARN.length} entries`, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped.WARN.map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None))),
-      new LogFile(`INFO: ${grouped.INFO.length} entries`, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped.INFO.map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None)))
-    ];
+    const summary = Object.keys(grouped).map(level => {
+      const count = grouped[level].length;
+      const label = `${level} (${count})`;
+      return new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None)));
+    });
 
     return summary;
   }
@@ -146,7 +148,7 @@ export class LogFile extends vscode.TreeItem {
     this.label = this.label.replace(/\(\d+\)/, '').trim();
   }
 
-  iconPath = new vscode.ThemeIcon('file');
+  iconPath = new vscode.ThemeIcon('list');
 
   contextValue = 'logFile';
   description = '';
