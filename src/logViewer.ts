@@ -25,7 +25,6 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
 
   getChildren(element?: LogFile): Thenable<LogFile[]> {
     if (!this.workspaceRoot) {
-      vscode.window.showInformationMessage('No Magento root folder found');
       return Promise.resolve([]);
     }
 
@@ -34,11 +33,14 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     } else {
       const logPath = path.join(this.workspaceRoot, 'var', 'log');
       if (this.pathExists(logPath)) {
-        return Promise.resolve(this.getLogFiles(logPath));
+        const logFiles = this.getLogFiles(logPath);
+        if (logFiles.length === 0) {
+          return Promise.resolve([new LogFile('No log files found', vscode.TreeItemCollapsibleState.None)]);
+        }
+        return Promise.resolve(logFiles);
       } else {
-        vscode.window.showInformationMessage('No log files found');
         this.updateBadge(0);
-        return Promise.resolve([]);
+        return Promise.resolve([new LogFile('No log files found', vscode.TreeItemCollapsibleState.None)]);
       }
     }
   }
@@ -71,7 +73,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     }
   }
 
-  private pathExists(p: string): boolean {
+  public pathExists(p: string): boolean {
     try {
       fs.accessSync(p);
     } catch (err) {

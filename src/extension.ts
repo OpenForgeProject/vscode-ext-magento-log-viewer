@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { LogViewerProvider } from './logViewer';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -34,6 +35,18 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
 	vscode.commands.registerCommand('magento-log-viewer.openFile', (resource) => {
 		vscode.window.showTextDocument(vscode.Uri.file(resource));
+	});
+
+	vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
+		const logPath = path.join(magentoRoot, 'var', 'log');
+		if (logViewerProvider.pathExists(logPath)) {
+			const files = fs.readdirSync(logPath);
+			files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
+			logViewerProvider.refresh();
+			vscode.window.showInformationMessage('All log files have been cleared.');
+		} else {
+			vscode.window.showInformationMessage('No log files found to clear.');
+		}
 	});
 
 	context.subscriptions.push(treeView);

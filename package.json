@@ -18,6 +18,14 @@
       {
         "command": "magento-log-viewer.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "magento-log-viewer.clearAllLogFiles",
+        "title": "Clear all Log's",
+        "icon": {
+          "light": "resources/bin-light.svg",
+          "dark": "resources/bin-dark.svg"
+        }
       }
     ],
     "configuration": {
@@ -41,7 +49,7 @@
       "activitybar": [
         {
           "id": "magentoLogViewer",
-          "title": "Magento Logs",
+          "title": "Magento Log Viewer",
           "icon": "resources/magento-logfile-viewer-logo.svg"
         }
       ]
@@ -50,7 +58,24 @@
       "magentoLogViewer": [
         {
           "id": "logFiles",
-          "name": "Log Files"
+          "name": "Log Files",
+          "contextualTitle": "Magento Logs",
+          "commands": [
+            {
+              "command": "magento-log-viewer.clearAllLogFiles",
+              "title": "Clear all Log's",
+              "group": "navigation"
+            }
+          ]
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "magento-log-viewer.clearAllLogFiles",
+          "when": "view == logFiles",
+          "group": "navigation"
         }
       ]
     }
