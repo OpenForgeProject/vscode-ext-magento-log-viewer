@@ -57,6 +57,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
           title: 'Open Log File',
           arguments: [filePath]
         });
+        logFile.iconPath = new vscode.ThemeIcon('file');
         logFile.children = this.getLogFileLines(filePath);
         return logFile;
       });
