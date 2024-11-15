@@ -78,16 +78,8 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   // Update the badge count
   const updateBadge = () => {
     const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
-    const totalEntries = logFiles.reduce((count, file) => {
-      return count + (file.children?.reduce((childCount, child) => childCount + (child.children?.length || 0), 0) || 0);
-    }, 0);
-    const errorEntries = logFiles.reduce((count, file) => {
-      return count + (file.children?.reduce((childCount, child) => {
-        return childCount + (child.children?.filter(grandChild => grandChild.label.toLowerCase().includes('error')).length || 0);
-      }, 0) || 0);
-    }, 0);
-    const entryText = totalEntries === 1 ? 'log entry' : 'log entries';
-    treeView.badge = { value: totalEntries, tooltip: `${totalEntries} ${entryText} (${errorEntries} errors)` };
+    const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
+    treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log entries` };
   };
 
   logViewerProvider.onDidChangeTreeData(updateBadge);
