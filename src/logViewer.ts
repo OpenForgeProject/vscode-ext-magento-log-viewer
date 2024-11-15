@@ -52,7 +52,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
       return files.map(file => {
         const filePath = path.join(dir, file);
         const lineCount = this.getLineCount(filePath);
-        const logFile = new LogFile(`${file} (Lines: ${lineCount})`, vscode.TreeItemCollapsibleState.Collapsed, {
+        const logFile = new LogFile(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.Collapsed, {
           command: 'magento-log-viewer.openFile',
           title: 'Open Log File',
           arguments: [filePath]
@@ -78,7 +78,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
       return files.map(file => {
         const filePath = path.join(dir, file);
         const lineCount = this.getLineCount(filePath);
-        return new LogFile(`${file} (Lines: ${lineCount})`, vscode.TreeItemCollapsibleState.None, {
+        return new LogFile(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.None, {
           command: 'magento-log-viewer.openFile',
           title: 'Open Log File',
           arguments: [filePath]
@@ -119,8 +119,8 @@ export class LogFile extends vscode.TreeItem {
     public readonly command?: vscode.Command
   ) {
     super(label, collapsibleState);
-    this.description = this.label.match(/\(Lines: \d+\)/)?.[0] || '';
-    this.label = this.label.replace(/\(Lines: \d+\)/, '').trim();
+    this.description = this.label.match(/\(\d+\)/)?.[0] || '';
+    this.label = this.label.replace(/\(\d+\)/, '').trim();
   }
 
   iconPath = {
