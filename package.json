@@ -21,19 +21,13 @@
       },
       {
         "command": "magento-log-viewer.clearAllLogFiles",
-        "title": "Clear all Logs",
-        "icon": {
-          "light": "resources/bin-light.svg",
-          "dark": "resources/bin-dark.svg"
-        }
+        "title": "Delete Logfiles",
+        "icon": "$(trash)"
       },
       {
         "command": "magento-log-viewer.refreshLogFiles",
         "title": "Refresh Log Files",
-        "icon": {
-          "light": "resources/light/refresh.svg",
-          "dark": "resources/dark/refresh.svg"
-        }
+        "icon": "$(refresh)"
       }
     ],
     "configuration": {
@@ -71,7 +65,7 @@
           "commands": [
             {
               "command": "magento-log-viewer.clearAllLogFiles",
-              "title": "Clear all Logs",
+              "title": "Delete Logfiles",
               "group": "navigation"
             }
           ]
