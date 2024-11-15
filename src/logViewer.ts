@@ -111,6 +111,8 @@ export class LogFile extends vscode.TreeItem {
     public readonly command?: vscode.Command
   ) {
     super(label, collapsibleState);
+    this.description = this.label.match(/\(Lines: \d+\)/)?.[0] || '';
+    this.label = this.label.replace(/\(Lines: \d+\)/, '').trim();
   }
 
   iconPath = {
@@ -119,4 +121,5 @@ export class LogFile extends vscode.TreeItem {
   };
 
   contextValue = 'logFile';
+  description = '';
 }
