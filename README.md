@@ -1,13 +1,12 @@
 # Magento Log Viewer
 
-![CI](https://github.com/dermatz/magento-log-viewer/actions/workflows/ci.yml/badge.svg)
-
 The Magento Log Viewer extension for Visual Studio Code allows you to easily view and manage log files in your Magento project. This extension provides a tree view of log files, the ability to open and clear log files, and a status bar item showing the number of log files.
 
 ## Features
 
 - **View Log Files**: Displays a tree view of log files in the `var/log` directory of your Magento project.
 - **Open Log Files**: Open log files directly in the editor by clicking on them in the tree view.
+- **Collapsible Log Lines**: Each log file can be expanded to view individual lines.
 - **Clear Log Files**: Clear all log files with a single command.
 - **Status Bar Item**: Shows the number of log files in the status bar.
 
@@ -29,7 +28,8 @@ This extension contributes the following settings:
 2. **Configure the extension**: When you open a workspace, the extension will prompt you to specify if it is a Magento project. If you select "Yes", you will be prompted to select the Magento root folder.
 3. **View log files**: The log files will be displayed in the tree view under the "Magento Log Viewer" activity bar.
 4. **Open log files**: Click on any log file in the tree view to open it in the editor.
-5. **Clear log files**: Use the "Clear all Logs" command to delete all log files in the `var/log` directory.
+5. **Expand log files**: Click on the arrow next to a log file to expand and view individual lines.
+6. **Clear log files**: Use the "Clear all Logs" command to delete all log files in the `var/log` directory.
 
 ## Known Issues
 
