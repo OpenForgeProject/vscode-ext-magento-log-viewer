@@ -29,7 +29,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     }
 
     if (element) {
-      return Promise.resolve(this.getLogFiles(path.join(this.workspaceRoot, 'var', 'log')));
+      return Promise.resolve(element.children || []);
     } else {
       const logPath = path.join(this.workspaceRoot, 'var', 'log');
       if (this.pathExists(logPath)) {
@@ -52,16 +52,24 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
       return files.map(file => {
         const filePath = path.join(dir, file);
         const lineCount = this.getLineCount(filePath);
-        return new LogFile(`${file} (Lines: ${lineCount})`, vscode.TreeItemCollapsibleState.None, {
+        const logFile = new LogFile(`${file} (Lines: ${lineCount})`, vscode.TreeItemCollapsibleState.Collapsed, {
           command: 'magento-log-viewer.openFile',
           title: 'Open Log File',
           arguments: [filePath]
         });
+        logFile.children = this.getLogFileLines(filePath);
+        return logFile;
       });
     } else {
       this.updateBadge(0);
       return [];
     }
+  }
+
+  private getLogFileLines(filePath: string): LogFile[] {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const lines = fileContent.split('\n');
+    return lines.map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None));
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogFile[] {
@@ -122,4 +130,5 @@ export class LogFile extends vscode.TreeItem {
 
   contextValue = 'logFile';
   description = '';
+  children: LogFile[] | undefined;
 }
