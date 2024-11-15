@@ -69,12 +69,12 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   private getLogFileLines(filePath: string): LogFile[] {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const lines = fileContent.split('\n');
-    const groupedLines = this.groupLogEntries(lines);
+    const groupedLines = this.groupLogEntries(lines, filePath);
     return groupedLines;
   }
 
-  private groupLogEntries(lines: string[]): LogFile[] {
-    const grouped: { [key: string]: string[] } = {};
+  private groupLogEntries(lines: string[], filePath: string): LogFile[] {
+    const grouped: { [key: string]: { line: string, lineNumber: number }[] } = {};
 
     lines.forEach((line, index) => {
       const match = line.match(/\.(\w+):/);
@@ -83,14 +83,18 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
         if (!grouped[level]) {
           grouped[level] = [];
         }
-        grouped[level].push(`Line ${index + 1}: ${line}`);
+        grouped[level].push({ line, lineNumber: index });
       }
     });
 
     const summary = Object.keys(grouped).map(level => {
       const count = grouped[level].length;
       const label = `${level} (${count})`;
-      return new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map(line => new LogFile(line, vscode.TreeItemCollapsibleState.None)));
+      return new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map(entry => new LogFile(`Line ${entry.lineNumber + 1}: ${entry.line}`, vscode.TreeItemCollapsibleState.None, {
+        command: 'magento-log-viewer.openFileAtLine',
+        title: 'Open Log File at Line',
+        arguments: [filePath, entry.lineNumber]
+      })));
     });
 
     return summary;

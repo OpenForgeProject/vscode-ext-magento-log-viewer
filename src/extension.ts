@@ -44,8 +44,21 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
 
   vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
-  vscode.commands.registerCommand('magento-log-viewer.openFile', (resource) => {
-    vscode.window.showTextDocument(vscode.Uri.file(resource));
+  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath, lineNumber) => {
+    if (lineNumber !== undefined) {
+      const options: vscode.TextDocumentShowOptions = {
+        selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
+      };
+      vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
+    } else {
+      vscode.window.showTextDocument(vscode.Uri.file(filePath));
+    }
+  });
+  vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath, lineNumber) => {
+    const options: vscode.TextDocumentShowOptions = {
+      selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
+    };
+    vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
   });
 
   vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
@@ -65,7 +78,8 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   // Update the badge count
   const updateBadge = () => {
     const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
-    treeView.badge = { value: logFiles.length, tooltip: `${logFiles.length} log files` };
+    const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
+    treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log entries` };
   };
 
   logViewerProvider.onDidChangeTreeData(updateBadge);
