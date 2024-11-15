@@ -18,6 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
               if (folderUri && folderUri[0]) {
                 config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Global).then(() => {
                   vscode.window.showInformationMessage('Magento root folder successfully saved!');
+                  config.update('magentoLogViewer.isMagentoProject', 'Yes', vscode.ConfigurationTarget.Global);
                   activateExtension(context, folderUri[0].fsPath);
                 });
               }
