@@ -6,4 +6,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-- Initial release
+### Added
+- View log files in the `var/log` directory of your Magento project.
+- Open log files directly in the editor by clicking on them in the tree view.
+- Expand log files to view individual lines.
+- Clear all log files with a single command.
+- Status bar item showing the number of log entries.
+- Badge in the tree view showing the total number of log entries.
+
+### Changed
+- Status bar item now shows the total number of log entries instead of the number of log files.
+- Updated README to reflect the change in the status bar item text.
