@@ -1,51 +1,35 @@
-# magento-log-viewer README
+# Magento Log Viewer
 
-This is the README for your extension "magento-log-viewer". After writing up a brief description, we recommend including the following sections.
+The Magento Log Viewer extension for Visual Studio Code allows you to easily view and manage log files in your Magento project. This extension provides a tree view of log files, the ability to open and clear log files, and a status bar item showing the number of log files.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **View Log Files**: Displays a tree view of log files in the `var/log` directory of your Magento project.
+- **Open Log Files**: Open log files directly in the editor by clicking on them in the tree view.
+- **Clear Log Files**: Clear all log files with a single command.
+- **Status Bar Item**: Shows the number of log files in the status bar.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- Visual Studio Code version 1.95.0 or higher.
+- A Magento project with log files located in the `var/log` directory.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+- `magentoLogViewer.isMagentoProject`: Indicates whether the current workspace is a Magento project. Options are "Ja", "Nein", and "Please select".
+- `magentoLogViewer.magentoRoot`: The path to the Magento root folder.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- None at the moment. Please report any issues you encounter.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+- Initial release of Magento Log Viewer.
 
 ---
 
