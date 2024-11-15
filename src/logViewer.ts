@@ -69,7 +69,29 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   private getLogFileLines(filePath: string): LogFile[] {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const lines = fileContent.split('\n');
-    return lines.map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None));
+    const groupedLines = this.groupLogEntries(lines);
+    return groupedLines;
+  }
+
+  private groupLogEntries(lines: string[]): LogFile[] {
+    const grouped: { [key: string]: string[] } = { ERROR: [], WARN: [], INFO: [] };
+    lines.forEach(line => {
+      if (line.includes('.ERROR:')) {
+        grouped.ERROR.push(line);
+      } else if (line.includes('.WARN:')) {
+        grouped.WARN.push(line);
+      } else if (line.includes('.INFO:')) {
+        grouped.INFO.push(line);
+      }
+    });
+
+    const summary = [
+      new LogFile(`ERROR: ${grouped.ERROR.length} entries`, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped.ERROR.map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None))),
+      new LogFile(`WARN: ${grouped.WARN.length} entries`, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped.WARN.map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None))),
+      new LogFile(`INFO: ${grouped.INFO.length} entries`, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped.INFO.map((line, index) => new LogFile(`Line ${index + 1}: ${line}`, vscode.TreeItemCollapsibleState.None)))
+    ];
+
+    return summary;
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogFile[] {
@@ -116,19 +138,16 @@ export class LogFile extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly command?: vscode.Command
+    public readonly command?: vscode.Command,
+    public children?: LogFile[]
   ) {
     super(label, collapsibleState);
     this.description = this.label.match(/\(\d+\)/)?.[0] || '';
     this.label = this.label.replace(/\(\d+\)/, '').trim();
   }
 
-  iconPath = {
-    light: path.join(__filename, '..', '..', 'resources', 'light', 'log.svg'),
-    dark: path.join(__filename, '..', '..', 'resources', 'dark', 'log.svg')
-  };
+  iconPath = new vscode.ThemeIcon('file');
 
   contextValue = 'logFile';
   description = '';
-  children: LogFile[] | undefined;
 }
