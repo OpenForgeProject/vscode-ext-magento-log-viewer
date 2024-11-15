@@ -26,6 +26,14 @@
           "light": "resources/bin-light.svg",
           "dark": "resources/bin-dark.svg"
         }
+      },
+      {
+        "command": "magento-log-viewer.refreshLogFiles",
+        "title": "Refresh Log Files",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
       }
     ],
     "configuration": {
@@ -74,6 +82,11 @@
       "view/title": [
         {
           "command": "magento-log-viewer.clearAllLogFiles",
+          "when": "view == logFiles",
+          "group": "navigation"
+        },
+        {
+          "command": "magento-log-viewer.refreshLogFiles",
           "when": "view == logFiles",
           "group": "navigation"
         }

@@ -61,6 +61,15 @@ export function activate(context: vscode.ExtensionContext) {
 	updateBadge();
 
 	vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
+
+	// Watch for changes in the log directory
+	const logPath = path.join(magentoRoot, 'var', 'log');
+	const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(logPath, '*'));
+	watcher.onDidChange(() => logViewerProvider.refresh());
+	watcher.onDidCreate(() => logViewerProvider.refresh());
+	watcher.onDidDelete(() => logViewerProvider.refresh());
+
+	context.subscriptions.push(watcher);
 }
 
 // This method is called when your extension is deactivated

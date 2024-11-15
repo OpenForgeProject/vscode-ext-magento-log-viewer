@@ -49,11 +49,15 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     if (this.pathExists(dir)) {
       const files = fs.readdirSync(dir);
       this.updateBadge(files.length);
-      return files.map(file => new LogFile(file, vscode.TreeItemCollapsibleState.None, {
-        command: 'magento-log-viewer.openFile',
-        title: 'Open Log File',
-        arguments: [path.join(dir, file)]
-      }));
+      return files.map(file => {
+        const filePath = path.join(dir, file);
+        const lineCount = this.getLineCount(filePath);
+        return new LogFile(`${file} (Lines: ${lineCount})`, vscode.TreeItemCollapsibleState.None, {
+          command: 'magento-log-viewer.openFile',
+          title: 'Open Log File',
+          arguments: [filePath]
+        });
+      });
     } else {
       this.updateBadge(0);
       return [];
@@ -63,14 +67,23 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   getLogFilesWithoutUpdatingBadge(dir: string): LogFile[] {
     if (this.pathExists(dir)) {
       const files = fs.readdirSync(dir);
-      return files.map(file => new LogFile(file, vscode.TreeItemCollapsibleState.None, {
-        command: 'magento-log-viewer.openFile',
-        title: 'Open Log File',
-        arguments: [path.join(dir, file)]
-      }));
+      return files.map(file => {
+        const filePath = path.join(dir, file);
+        const lineCount = this.getLineCount(filePath);
+        return new LogFile(`${file} (Lines: ${lineCount})`, vscode.TreeItemCollapsibleState.None, {
+          command: 'magento-log-viewer.openFile',
+          title: 'Open Log File',
+          arguments: [filePath]
+        });
+      });
     } else {
       return [];
     }
+  }
+
+  private getLineCount(filePath: string): number {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    return fileContent.split('\n').length;
   }
 
   public pathExists(p: string): boolean {
