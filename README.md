@@ -18,8 +18,16 @@ The Magento Log Viewer extension for Visual Studio Code allows you to easily vie
 
 This extension contributes the following settings:
 
-- `magentoLogViewer.isMagentoProject`: Indicates whether the current workspace is a Magento project. Options are "Ja", "Nein", and "Please select".
+- `magentoLogViewer.isMagentoProject`: Indicates whether the current workspace is a Magento project. Options are "Yes", "No", and "Please select".
 - `magentoLogViewer.magentoRoot`: The path to the Magento root folder.
+
+## Usage
+
+1. **Install the extension**: Install the Magento Log Viewer extension from the Visual Studio Code marketplace.
+2. **Configure the extension**: When you open a workspace, the extension will prompt you to specify if it is a Magento project. If you select "Yes", you will be prompted to select the Magento root folder.
+3. **View log files**: The log files will be displayed in the tree view under the "Magento Log Viewer" activity bar.
+4. **Open log files**: Click on any log file in the tree view to open it in the editor.
+5. **Clear log files**: Use the "Clear all Logs" command to delete all log files in the `var/log` directory.
 
 ## Known Issues
 

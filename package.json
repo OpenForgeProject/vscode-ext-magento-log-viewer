@@ -1,6 +1,6 @@
 {
   "name": "magento-log-viewer",
-  "displayName": "magento-log-viewer",
+  "displayName": "Magento Log Viewer",
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -21,7 +21,7 @@
       },
       {
         "command": "magento-log-viewer.clearAllLogFiles",
-        "title": "Clear all Log's",
+        "title": "Clear all Logs",
         "icon": {
           "light": "resources/bin-light.svg",
           "dark": "resources/bin-dark.svg"
@@ -42,14 +42,14 @@
       "properties": {
         "magentoLogViewer.isMagentoProject": {
           "type": "string",
-          "enum": ["Ja", "Nein", "Please select"],
+          "enum": ["Yes", "No", "Please select"],
           "default": "Please select",
-          "description": "Dies ist ein Magento Projekt"
+          "description": "This is a Magento project"
         },
         "magentoLogViewer.magentoRoot": {
           "type": "string",
           "default": "",
-          "description": "Pfad zum Magento Root Ordner"
+          "description": "Path to the Magento root folder"
         }
       }
     },
@@ -71,7 +71,7 @@
           "commands": [
             {
               "command": "magento-log-viewer.clearAllLogFiles",
-              "title": "Clear all Log's",
+              "title": "Clear all Logs",
               "group": "navigation"
             }
           ]

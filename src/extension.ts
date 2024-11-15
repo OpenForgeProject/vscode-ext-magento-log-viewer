@@ -8,9 +8,9 @@ export function activate(context: vscode.ExtensionContext) {
   const isMagentoProject = config.get<string>('magentoLogViewer.isMagentoProject', 'Please select');
 
   if (isMagentoProject === 'Please select') {
-    vscode.window.showInformationMessage('Is it a Magento Project?', 'Yes', 'No').then(selection => {
+    vscode.window.showInformationMessage('Is this a Magento project?', 'Yes', 'No').then(selection => {
       if (selection === 'Yes') {
-        vscode.window.showInformationMessage('Select Magento Root Folder', 'Select Magento Root Folder').then(buttonSelection => {
+        vscode.window.showInformationMessage('Please select the Magento root folder.', 'Select Magento Root Folder').then(buttonSelection => {
           if (buttonSelection === 'Select Magento Root Folder') {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
