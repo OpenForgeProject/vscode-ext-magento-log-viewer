@@ -4,72 +4,80 @@ import * as fs from 'fs';
 import { LogViewerProvider } from './logViewer';
 
 export function activate(context: vscode.ExtensionContext) {
+  const config = vscode.workspace.getConfiguration();
+  const isMagentoProject = config.get<string>('magentoLogViewer.isMagentoProject', 'Please select');
 
-	const config = vscode.workspace.getConfiguration();
-	const isMagentoProject = config.get('magentoLogViewer.isMagentoProject', 'Please select');
+  if (isMagentoProject === 'Please select') {
+    vscode.window.showInformationMessage('Is it a Magento Project?', 'Yes', 'No').then(selection => {
+      if (selection === 'Yes') {
+        vscode.window.showInformationMessage('Select Magento Root Folder', 'Select Magento Root Folder').then(buttonSelection => {
+          if (buttonSelection === 'Select Magento Root Folder') {
+            vscode.window.showOpenDialog({ canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
+              if (folderUri && folderUri[0]) {
+                config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Global).then(() => {
+                  vscode.window.showInformationMessage('Magento root folder successfully saved!');
+                  activateExtension(context, folderUri[0].fsPath);
+                });
+              }
+            });
+          }
+        });
+      } else {
+        config.update('magentoLogViewer.isMagentoProject', selection, vscode.ConfigurationTarget.Global);
+      }
+    });
+  } else if (isMagentoProject === 'Yes') {
+    const magentoRoot = config.get<string>('magentoLogViewer.magentoRoot', '');
+    if (!magentoRoot || !fs.existsSync(magentoRoot) || !fs.lstatSync(magentoRoot).isDirectory()) {
+      vscode.window.showErrorMessage('Magento root path is not set or is not a directory.');
+      return;
+    }
+    activateExtension(context, magentoRoot);
+  }
+}
 
-	if (isMagentoProject === 'Please select') {
-		vscode.window.showInformationMessage('Ist dies ein Magento Projekt?', 'Ja', 'Nein').then(selection => {
-			if (selection === 'Ja') {
-				vscode.window.showInformationMessage('Bitte wählen Sie den Magento Root Ordner aus.', 'Jetzt Magento Root auswählen').then(buttonSelection => {
-					if (buttonSelection === 'Jetzt Magento Root auswählen') {
-						vscode.window.showOpenDialog({ canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
-							if (folderUri && folderUri[0]) {
-								config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Global).then(() => {
-									vscode.window.showInformationMessage('Magento Root Ordner erfolgreich gespeichert!');
-								});
-							}
-						});
-					}
-				});
-			}
-			config.update('magentoLogViewer.isMagentoProject', selection, vscode.ConfigurationTarget.Global);
-		});
-	}
+function activateExtension(context: vscode.ExtensionContext, magentoRoot: string) {
+  const logViewerProvider = new LogViewerProvider(magentoRoot);
+  const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
 
-	const magentoRoot = config.get('magentoLogViewer.magentoRoot', '');
+  vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
+  vscode.commands.registerCommand('magento-log-viewer.openFile', (resource) => {
+    vscode.window.showTextDocument(vscode.Uri.file(resource));
+  });
 
-	const logViewerProvider = new LogViewerProvider(magentoRoot);
-	const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
+  vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
+    const logPath = path.join(magentoRoot, 'var', 'log');
+    if (logViewerProvider.pathExists(logPath)) {
+      const files = fs.readdirSync(logPath);
+      files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
+      logViewerProvider.refresh();
+      vscode.window.showInformationMessage('All log files have been cleared.');
+    } else {
+      vscode.window.showInformationMessage('No log files found to clear.');
+    }
+  });
 
-	vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
-	vscode.commands.registerCommand('magento-log-viewer.openFile', (resource) => {
-		vscode.window.showTextDocument(vscode.Uri.file(resource));
-	});
+  context.subscriptions.push(treeView);
 
-	vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
-		const logPath = path.join(magentoRoot, 'var', 'log');
-		if (logViewerProvider.pathExists(logPath)) {
-			const files = fs.readdirSync(logPath);
-			files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
-			logViewerProvider.refresh();
-			vscode.window.showInformationMessage('All log files have been cleared.');
-		} else {
-			vscode.window.showInformationMessage('No log files found to clear.');
-		}
-	});
+  // Update the badge count
+  const updateBadge = () => {
+    const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
+    treeView.badge = { value: logFiles.length, tooltip: `${logFiles.length} log files` };
+  };
 
-	context.subscriptions.push(treeView);
+  logViewerProvider.onDidChangeTreeData(updateBadge);
+  updateBadge();
 
-	// Update the badge count
-	const updateBadge = () => {
-		const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
-		treeView.badge = { value: logFiles.length, tooltip: `${logFiles.length} log files` };
-	};
+  vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
 
-	logViewerProvider.onDidChangeTreeData(updateBadge);
-	updateBadge();
+  // Watch for changes in the log directory
+  const logPath = path.join(magentoRoot, 'var', 'log');
+  const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(logPath, '*'));
+  watcher.onDidChange(() => logViewerProvider.refresh());
+  watcher.onDidCreate(() => logViewerProvider.refresh());
+  watcher.onDidDelete(() => logViewerProvider.refresh());
 
-	vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
-
-	// Watch for changes in the log directory
-	const logPath = path.join(magentoRoot, 'var', 'log');
-	const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(logPath, '*'));
-	watcher.onDidChange(() => logViewerProvider.refresh());
-	watcher.onDidCreate(() => logViewerProvider.refresh());
-	watcher.onDidDelete(() => logViewerProvider.refresh());
-
-	context.subscriptions.push(watcher);
+  context.subscriptions.push(watcher);
 }
 
 // This method is called when your extension is deactivated
