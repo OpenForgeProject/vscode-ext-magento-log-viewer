@@ -48,8 +48,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   public getLogFiles(dir: string): LogFile[] {
     if (this.pathExists(dir)) {
       const files = fs.readdirSync(dir);
-      this.updateBadge(files.length);
-      return files.map(file => {
+      const logFiles = files.map(file => {
         const filePath = path.join(dir, file);
         const lineCount = this.getLineCount(filePath);
         const logFile = new LogFile(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.Collapsed, {
@@ -61,8 +60,18 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
         logFile.children = this.getLogFileLines(filePath);
         return logFile;
       });
+      const totalEntries = logFiles.reduce((count, logFile) => {
+        return count + (logFile.children?.reduce((childCount, child) => childCount + (child.children?.length || 0), 0) || 0);
+      }, 0);
+      const errorEntries = logFiles.reduce((count, logFile) => {
+        return count + (logFile.children?.reduce((childCount, child) => {
+          return childCount + (child.children?.filter(grandChild => grandChild.label.toLowerCase().includes('error')).length || 0);
+        }, 0) || 0);
+      }, 0);
+      this.updateBadge(totalEntries, errorEntries);
+      return logFiles;
     } else {
-      this.updateBadge(0);
+      this.updateBadge(0, 0);
       return [];
     }
   }
@@ -149,8 +158,9 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     return true;
   }
 
-  private updateBadge(count: number = 0): void {
-    this.statusBarItem.text = `Magento Logs: ${count}`;
+  private updateBadge(totalEntries: number = 0, errorEntries: number = 0): void {
+    const entryText = totalEntries === 1 ? 'Magento Log-Entry' : 'Magento Log-Entries';
+    this.statusBarItem.text = `${entryText}: ${totalEntries} (${errorEntries} errors)`;
   }
 
   dispose() {
