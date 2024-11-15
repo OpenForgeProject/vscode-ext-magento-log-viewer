@@ -1,5 +1,7 @@
 # Magento Log Viewer
 
+![CI](https://github.com/dermatz/magento-log-viewer/actions/workflows/ci.yml/badge.svg)
+
 The Magento Log Viewer extension for Visual Studio Code allows you to easily view and manage log files in your Magento project. This extension provides a tree view of log files, the ability to open and clear log files, and a status bar item showing the number of log files.
 
 ## Features
