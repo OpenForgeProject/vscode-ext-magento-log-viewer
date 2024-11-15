@@ -91,11 +91,28 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     const summary = Object.keys(grouped).map(level => {
       const count = grouped[level].length;
       const label = `${level} (${count})`;
-      return new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map(entry => new LogFile(`Line ${entry.lineNumber + 1}: ${entry.line}`, vscode.TreeItemCollapsibleState.None, {
+      const logFile = new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map(entry => new LogFile(`Line ${entry.lineNumber + 1}: ${entry.line}`, vscode.TreeItemCollapsibleState.None, {
         command: 'magento-log-viewer.openFileAtLine',
         title: 'Open Log File at Line',
         arguments: [filePath, entry.lineNumber]
       })));
+      switch (level.toLowerCase()) {
+        case 'error':
+          logFile.iconPath = new vscode.ThemeIcon('error');
+          break;
+        case 'warn':
+          logFile.iconPath = new vscode.ThemeIcon('warning');
+          break;
+        case 'debug':
+          logFile.iconPath = new vscode.ThemeIcon('debug');
+          break;
+        case 'info':
+          logFile.iconPath = new vscode.ThemeIcon('info');
+          break;
+        default:
+          logFile.iconPath = new vscode.ThemeIcon('list');
+      }
+      return logFile;
     });
 
     return summary;
