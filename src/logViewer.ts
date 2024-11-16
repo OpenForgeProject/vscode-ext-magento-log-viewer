@@ -39,7 +39,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
         }
         return Promise.resolve(logFiles);
       } else {
-        this.updateBadge(0);
+        this.updateBadge();
         return Promise.resolve([new LogFile('No log files found', vscode.TreeItemCollapsibleState.None)]);
       }
     }
@@ -48,7 +48,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   public getLogFiles(dir: string): LogFile[] {
     if (this.pathExists(dir)) {
       const files = fs.readdirSync(dir);
-      this.updateBadge(files.length);
+      this.updateBadge();
       return files.map(file => {
         const filePath = path.join(dir, file);
         const lineCount = this.getLineCount(filePath);
@@ -62,7 +62,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
         return logFile;
       });
     } else {
-      this.updateBadge(0);
+      this.updateBadge();
       return [];
     }
   }
