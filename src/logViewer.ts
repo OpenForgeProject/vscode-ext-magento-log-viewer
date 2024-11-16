@@ -156,7 +156,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   private updateBadge(): void {
     const logPath = path.join(this.workspaceRoot, 'var', 'log');
     const logFiles = this.getLogFilesWithoutUpdatingBadge(logPath);
-    const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
+    const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description.match(/\d+/)[0] || '0', 10), 0);
     this.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
   }
 
