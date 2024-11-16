@@ -7,6 +7,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [Unreleased]
 
 
+## v1.0.2
+### Changed
+- Repository URL to `https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer`
+
 ## v1.0.1
 ### Added
 - Extension Logo
