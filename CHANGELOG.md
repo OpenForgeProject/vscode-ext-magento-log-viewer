@@ -5,6 +5,9 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## [Unreleased]
+### Added
+- Comprehensive bug report template
+- Detailed feature request template
 
 ## [1.1.0] - 2024-11-16
 ### Added
