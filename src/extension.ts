@@ -43,7 +43,7 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   const logViewerProvider = new LogViewerProvider(magentoRoot);
   const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
 
-  vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
+  vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => { logViewerProvider.refresh(); });
   vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath, lineNumber) => {
     if (lineNumber !== undefined) {
       const options: vscode.TextDocumentShowOptions = {
