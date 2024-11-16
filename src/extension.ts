@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
   } else if (isMagentoProject === 'Yes') {
     const magentoRoot = config.get<string>('magentoLogViewer.magentoRoot', '');
-    if (!magentoRoot || !fs.existsSync(magentoRoot) || !fs.lstatSync(magentoRoot).isDirectory()) {
+    if (!magentoRoot || !isValidPath(magentoRoot)) {
       vscode.window.showErrorMessage('Magento root path is not set or is not a directory.');
       return;
     }
@@ -95,6 +95,14 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   watcher.onDidDelete(() => logViewerProvider.refresh());
 
   context.subscriptions.push(watcher);
+}
+
+function isValidPath(filePath: string): boolean {
+  try {
+    return fs.existsSync(filePath) && fs.lstatSync(filePath).isDirectory();
+  } catch (error) {
+    return false;
+  }
 }
 
 // This method is called when your extension is deactivated

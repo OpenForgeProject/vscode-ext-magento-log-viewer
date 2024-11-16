@@ -6,8 +6,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [1.1.0] - 2024-11-16
+### Added
+- Improved the user interface of the webview panel.
+- Added line number formatting with leading zeros.
+- Removed timestamp and dot from log entries in the summary.
 
-## v1.0.2
+### Fixed
+- Fixed potential security issue with non-literal argument in `fs.existsSync`.
+- Fixed potential object injection issue in `groupLogEntries` method.
+
+## [1.0.2] - 2024-10-10
 ### Changed
 - Repository URL to `https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer`
 

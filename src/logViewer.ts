@@ -81,21 +81,27 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
       const match = line.match(/\.(\w+):/);
       if (match) {
         const level = match[1];
-        if (!grouped[level]) {
-          grouped[level] = [];
+        const message = line.replace(/^\[.*?\]\s*\.\w+:\s*/, ''); // Entfernt den Zeitstempel und den Punkt
+        if (this.isValidLogLevel(level)) {
+          if (!grouped[level]) {
+            grouped[level] = [];
+          }
+          grouped[level].push({ line: message, lineNumber: index });
         }
-        grouped[level].push({ line, lineNumber: index });
       }
     });
 
     const summary = Object.keys(grouped).map(level => {
       const count = grouped[level].length;
       const label = `${level} (${count})`;
-      const logFile = new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map(entry => new LogFile(`Line ${entry.lineNumber + 1}: ${entry.line}`, vscode.TreeItemCollapsibleState.None, {
-        command: 'magento-log-viewer.openFileAtLine',
-        title: 'Open Log File at Line',
-        arguments: [filePath, entry.lineNumber]
-      })));
+      const logFile = new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map(entry => {
+        const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0'); // Zeilennummer mit führenden Nullen
+        return new LogFile(`Line ${lineNumber}:  ${entry.line}`, vscode.TreeItemCollapsibleState.None, { // Fügen Sie hier den Abstand hinzu
+          command: 'magento-log-viewer.openFileAtLine',
+          title: 'Open Log File at Line',
+          arguments: [filePath, entry.lineNumber]
+        });
+      }));
       switch (level.toLowerCase()) {
         case 'error':
           logFile.iconPath = new vscode.ThemeIcon('error');
@@ -116,6 +122,11 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     });
 
     return summary;
+  }
+
+  private isValidLogLevel(level: string): boolean {
+    const validLevels = ['error', 'warn', 'debug', 'info'];
+    return validLevels.includes(level.toLowerCase());
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogFile[] {
