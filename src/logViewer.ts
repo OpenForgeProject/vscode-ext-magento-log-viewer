@@ -29,7 +29,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     }
 
     if (element) {
-      return Promise.resolve(element.children || []);
+      return Promise.resolve(element.children ?? []);
     } else {
       const logPath = path.join(this.workspaceRoot, 'var', 'log');
       if (this.pathExists(logPath)) {
@@ -82,7 +82,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
       if (match) {
         const level = match[1].toUpperCase(); // Changed to uppercase
         const message = line.replace(/^\[.*?\]\s*\.\w+:\s*/, '');
-        const entries = grouped.get(level) || [];
+        const entries = grouped.get(level) ?? [];
         entries.push({ line: message, lineNumber: index });
         grouped.set(level, entries);
       }
@@ -156,7 +156,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   private updateBadge(): void {
     const logPath = path.join(this.workspaceRoot, 'var', 'log');
     const logFiles = this.getLogFilesWithoutUpdatingBadge(logPath);
-    const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description.match(/\d+/)[0] || '0', 10), 0);
+    const totalEntries = logFiles.reduce((count, file) => {
+      const match = file.description.match(/\d+/);
+      return count + parseInt(match?.[0] ?? '0', 10);
+    }, 0);
     this.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
   }
 
@@ -173,7 +176,7 @@ export class LogFile extends vscode.TreeItem {
     public children?: LogFile[]
   ) {
     super(label, collapsibleState as vscode.TreeItemCollapsibleState);
-    this.description = this.label.match(/\(\d+\)/)?.[0] || '';
+    this.description = this.label.match(/\(\d+\)/)?.[0] ?? '';
     this.label = this.label.replace(/\(\d+\)/, '').trim();
   }
 
