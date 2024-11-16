@@ -16,9 +16,9 @@ export function activate(context: vscode.ExtensionContext) {
             const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
             vscode.window.showOpenDialog({ defaultUri, canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
               if (folderUri && folderUri[0]) {
-                config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Global).then(() => {
+                config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Workspace).then(() => {
                   vscode.window.showInformationMessage('Magento root folder successfully saved!');
-                  config.update('magentoLogViewer.isMagentoProject', 'Yes', vscode.ConfigurationTarget.Global);
+                  config.update('magentoLogViewer.isMagentoProject', 'Yes', vscode.ConfigurationTarget.Workspace);
                   activateExtension(context, folderUri[0].fsPath);
                 });
               }
@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
           }
         });
       } else {
-        config.update('magentoLogViewer.isMagentoProject', selection, vscode.ConfigurationTarget.Global);
+        config.update('magentoLogViewer.isMagentoProject', selection, vscode.ConfigurationTarget.Workspace);
       }
     });
   } else if (isMagentoProject === 'Yes') {
