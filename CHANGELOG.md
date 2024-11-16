@@ -6,6 +6,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+
+## v1.0.1
+### Added
+- Extension Logo
+- Screenshot in the README file.
+- Added a "Getting Started" section to the README.
+
+## v1.0.0
 ### Added
 - View log files in the `var/log` directory of your Magento project.
 - Open log files directly in the editor by clicking on them in the tree view.
@@ -13,6 +21,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Clear all log files with a single command.
 - Status bar item showing the number of log entries.
 - Badge in the tree view showing the total number of log entries.
+- Repository field in `package.json`.
 
 ### Changed
 - Status bar item now shows the total number of log entries instead of the number of log files.
