@@ -75,58 +75,51 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   }
 
   private groupLogEntries(lines: string[], filePath: string): LogFile[] {
-    const grouped: { [key: string]: { line: string, lineNumber: number }[] } = {};
+    const grouped = new Map<string, { line: string, lineNumber: number }[]>();
 
     lines.forEach((line, index) => {
       const match = line.match(/\.(\w+):/);
       if (match) {
-        const level = match[1];
-        const message = line.replace(/^\[.*?\]\s*\.\w+:\s*/, ''); // Entfernt den Zeitstempel und den Punkt
-        if (this.isValidLogLevel(level)) {
-          if (!grouped[level]) {
-            grouped[level] = [];
-          }
-          grouped[level].push({ line: message, lineNumber: index });
-        }
+        const level = match[1].toUpperCase(); // Changed to uppercase
+        const message = line.replace(/^\[.*?\]\s*\.\w+:\s*/, '');
+        const entries = grouped.get(level) || [];
+        entries.push({ line: message, lineNumber: index });
+        grouped.set(level, entries);
       }
     });
 
-    const summary = Object.keys(grouped).map(level => {
-      const count = grouped[level].length;
+    return Array.from(grouped.entries()).map(([level, entries]) => {
+      const count = entries.length;
       const label = `${level} (${count})`;
-      const logFile = new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined, grouped[level].map(entry => {
-        const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0'); // Zeilennummer mit führenden Nullen
-        return new LogFile(`Line ${lineNumber}:  ${entry.line}`, vscode.TreeItemCollapsibleState.None, { // Fügen Sie hier den Abstand hinzu
-          command: 'magento-log-viewer.openFileAtLine',
-          title: 'Open Log File at Line',
-          arguments: [filePath, entry.lineNumber]
-        });
-      }));
-      switch (level.toLowerCase()) {
-        case 'error':
-          logFile.iconPath = new vscode.ThemeIcon('error');
-          break;
-        case 'warn':
-          logFile.iconPath = new vscode.ThemeIcon('warning');
-          break;
-        case 'debug':
-          logFile.iconPath = new vscode.ThemeIcon('debug');
-          break;
-        case 'info':
-          logFile.iconPath = new vscode.ThemeIcon('info');
-          break;
-        default:
-          logFile.iconPath = new vscode.ThemeIcon('file');
-      }
+      const logFile = new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined,
+        entries.map(entry => {
+          const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
+          return new LogFile(
+            `Line ${lineNumber}:  ${entry.line}`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              command: 'magento-log-viewer.openFileAtLine',
+              title: 'Open Log File at Line',
+              arguments: [filePath, entry.lineNumber]
+            }
+          );
+        })
+      );
+
+      // Set icon based on known log levels, use default for others
+      logFile.iconPath = this.getIconForLogLevel(level);
       return logFile;
     });
-
-    return summary;
   }
 
-  private isValidLogLevel(level: string): boolean {
-    const validLevels = ['error', 'warn', 'debug', 'info'];
-    return validLevels.includes(level.toLowerCase());
+  private getIconForLogLevel(level: string): vscode.ThemeIcon {
+    switch (level) { // Removed toLowerCase() since level is already uppercase
+      case 'ERROR': return new vscode.ThemeIcon('error');
+      case 'WARN': return new vscode.ThemeIcon('warning');
+      case 'DEBUG': return new vscode.ThemeIcon('debug');
+      case 'INFO': return new vscode.ThemeIcon('info');
+      default: return new vscode.ThemeIcon('circle-outline');
+    }
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogFile[] {

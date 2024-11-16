@@ -11,6 +11,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Improved the user interface of the webview panel.
 - Added line number formatting with leading zeros.
 - Removed timestamp and dot from log entries in the summary.
+### Changed
+- Log levels are now displayed in uppercase format (e.g. ERROR, WARN, DEBUG, INFO, ...)
 
 ### Fixed
 - Fixed potential security issue with non-literal argument in `fs.existsSync`.
