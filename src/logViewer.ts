@@ -175,7 +175,7 @@ export class LogFile extends vscode.TreeItem {
     public readonly command?: vscode.Command,
     public children?: LogFile[]
   ) {
-    super(label, collapsibleState as vscode.TreeItemCollapsibleState);
+    super(label, collapsibleState);
     this.description = this.label.match(/\(\d+\)/)?.[0] ?? '';
     this.label = this.label.replace(/\(\d+\)/, '').trim();
   }
