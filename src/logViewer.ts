@@ -169,15 +169,26 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
 }
 
 export class LogFile extends vscode.TreeItem {
+  private _children?: LogFile[];
+
   constructor(
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly command?: vscode.Command,
-    public children?: LogFile[]
+    children?: LogFile[]
   ) {
     super(label, collapsibleState);
     this.description = this.label.match(/\(\d+\)/)?.[0] ?? '';
     this.label = this.label.replace(/\(\d+\)/, '').trim();
+    this._children = children;
+  }
+
+  get children(): LogFile[] | undefined {
+    return this._children;
+  }
+
+  set children(value: LogFile[] | undefined) {
+    this._children = value;
   }
 
   iconPath = new vscode.ThemeIcon('list');
