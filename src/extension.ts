@@ -63,11 +63,21 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
       vscode.window.showErrorMessage(`Failed to open file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
-  vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath, lineNumber) => {
-    const options: vscode.TextDocumentShowOptions = {
-      selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
-    };
-    vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
+  vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath: string, lineNumber: number) => {
+    if (!filePath || typeof filePath !== 'string' || typeof lineNumber !== 'number') {
+      vscode.window.showErrorMessage('Invalid arguments provided for opening file at line');
+      return;
+    }
+
+    try {
+      const position = new vscode.Position(lineNumber, 0);
+      const options: vscode.TextDocumentShowOptions = {
+        selection: new vscode.Range(position, position)
+      };
+      vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to open file at line: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   });
 
   vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
