@@ -147,10 +147,18 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   public pathExists(p: string): boolean {
     try {
       fs.accessSync(p);
-    } catch (err) {
+      return true;
+    } catch (error) {
+      if (error instanceof Error) {
+        // Handle specific error types if needed
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+          return false;
+        }
+        // Log other types of errors but still return false
+        console.error('Error checking path:', error.message);
+      }
       return false;
     }
-    return true;
   }
 
   private updateBadge(): void {
