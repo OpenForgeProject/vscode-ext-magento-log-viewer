@@ -44,14 +44,23 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
 
   vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => { logViewerProvider.refresh(); });
-  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath, lineNumber) => {
-    if (lineNumber !== undefined) {
-      const options: vscode.TextDocumentShowOptions = {
-        selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
-      };
-      vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
-    } else {
-      vscode.window.showTextDocument(vscode.Uri.file(filePath));
+  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string, lineNumber?: number) => {
+    if (!filePath || typeof filePath !== 'string') {
+      vscode.window.showErrorMessage('Invalid file path provided');
+      return;
+    }
+
+    try {
+      if (lineNumber !== undefined) {
+        const options: vscode.TextDocumentShowOptions = {
+          selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
+        };
+        vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
+      } else {
+        vscode.window.showTextDocument(vscode.Uri.file(filePath));
+      }
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to open file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
   vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath, lineNumber) => {

@@ -6,12 +6,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-### Added
-
-- Added ts-ignore comment to suppress false positive linting warning about unused workspaceRoot parameter
-
 ### Fixed
 
+- Fixed false positive linting warning about unused workspaceRoot parameter
 - Fixed several TypeScript Security Issues and Class-Handles
 
 ## [1.2.0] - 2024-11-17

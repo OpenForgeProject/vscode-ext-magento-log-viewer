@@ -7,7 +7,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   readonly onDidChangeTreeData: vscode.Event<LogFile | undefined | void> = this._onDidChangeTreeData.event;
   private statusBarItem: vscode.StatusBarItem;
 
-  // @ts-expect-error - workspaceRoot is used in class methods
+  // @ts-ignore - workspaceRoot is used in class methods
   constructor(private workspaceRoot: string) {
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     this.statusBarItem.command = 'magento-log-viewer.refreshLogFiles';
