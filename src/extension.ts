@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
             vscode.window.showOpenDialog({ defaultUri, canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
-              if (folderUri && folderUri[0]) {
+              if (folderUri?.[0]) {
                 config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Workspace).then(() => {
                   vscode.window.showInformationMessage('Magento root folder successfully saved!');
                   config.update('magentoLogViewer.isMagentoProject', 'Yes', vscode.ConfigurationTarget.Workspace);
