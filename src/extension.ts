@@ -55,7 +55,7 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string, lineNumber?: number) => {
 
     if (typeof filePath === 'string') {
-      if (lineNumber !== undefined && typeof lineNumber === 'number' && vscode && vscode.window) {
+      if (lineNumber !== undefined && typeof lineNumber === 'number' && typeof vscode !== 'undefined' && typeof vscode.window !== 'undefined') {
         const options: vscode.TextDocumentShowOptions = {
           selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
         };
