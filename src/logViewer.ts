@@ -45,12 +45,28 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     }
   }
 
+  private isValidLogDirectory(dir: string): boolean {
+    const normalizedDir = path.normalize(dir);
+    const normalizedLogPath = path.normalize(path.join(this.workspaceRoot, 'var', 'log'));
+    return normalizedDir === normalizedLogPath;
+  }
+
   public getLogFiles(dir: string): LogFile[] {
+    if (!this.isValidLogDirectory(dir)) {
+      console.error('Invalid log directory path');
+      return [];
+    }
+
     if (this.pathExists(dir)) {
       const files = fs.readdirSync(dir);
       this.updateBadge();
       return files.map(file => {
+        // Validate file path is within log directory
         const filePath = path.join(dir, file);
+        if (!filePath.startsWith(dir)) {
+          console.error('Invalid file path detected');
+          return null;
+        }
         const lineCount = this.getLineCount(filePath);
         const logFile = new LogFile(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.Collapsed, {
           command: 'magento-log-viewer.openFile',
@@ -60,7 +76,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
         logFile.iconPath = new vscode.ThemeIcon('file');
         logFile.children = this.getLogFileLines(filePath);
         return logFile;
-      });
+      }).filter(Boolean) as LogFile[];
     } else {
       this.updateBadge();
       return [];
