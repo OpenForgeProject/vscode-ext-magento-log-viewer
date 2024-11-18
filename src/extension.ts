@@ -44,17 +44,19 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
 
   vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
-  vscode.commands.registerCommand('magento-log-viewer.openFile', (...args: any[]) => {
+  vscode.commands.registerCommand('magento-log-viewer.openFile', (...args: unknown[]) => {
     const filePath = args[0] as string;
     const lineNumber = args[1] as number | undefined;
 
-    if (lineNumber !== undefined) {
-      const options: vscode.TextDocumentShowOptions = {
-        selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
-      };
-      vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
-    } else {
-      vscode.window.showTextDocument(vscode.Uri.file(filePath));
+    if (typeof filePath === 'string') {
+      if (lineNumber !== undefined && typeof lineNumber === 'number') {
+        const options: vscode.TextDocumentShowOptions = {
+          selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
+        };
+        vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
+      } else {
+        vscode.window.showTextDocument(vscode.Uri.file(filePath));
+      }
     }
   });
   vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath: string, lineNumber: number) => {
