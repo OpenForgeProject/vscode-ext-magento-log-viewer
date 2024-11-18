@@ -17,7 +17,11 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showOpenDialog({ defaultUri, canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
               if (folderUri?.[0]) {
                 config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Workspace).then(() => {
-                  vscode.window.showInformationMessage('Magento root folder successfully saved!');
+                  try {
+                    vscode.window.showInformationMessage('Magento root folder successfully saved!');
+                  } catch (error) {
+                    console.error('Failed to show information message:', error);
+                  }
                   config.update('magentoLogViewer.isMagentoProject', 'Yes', vscode.ConfigurationTarget.Workspace);
                   activateExtension(context, folderUri[0].fsPath);
                 });
@@ -32,7 +36,11 @@ export function activate(context: vscode.ExtensionContext) {
   } else if (isMagentoProject === 'Yes') {
     const magentoRoot = config.get<string>('magentoLogViewer.magentoRoot', '');
     if (!magentoRoot || !isValidPath(magentoRoot)) {
-      vscode.window.showErrorMessage('Magento root path is not set or is not a directory.');
+      try {
+        vscode.window.showErrorMessage('Magento root path is not set or is not a directory.');
+      } catch (error) {
+        console.error('Failed to show error message:', error);
+      }
       return;
     }
     activateExtension(context, magentoRoot);
@@ -70,9 +78,17 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
       const files = fs.readdirSync(logPath);
       files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
       logViewerProvider.refresh();
-      vscode.window.showInformationMessage('All log files have been cleared.');
+      try {
+        vscode.window.showInformationMessage('All log files have been cleared.');
+      } catch (error) {
+        console.error('Failed to show information message:', error);
+      }
     } else {
-      vscode.window.showInformationMessage('No log files found to clear.');
+      try {
+        vscode.window.showInformationMessage('No log files found to clear.');
+      } catch (error) {
+        console.error('Failed to show information message:', error);
+      }
     }
   });
 
