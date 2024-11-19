@@ -14,7 +14,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ### Fixed
 
-- fixed TypeScript ES22-Issues
+- Fixed TypeScript ES2022 issues
 
 ## [1.2.0] - 2024-11-17
 
