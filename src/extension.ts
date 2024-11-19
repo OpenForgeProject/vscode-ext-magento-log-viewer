@@ -15,9 +15,13 @@ export function activate(context: vscode.ExtensionContext) {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
             vscode.window.showOpenDialog({ defaultUri, canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
-              if (folderUri && folderUri[0]) {
+              if (folderUri?.[0]) {
                 config.update('magentoLogViewer.magentoRoot', folderUri[0].fsPath, vscode.ConfigurationTarget.Workspace).then(() => {
-                  vscode.window.showInformationMessage('Magento root folder successfully saved!');
+                  try {
+                    vscode.window.showInformationMessage('Magento root folder successfully saved!');
+                  } catch (error) {
+                    console.error('Failed to show information message:', error instanceof Error ? error.message : String(error));
+                  }
                   config.update('magentoLogViewer.isMagentoProject', 'Yes', vscode.ConfigurationTarget.Workspace);
                   activateExtension(context, folderUri[0].fsPath);
                 });
@@ -32,7 +36,11 @@ export function activate(context: vscode.ExtensionContext) {
   } else if (isMagentoProject === 'Yes') {
     const magentoRoot = config.get<string>('magentoLogViewer.magentoRoot', '');
     if (!magentoRoot || !isValidPath(magentoRoot)) {
-      vscode.window.showErrorMessage('Magento root path is not set or is not a directory.');
+      try {
+        vscode.window.showErrorMessage('Magento root path is not set or is not a directory.');
+      } catch (error) {
+        console.error('Failed to show error message:', error instanceof Error ? error.message : String(error));
+      }
       return;
     }
     activateExtension(context, magentoRoot);
@@ -44,17 +52,20 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
 
   vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
-  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath, lineNumber) => {
-    if (lineNumber !== undefined) {
-      const options: vscode.TextDocumentShowOptions = {
-        selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
-      };
-      vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
-    } else {
-      vscode.window.showTextDocument(vscode.Uri.file(filePath));
+  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string, lineNumber?: number) => {
+
+    if (typeof filePath === 'string') {
+      if (lineNumber !== undefined && typeof lineNumber === 'number' && typeof vscode !== 'undefined' && typeof vscode.window !== 'undefined') {
+        const options: vscode.TextDocumentShowOptions = {
+          selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
+        };
+        vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
+      } else {
+        vscode.window.showTextDocument(vscode.Uri.file(filePath));
+      }
     }
   });
-  vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath, lineNumber) => {
+  vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath: string, lineNumber: number) => {
     const options: vscode.TextDocumentShowOptions = {
       selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
     };
@@ -67,9 +78,17 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
       const files = fs.readdirSync(logPath);
       files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
       logViewerProvider.refresh();
-      vscode.window.showInformationMessage('All log files have been cleared.');
+      try {
+        vscode.window.showInformationMessage('All log files have been cleared.');
+      } catch (error) {
+        console.error('Failed to show information message:', error instanceof Error ? error.message : String(error));
+      }
     } else {
-      vscode.window.showInformationMessage('No log files found to clear.');
+      try {
+        vscode.window.showInformationMessage('No log files found to clear.');
+      } catch (error) {
+        console.error('Failed to show information message:', error instanceof Error ? error.message : String(error));
+      }
     }
   });
 
