@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [1.2.2] - 2024-11-19
+
+### Fixed
+
+- Fixed code dublication by extracting the logic into functions to improve Extension Performance
+- Fixed trailing comma in `tsconfig.json`
+
 ## [1.2.1] - 2024-11-19
 
 ### Added
