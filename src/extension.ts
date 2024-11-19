@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
                   try {
                     vscode.window.showInformationMessage('Magento root folder successfully saved!');
                   } catch (error) {
-                    console.error('Failed to show information message:', error);
+                    console.error('Failed to show information message:', error instanceof Error ? error.message : String(error));
                   }
                   config.update('magentoLogViewer.isMagentoProject', 'Yes', vscode.ConfigurationTarget.Workspace);
                   activateExtension(context, folderUri[0].fsPath);
@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         vscode.window.showErrorMessage('Magento root path is not set or is not a directory.');
       } catch (error) {
-        console.error('Failed to show error message:', error);
+        console.error('Failed to show error message:', error instanceof Error ? error.message : String(error));
       }
       return;
     }
@@ -81,13 +81,13 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
       try {
         vscode.window.showInformationMessage('All log files have been cleared.');
       } catch (error) {
-        console.error('Failed to show information message:', error);
+        console.error('Failed to show information message:', error instanceof Error ? error.message : String(error));
       }
     } else {
       try {
         vscode.window.showInformationMessage('No log files found to clear.');
       } catch (error) {
-        console.error('Failed to show information message:', error);
+        console.error('Failed to show information message:', error instanceof Error ? error.message : String(error));
       }
     }
   });
