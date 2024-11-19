@@ -6,11 +6,13 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   private _onDidChangeTreeData: vscode.EventEmitter<LogFile | undefined | void> = new vscode.EventEmitter<LogFile | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<LogFile | undefined | void> = this._onDidChangeTreeData.event;
   private statusBarItem: vscode.StatusBarItem;
+  private groupByMessage: boolean;
 
   constructor(private workspaceRoot: string) {
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     this.statusBarItem.command = 'magento-log-viewer.refreshLogFiles';
     this.statusBarItem.show();
+    this.groupByMessage = vscode.workspace.getConfiguration('magentoLogViewer').get<boolean>('groupByMessage', true);
     this.updateBadge();
   }
 
@@ -91,40 +93,69 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
   }
 
   private groupLogEntries(lines: string[], filePath: string): LogFile[] {
-    const grouped = new Map<string, { line: string, lineNumber: number }[]>();
+    const groupedByType = new Map<string, { message: string, line: string, lineNumber: number }[]>();
 
     lines.forEach((line, index) => {
       const match = line.match(/\.(\w+):/);
       if (match) {
-        const level = match[1].toUpperCase(); // Changed to uppercase
+        const level = match[1].toUpperCase();
         const message = line.replace(/^\[.*?\]\s*\.\w+:\s*/, '');
-        const entries = grouped.get(level) || [];
-        entries.push({ line: message, lineNumber: index });
-        grouped.set(level, entries);
+        const entries = groupedByType.get(level) || [];
+        entries.push({ message, line, lineNumber: index });
+        groupedByType.set(level, entries);
       }
     });
 
-    return Array.from(grouped.entries()).map(([level, entries]) => {
-      const count = entries.length;
-      const label = `${level} (${count})`;
-      const logFile = new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined,
-        entries.map(entry => {
-          const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
-          return new LogFile(
-            `Line ${lineNumber}:  ${entry.line}`,
-            vscode.TreeItemCollapsibleState.None,
-            {
-              command: 'magento-log-viewer.openFileAtLine',
-              title: 'Open Log File at Line',
-              arguments: [filePath, entry.lineNumber]
-            }
-          );
-        })
-      );
+    return Array.from(groupedByType.entries()).map(([level, entries]) => {
+      if (this.groupByMessage) {
+        const groupedByMessage = new Map<string, { line: string, lineNumber: number }[]>();
 
-      // Set icon based on known log levels, use default for others
-      logFile.iconPath = this.getIconForLogLevel(level);
-      return logFile;
+        entries.forEach(entry => {
+          const messageGroup = groupedByMessage.get(entry.message) || [];
+          messageGroup.push({ line: entry.line, lineNumber: entry.lineNumber });
+          groupedByMessage.set(entry.message, messageGroup);
+        });
+
+        const messageGroups = Array.from(groupedByMessage.entries()).map(([message, messageEntries]) => {
+          const count = messageEntries.length;
+          const label = `${message} (${count})`;
+          return new LogFile(label, vscode.TreeItemCollapsibleState.Collapsed, undefined,
+            messageEntries.map(entry => {
+              const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
+              return new LogFile(
+                `Line ${lineNumber}:  ${entry.line}`,
+                vscode.TreeItemCollapsibleState.None,
+                {
+                  command: 'magento-log-viewer.openFileAtLine',
+                  title: 'Open Log File at Line',
+                  arguments: [filePath, entry.lineNumber]
+                }
+              );
+            })
+          );
+        });
+
+        const logFile = new LogFile(`${level} (${entries.length}, grouped)`, vscode.TreeItemCollapsibleState.Collapsed, undefined, messageGroups);
+        logFile.iconPath = this.getIconForLogLevel(level);
+        return logFile;
+      } else {
+        const logFile = new LogFile(`${level} (${entries.length})`, vscode.TreeItemCollapsibleState.Collapsed, undefined,
+          entries.map(entry => {
+            const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
+            return new LogFile(
+              `Line ${lineNumber}:  ${entry.line}`,
+              vscode.TreeItemCollapsibleState.None,
+              {
+                command: 'magento-log-viewer.openFileAtLine',
+                title: 'Open Log File at Line',
+                arguments: [filePath, entry.lineNumber]
+              }
+            );
+          })
+        );
+        logFile.iconPath = this.getIconForLogLevel(level);
+        return logFile;
+      }
     });
   }
 

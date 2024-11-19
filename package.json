@@ -52,6 +52,12 @@
           "default": "",
           "description": "Path to the Magento root folder",
           "scope": "resource"
+        },
+        "magentoLogViewer.groupByMessage": {
+          "type": "boolean",
+          "default": true,
+          "description": "Group log entries by message content",
+          "scope": "resource"
         }
       }
     },
