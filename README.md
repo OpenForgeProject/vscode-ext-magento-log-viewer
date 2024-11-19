@@ -4,10 +4,13 @@
 
 The Magento Log Viewer extension for Visual Studio Code provides a convenient way to view and manage Magento log files directly in your workspace.
 
+![Magento Log Viewer Screenshot](resources/logVideo.gif)
+
 ## Features
 
 - Tree view of log files from Magento's `var/log` directory
 - Grouped log entries by severity level (ERROR, WARN, DEBUG, INFO)
+- Option to group log entries by message content
 - Direct file opening with line highlighting
 - One-click log file clearing
 - Status bar showing total log entries
@@ -30,6 +33,7 @@ Note: Settings are workspace-specific, allowing different configurations for eac
 - **Refresh**: Click the refresh icon or wait for auto-update
 - **Navigate**: Click on log entries to jump to specific lines
 - **Filter**: Expand log files to see entries grouped by severity
+- **Group by Message**: Enable or disable grouping of log entries by message content in the settings. When enabled, the counter will display "grouped" (e.g., `INFO (128, grouped)`).
 
 ## Requirements
 

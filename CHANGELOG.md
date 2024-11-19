@@ -6,6 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Added
+
+- Added Feature in Workspace configuration option to group log entries by message content.
+- When grouping is enabled, the counter will display "grouped" (e.g., `INFO (128, grouped)`).
+
 ## [1.2.2] - 2024-11-19
 
 ### Fixed
