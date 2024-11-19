@@ -14,3 +14,8 @@ rules:
   # Add your custom rules here
   # For example:
   # '@typescript-eslint/no-explicit-any': 'warn'
+  '@typescript-eslint/no-explicit-any': 'error'
+  '@typescript-eslint/no-unsafe-argument': 'error'
+  '@typescript-eslint/no-unsafe-assignment': 'error'
+  '@typescript-eslint/no-unsafe-member-access': 'error'
+  '@typescript-eslint/no-unsafe-return': 'error'
