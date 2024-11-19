@@ -43,7 +43,7 @@ function selectMagentoRootFolder(config: vscode.WorkspaceConfiguration, context:
   });
 }
 
-function updateConfig(config: vscode.WorkspaceConfiguration, key: string, value: any) {
+function updateConfig(config: vscode.WorkspaceConfiguration, key: string, value: unknown) {
   return config.update(key, value, vscode.ConfigurationTarget.Workspace);
 }
 
