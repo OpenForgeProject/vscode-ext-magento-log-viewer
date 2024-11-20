@@ -6,6 +6,16 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [1.4.0] - 2024-11-20
+
+### Added
+
+- Added a confirmation popup to ask if you really want to delete all files
+
+### Changed
+
+- update "Delete Logfiles" button visibility based on log file presence
+
 ## [1.3.0] - 2024-11-19
 
 ### Added

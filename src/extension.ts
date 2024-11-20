@@ -84,15 +84,19 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   });
 
   vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
-    const logPath = path.join(magentoRoot, 'var', 'log');
-    if (logViewerProvider.pathExists(logPath)) {
-      const files = fs.readdirSync(logPath);
-      files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
-      logViewerProvider.refresh();
-      showInformationMessage('All log files have been cleared.');
-    } else {
-      showInformationMessage('No log files found to clear.');
-    }
+    vscode.window.showWarningMessage('Are you sure you want to delete all log files?', 'Yes', 'No').then(selection => {
+      if (selection === 'Yes') {
+        const logPath = path.join(magentoRoot, 'var', 'log');
+        if (logViewerProvider.pathExists(logPath)) {
+          const files = fs.readdirSync(logPath);
+          files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
+          logViewerProvider.refresh();
+          showInformationMessage('All log files have been cleared.');
+        } else {
+          showInformationMessage('No log files found to clear.');
+        }
+      }
+    });
   });
 
   context.subscriptions.push(treeView);
@@ -102,6 +106,9 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
     const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
     const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
     treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log entries` };
+
+    // Enable or disable the "Delete Logfiles" button based on the presence of log files
+    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasLogFiles', totalEntries > 0);
   };
 
   logViewerProvider.onDidChangeTreeData(updateBadge);

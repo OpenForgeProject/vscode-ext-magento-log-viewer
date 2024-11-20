@@ -90,7 +90,7 @@
       "view/title": [
         {
           "command": "magento-log-viewer.clearAllLogFiles",
-          "when": "view == logFiles",
+          "when": "view == logFiles && magentoLogViewer.hasLogFiles",
           "group": "navigation"
         },
         {
