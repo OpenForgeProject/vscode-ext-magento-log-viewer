@@ -126,10 +126,5 @@
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "vscode": "^1.78.0"
-  },
-  "vsce": {
-    "exclude": [
-      ".trunk/tools"
-    ]
   }
 }
