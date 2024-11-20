@@ -117,8 +117,8 @@ export function clearAllLogFiles(logViewerProvider: LogViewerProvider, magentoRo
 }
 
 // Updates the badge count for the tree view based on the number of log entries.
-export function updateBadge(treeView: vscode.TreeView<any>, logViewerProvider: LogViewerProvider, magentoRoot: string): void {
-  const updateBadgeCount = () => {
+export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvider: LogViewerProvider, magentoRoot: string): void {
+    const updateBadgeCount = () => {
     const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
     const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
     treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log entries` };
