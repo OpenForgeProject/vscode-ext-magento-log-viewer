@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { pathExists, getLineCount, getIconForLogLevel } from './helpers';
 
 export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<LogFile | undefined | void> = new vscode.EventEmitter<LogFile | undefined | void>();
@@ -34,7 +35,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
       return Promise.resolve(element.children || []);
     } else {
       const logPath = path.join(this.workspaceRoot, 'var', 'log');
-      if (this.pathExists(logPath)) {
+      if (pathExists(logPath)) {
         const logFiles = this.getLogFiles(logPath);
         if (logFiles.length === 0) {
           return Promise.resolve([new LogFile('No log files found', vscode.TreeItemCollapsibleState.None)]);
@@ -59,7 +60,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
       return [];
     }
 
-    if (this.pathExists(dir)) {
+    if (pathExists(dir)) {
       const files = fs.readdirSync(dir);
       this.updateBadge();
       return files.map(file => {
@@ -69,7 +70,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
           console.error('Invalid file path detected');
           return null;
         }
-        const lineCount = this.getLineCount(filePath);
+        const lineCount = getLineCount(filePath);
         const logFile = new LogFile(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.Collapsed, {
           command: 'magento-log-viewer.openFile',
           title: 'Open Log File',
@@ -136,7 +137,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
         });
 
         const logFile = new LogFile(`${level} (${entries.length}, grouped)`, vscode.TreeItemCollapsibleState.Collapsed, undefined, messageGroups);
-        logFile.iconPath = this.getIconForLogLevel(level);
+        logFile.iconPath = getIconForLogLevel(level);
         return logFile;
       } else {
         const logFile = new LogFile(`${level} (${entries.length})`, vscode.TreeItemCollapsibleState.Collapsed, undefined,
@@ -153,28 +154,18 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
             );
           })
         );
-        logFile.iconPath = this.getIconForLogLevel(level);
+        logFile.iconPath = getIconForLogLevel(level);
         return logFile;
       }
     });
   }
 
-  private getIconForLogLevel(level: string): vscode.ThemeIcon {
-    switch (level) { // Removed toLowerCase() since level is already uppercase
-      case 'ERROR': return new vscode.ThemeIcon('error');
-      case 'WARN': return new vscode.ThemeIcon('warning');
-      case 'DEBUG': return new vscode.ThemeIcon('debug');
-      case 'INFO': return new vscode.ThemeIcon('info');
-      default: return new vscode.ThemeIcon('circle-outline');
-    }
-  }
-
   getLogFilesWithoutUpdatingBadge(dir: string): LogFile[] {
-    if (this.pathExists(dir)) {
+    if (pathExists(dir)) {
       const files = fs.readdirSync(dir);
       return files.map(file => {
         const filePath = path.join(dir, file);
-        const lineCount = this.getLineCount(filePath);
+        const lineCount = getLineCount(filePath);
         return new LogFile(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.None, {
           command: 'magento-log-viewer.openFile',
           title: 'Open Log File',
@@ -184,11 +175,6 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     } else {
       return [];
     }
-  }
-
-  private getLineCount(filePath: string): number {
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    return fileContent.split('\n').length;
   }
 
   public pathExists(p: string): boolean {
