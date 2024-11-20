@@ -14,7 +14,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ### Changed
 
-- update "Delete Logfiles" button visibility based on log file presence
+- Update "Delete Logfiles" button visibility based on log file presence
+- Refactored the code to improve readability and maintainability
 
 ## [1.3.0] - 2024-11-19
 

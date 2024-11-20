@@ -8,13 +8,7 @@ export function activate(context: vscode.ExtensionContext) {
   const isMagentoProject = config.get<string>('magentoLogViewer.isMagentoProject', 'Please select');
 
   if (isMagentoProject === 'Please select') {
-    vscode.window.showInformationMessage('Is this a Magento project?', 'Yes', 'No').then(selection => {
-      if (selection === 'Yes') {
-        selectMagentoRootFolder(config, context);
-      } else {
-        updateConfig(config, 'magentoLogViewer.isMagentoProject', selection);
-      }
-    });
+    promptMagentoProjectSelection(config, context);
   } else if (isMagentoProject === 'Yes') {
     const magentoRoot = config.get<string>('magentoLogViewer.magentoRoot', '');
     if (!magentoRoot || !isValidPath(magentoRoot)) {
@@ -23,6 +17,16 @@ export function activate(context: vscode.ExtensionContext) {
     }
     activateExtension(context, magentoRoot);
   }
+}
+
+function promptMagentoProjectSelection(config: vscode.WorkspaceConfiguration, context: vscode.ExtensionContext) {
+  vscode.window.showInformationMessage('Is this a Magento project?', 'Yes', 'No').then(selection => {
+    if (selection === 'Yes') {
+      selectMagentoRootFolder(config, context);
+    } else {
+      updateConfig(config, 'magentoLogViewer.isMagentoProject', selection);
+    }
+  });
 }
 
 function selectMagentoRootFolder(config: vscode.WorkspaceConfiguration, context: vscode.ExtensionContext) {
@@ -67,56 +71,11 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   const logViewerProvider = new LogViewerProvider(magentoRoot);
   const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
 
-  vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
-  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string, lineNumber?: number) => {
-    if (typeof filePath === 'string') {
-      const options: vscode.TextDocumentShowOptions = lineNumber !== undefined && typeof lineNumber === 'number' ? {
-        selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
-      } : {};
-      vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
-    }
-  });
-  vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath: string, lineNumber: number) => {
-    const options: vscode.TextDocumentShowOptions = {
-      selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
-    };
-    vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
-  });
-
-  vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
-    vscode.window.showWarningMessage('Are you sure you want to delete all log files?', 'Yes', 'No').then(selection => {
-      if (selection === 'Yes') {
-        const logPath = path.join(magentoRoot, 'var', 'log');
-        if (logViewerProvider.pathExists(logPath)) {
-          const files = fs.readdirSync(logPath);
-          files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
-          logViewerProvider.refresh();
-          showInformationMessage('All log files have been cleared.');
-        } else {
-          showInformationMessage('No log files found to clear.');
-        }
-      }
-    });
-  });
-
+  registerCommands(context, logViewerProvider, magentoRoot);
   context.subscriptions.push(treeView);
 
-  // Update the badge count
-  const updateBadge = () => {
-    const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
-    const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
-    treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log entries` };
+  updateBadge(treeView, logViewerProvider, magentoRoot);
 
-    // Enable or disable the "Delete Logfiles" button based on the presence of log files
-    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasLogFiles', totalEntries > 0);
-  };
-
-  logViewerProvider.onDidChangeTreeData(updateBadge);
-  updateBadge();
-
-  vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
-
-  // Watch for changes in the log directory
   const logPath = path.join(magentoRoot, 'var', 'log');
   const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(logPath, '*'));
   watcher.onDidChange(() => logViewerProvider.refresh());
@@ -124,6 +83,59 @@ function activateExtension(context: vscode.ExtensionContext, magentoRoot: string
   watcher.onDidDelete(() => logViewerProvider.refresh());
 
   context.subscriptions.push(watcher);
+}
+
+function registerCommands(context: vscode.ExtensionContext, logViewerProvider: LogViewerProvider, magentoRoot: string) {
+  vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
+  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string, lineNumber?: number) => {
+    openFile(filePath, lineNumber);
+  });
+  vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath: string, lineNumber: number) => {
+    openFile(filePath, lineNumber);
+  });
+  vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
+    clearAllLogFiles(logViewerProvider, magentoRoot);
+  });
+}
+
+function openFile(filePath: string, lineNumber?: number) {
+  if (typeof filePath === 'string') {
+    const options: vscode.TextDocumentShowOptions = lineNumber !== undefined && typeof lineNumber === 'number' ? {
+      selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
+    } : {};
+    vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
+  }
+}
+
+function clearAllLogFiles(logViewerProvider: LogViewerProvider, magentoRoot: string) {
+  vscode.window.showWarningMessage('Are you sure you want to delete all log files?', 'Yes', 'No').then(selection => {
+    if (selection === 'Yes') {
+      const logPath = path.join(magentoRoot, 'var', 'log');
+      if (logViewerProvider.pathExists(logPath)) {
+        const files = fs.readdirSync(logPath);
+        files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
+        logViewerProvider.refresh();
+        showInformationMessage('All log files have been cleared.');
+      } else {
+        showInformationMessage('No log files found to clear.');
+      }
+    }
+  });
+}
+
+function updateBadge(treeView: vscode.TreeView<any>, logViewerProvider: LogViewerProvider, magentoRoot: string) {
+  const updateBadgeCount = () => {
+    const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
+    const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
+    treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log entries` };
+
+    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasLogFiles', totalEntries > 0);
+  };
+
+  logViewerProvider.onDidChangeTreeData(updateBadgeCount);
+  updateBadgeCount();
+
+  vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
 }
 
 function isValidPath(filePath: string): boolean {
