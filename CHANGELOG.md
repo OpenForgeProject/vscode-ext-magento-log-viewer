@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [1.5.0] - 2024-12-04
+
+### Changed
+
+- sort log entries and message groups alphabetically
+
 ## [1.4.0] - 2024-11-20
 
 ### Added

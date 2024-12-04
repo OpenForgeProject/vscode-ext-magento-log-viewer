@@ -132,9 +132,9 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
                   arguments: [filePath, entry.lineNumber]
                 }
               );
-            })
+            }).sort((a, b) => a.label.localeCompare(b.label)) // Sort entries alphabetically
           );
-        });
+        }).sort((a, b) => a.label.localeCompare(b.label)); // Sort message groups alphabetically
 
         const logFile = new LogFile(`${level} (${entries.length}, grouped)`, vscode.TreeItemCollapsibleState.Collapsed, undefined, messageGroups);
         logFile.iconPath = getIconForLogLevel(level);
@@ -152,12 +152,12 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
                 arguments: [filePath, entry.lineNumber]
               }
             );
-          })
+          }).sort((a, b) => a.label.localeCompare(b.label)) // Sort entries alphabetically
         );
         logFile.iconPath = getIconForLogLevel(level);
         return logFile;
       }
-    });
+    }).sort((a, b) => a.label.localeCompare(b.label)); // Sort log files alphabetically
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogFile[] {
