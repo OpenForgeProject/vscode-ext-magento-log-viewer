@@ -15,9 +15,18 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
     this.statusBarItem.show();
     this.groupByMessage = vscode.workspace.getConfiguration('magentoLogViewer').get<boolean>('groupByMessage', true);
     this.updateBadge();
+    this.updateRefreshButtonVisibility();
+  }
+
+  private updateRefreshButtonVisibility(): void {
+    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasMagentoRoot', !!this.workspaceRoot);
   }
 
   refresh(): void {
+    if (!this.workspaceRoot) {
+      vscode.window.showErrorMessage('No workspace root found. Please open a Magento project.');
+      return;
+    }
     this._onDidChangeTreeData.fire();
     this.updateBadge();
   }
@@ -68,6 +77,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogFile>, vsco
         const filePath = path.join(dir, file);
         if (!filePath.startsWith(dir)) {
           console.error('Invalid file path detected');
+          return null;
+        }
+        if (!fs.lstatSync(filePath).isFile()) {
+          console.error('Path is not a file:', filePath);
           return null;
         }
         const lineCount = getLineCount(filePath);

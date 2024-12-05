@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [1.5.1] - 2024-12-05
+
+### Fixed
+
+- Fixed an issue that caused the Reload button to not display any results
+
 ## [1.5.0] - 2024-12-04
 
 ### Changed

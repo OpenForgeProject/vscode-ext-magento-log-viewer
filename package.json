@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -95,7 +95,7 @@
         },
         {
           "command": "magento-log-viewer.refreshLogFiles",
-          "when": "view == logFiles",
+          "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
           "group": "navigation"
         }
       ]
