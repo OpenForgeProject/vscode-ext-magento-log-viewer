@@ -251,11 +251,13 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
         }
       } else if (fs.lstatSync(filePath).isFile()) {
         const title = this.parseReportTitle(filePath);
-        items.push(new LogItem(title, vscode.TreeItemCollapsibleState.None, {
+        const logFile = new LogItem(title, vscode.TreeItemCollapsibleState.None, {
           command: 'magento-log-viewer.openFile',
           title: 'Open Log File',
           arguments: [filePath]
-        }));
+        });
+        logFile.iconPath = this.getIconForReport(filePath);
+        items.push(logFile);
       }
     });
 
@@ -268,12 +270,33 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
       const report = JSON.parse(fileContent);
 
       if (filePath.includes('/api/')) {
-        return report;
+        const folderName = path.basename(path.dirname(filePath));
+        const capitalizedFolderName = folderName.charAt(0).toUpperCase() + folderName.slice(1);
+        return `${capitalizedFolderName}: ${report}`;
       }
 
       return report['0'] || path.basename(filePath);
     } catch (error) {
       return path.basename(filePath);
+    }
+  }
+
+  private getIconForReport(filePath: string): vscode.ThemeIcon {
+    try {
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const report = JSON.parse(fileContent);
+
+      if (filePath.includes('/api/')) {
+        return new vscode.ThemeIcon('warning');
+      }
+
+      if (report['0'] && report['0'].toLowerCase().includes('error')) {
+        return new vscode.ThemeIcon('error');
+      }
+
+      return new vscode.ThemeIcon('file');
+    } catch (error) {
+      return new vscode.ThemeIcon('file');
     }
   }
 
@@ -307,14 +330,13 @@ export class LogItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly command?: vscode.Command,
-    public children?: LogItem[]
+    public children?: LogItem[],
+    public iconPath?: vscode.ThemeIcon
   ) {
     super(label, collapsibleState as vscode.TreeItemCollapsibleState);
     this.description = this.label.match(/\(\d+\)/)?.[0] || '';
     this.label = this.label.replace(/\(\d+\)/, '').trim();
   }
-
-  iconPath = new vscode.ThemeIcon('list');
 
   contextValue = 'logItem';
   description = '';
