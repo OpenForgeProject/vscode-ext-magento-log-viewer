@@ -208,3 +208,69 @@ export function getIconForLogLevel(level: string): vscode.ThemeIcon {
     default: return new vscode.ThemeIcon('circle-outline');
   }
 }
+
+export function getLogItems(dir: string, parseTitle: (filePath: string) => string, getIcon: (filePath: string) => vscode.ThemeIcon): LogItem[] {
+  if (!pathExists(dir)) {
+    return [];
+  }
+
+  const items: LogItem[] = [];
+  const files = fs.readdirSync(dir);
+
+  files.forEach(file => {
+    const filePath = path.join(dir, file);
+    if (fs.lstatSync(filePath).isDirectory()) {
+      const subItems = getLogItems(filePath, parseTitle, getIcon);
+      if (subItems.length > 0) {
+        items.push(...subItems);
+      }
+    } else if (fs.lstatSync(filePath).isFile()) {
+      const title = parseTitle(filePath);
+      const logFile = new LogItem(title, vscode.TreeItemCollapsibleState.None, {
+        command: 'magento-log-viewer.openFile',
+        title: 'Open Log File',
+        arguments: [filePath]
+      });
+      logFile.iconPath = getIcon(filePath);
+      items.push(logFile);
+    }
+  });
+
+  return items;
+}
+
+export function parseReportTitle(filePath: string): string {
+  try {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const report = JSON.parse(fileContent);
+
+    if (filePath.includes('/api/')) {
+      const folderName = path.basename(path.dirname(filePath));
+      const capitalizedFolderName = folderName.charAt(0).toUpperCase() + folderName.slice(1);
+      return `${capitalizedFolderName}: ${report}`;
+    }
+
+    return report['0'] || path.basename(filePath);
+  } catch (error) {
+    return path.basename(filePath);
+  }
+}
+
+export function getIconForReport(filePath: string): vscode.ThemeIcon {
+  try {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const report = JSON.parse(fileContent);
+
+    if (filePath.includes('/api/')) {
+      return new vscode.ThemeIcon('warning');
+    }
+
+    if (report['0'] && report['0'].toLowerCase().includes('error')) {
+      return new vscode.ThemeIcon('error');
+    }
+
+    return new vscode.ThemeIcon('file');
+  } catch (error) {
+    return new vscode.ThemeIcon('file');
+  }
+}

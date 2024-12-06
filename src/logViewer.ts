@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { pathExists, getLineCount, getIconForLogLevel } from './helpers';
+import { pathExists, getLineCount, getIconForLogLevel, getLogItems, parseReportTitle, getIconForReport } from './helpers';
 
 export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
@@ -235,69 +235,7 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   }
 
   private getLogItems(dir: string, label: string): LogItem[] {
-    if (!pathExists(dir)) {
-      return [];
-    }
-
-    const items: LogItem[] = [];
-    const files = fs.readdirSync(dir);
-
-    files.forEach(file => {
-      const filePath = path.join(dir, file);
-      if (fs.lstatSync(filePath).isDirectory()) {
-        const subItems = this.getLogItems(filePath, label);
-        if (subItems.length > 0) {
-          items.push(...subItems);
-        }
-      } else if (fs.lstatSync(filePath).isFile()) {
-        const title = this.parseReportTitle(filePath);
-        const logFile = new LogItem(title, vscode.TreeItemCollapsibleState.None, {
-          command: 'magento-log-viewer.openFile',
-          title: 'Open Log File',
-          arguments: [filePath]
-        });
-        logFile.iconPath = this.getIconForReport(filePath);
-        items.push(logFile);
-      }
-    });
-
-    return items;
-  }
-
-  private parseReportTitle(filePath: string): string {
-    try {
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const report = JSON.parse(fileContent);
-
-      if (filePath.includes('/api/')) {
-        const folderName = path.basename(path.dirname(filePath));
-        const capitalizedFolderName = folderName.charAt(0).toUpperCase() + folderName.slice(1);
-        return `${capitalizedFolderName}: ${report}`;
-      }
-
-      return report['0'] || path.basename(filePath);
-    } catch (error) {
-      return path.basename(filePath);
-    }
-  }
-
-  private getIconForReport(filePath: string): vscode.ThemeIcon {
-    try {
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const report = JSON.parse(fileContent);
-
-      if (filePath.includes('/api/')) {
-        return new vscode.ThemeIcon('warning');
-      }
-
-      if (report['0'] && report['0'].toLowerCase().includes('error')) {
-        return new vscode.ThemeIcon('error');
-      }
-
-      return new vscode.ThemeIcon('file');
-    } catch (error) {
-      return new vscode.ThemeIcon('file');
-    }
+    return getLogItems(dir, parseReportTitle, getIconForReport);
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogItem[] {
