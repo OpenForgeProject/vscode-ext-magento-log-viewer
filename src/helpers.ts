@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { LogViewerProvider } from './logViewer';
+import { LogViewerProvider, ReportViewerProvider } from './logViewer';
 
 // Prompts the user to confirm if the current project is a Magento project.
 export function promptMagentoProjectSelection(config: vscode.WorkspaceConfiguration, context: vscode.ExtensionContext): void {
@@ -59,25 +59,36 @@ export function showErrorMessage(message: string): void {
 // Activates the extension by setting up the log viewer and file system watcher.
 export function activateExtension(context: vscode.ExtensionContext, magentoRoot: string): void {
   const logViewerProvider = new LogViewerProvider(magentoRoot);
-  const treeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
+  const reportViewerProvider = new ReportViewerProvider(magentoRoot);
 
-  registerCommands(context, logViewerProvider, magentoRoot);
-  context.subscriptions.push(treeView);
+  const logTreeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
+  const reportTreeView = vscode.window.createTreeView('reportFiles', { treeDataProvider: reportViewerProvider });
 
-  updateBadge(treeView, logViewerProvider, magentoRoot);
+  registerCommands(context, logViewerProvider, reportViewerProvider, magentoRoot);
+  context.subscriptions.push(logTreeView, reportTreeView);
+
+  updateBadge(logTreeView, logViewerProvider, reportViewerProvider, magentoRoot);
 
   const logPath = path.join(magentoRoot, 'var', 'log');
-  const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(logPath, '*'));
-  watcher.onDidChange(() => logViewerProvider.refresh());
-  watcher.onDidCreate(() => logViewerProvider.refresh());
-  watcher.onDidDelete(() => logViewerProvider.refresh());
+  const reportPath = path.join(magentoRoot, 'var', 'report');
 
-  context.subscriptions.push(watcher);
+  const logWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(logPath, '*'));
+  logWatcher.onDidChange(() => logViewerProvider.refresh());
+  logWatcher.onDidCreate(() => logViewerProvider.refresh());
+  logWatcher.onDidDelete(() => logViewerProvider.refresh());
+
+  const reportWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(reportPath, '*'));
+  reportWatcher.onDidChange(() => reportViewerProvider.refresh());
+  reportWatcher.onDidCreate(() => reportViewerProvider.refresh());
+  reportWatcher.onDidDelete(() => reportViewerProvider.refresh());
+
+  context.subscriptions.push(logWatcher, reportWatcher);
 }
 
 // Registers commands for the extension.
-export function registerCommands(context: vscode.ExtensionContext, logViewerProvider: LogViewerProvider, magentoRoot: string): void {
+export function registerCommands(context: vscode.ExtensionContext, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
   vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
+  vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => reportViewerProvider.refresh());
   vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string, lineNumber?: number) => {
     openFile(filePath, lineNumber);
   });
@@ -117,16 +128,22 @@ export function clearAllLogFiles(logViewerProvider: LogViewerProvider, magentoRo
 }
 
 // Updates the badge count for the tree view based on the number of log entries.
-export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvider: LogViewerProvider, magentoRoot: string): void {
-    const updateBadgeCount = () => {
+export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
+  const updateBadgeCount = () => {
     const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
-    const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
-    treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log entries` };
+    const reportFiles = reportViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'report'));
+
+    const totalLogEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
+    const totalReportFiles = reportFiles.length;
+
+    const totalEntries = totalLogEntries + totalReportFiles;
+    treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log and report entries` };
 
     vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasLogFiles', totalEntries > 0);
   };
 
   logViewerProvider.onDidChangeTreeData(updateBadgeCount);
+  reportViewerProvider.onDidChangeTreeData(updateBadgeCount);
   updateBadgeCount();
 
   vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
