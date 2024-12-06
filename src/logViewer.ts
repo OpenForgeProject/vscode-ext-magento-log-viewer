@@ -250,7 +250,8 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
           items.push(...subItems);
         }
       } else if (fs.lstatSync(filePath).isFile()) {
-        items.push(new LogItem(file, vscode.TreeItemCollapsibleState.None, {
+        const title = this.parseReportTitle(filePath);
+        items.push(new LogItem(title, vscode.TreeItemCollapsibleState.None, {
           command: 'magento-log-viewer.openFile',
           title: 'Open Log File',
           arguments: [filePath]
@@ -259,6 +260,21 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
     });
 
     return items;
+  }
+
+  private parseReportTitle(filePath: string): string {
+    try {
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const report = JSON.parse(fileContent);
+
+      if (filePath.includes('/api/')) {
+        return report;
+      }
+
+      return report['0'] || path.basename(filePath);
+    } catch (error) {
+      return path.basename(filePath);
+    }
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogItem[] {
