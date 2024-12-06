@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { LogViewerProvider, ReportViewerProvider } from './logViewer';
+import { LogViewerProvider, ReportViewerProvider, LogItem } from './logViewer';
 
 // Prompts the user to confirm if the current project is a Magento project.
 export function promptMagentoProjectSelection(config: vscode.WorkspaceConfiguration, context: vscode.ExtensionContext): void {
@@ -131,7 +131,7 @@ export function clearAllLogFiles(logViewerProvider: LogViewerProvider, magentoRo
 export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
   const updateBadgeCount = () => {
     const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
-    const reportFiles = reportViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'report'));
+    const reportFiles = getAllReportFiles(path.join(magentoRoot, 'var', 'report'));
 
     const totalLogEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
     const totalReportFiles = reportFiles.length;
@@ -147,6 +147,30 @@ export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvide
   updateBadgeCount();
 
   vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
+}
+
+function getAllReportFiles(dir: string): LogItem[] {
+  if (!pathExists(dir)) {
+    return [];
+  }
+
+  const items: LogItem[] = [];
+  const files = fs.readdirSync(dir);
+
+  files.forEach(file => {
+    const filePath = path.join(dir, file);
+    if (fs.lstatSync(filePath).isDirectory()) {
+      items.push(...getAllReportFiles(filePath));
+    } else if (fs.lstatSync(filePath).isFile()) {
+      items.push(new LogItem(file, vscode.TreeItemCollapsibleState.None, {
+        command: 'magento-log-viewer.openFile',
+        title: 'Open Log File',
+        arguments: [filePath]
+      }));
+    }
+  });
+
+  return items;
 }
 
 // Checks if the given path is a valid directory.

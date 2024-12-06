@@ -236,26 +236,27 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
 
   private getLogItems(dir: string, label: string): LogItem[] {
     if (!pathExists(dir)) {
-      return [new LogItem(`No items found`, vscode.TreeItemCollapsibleState.None)];
+      return [];
     }
 
+    const items: LogItem[] = [];
     const files = fs.readdirSync(dir);
-    if (files.length === 0) {
-      return [new LogItem(`No items found`, vscode.TreeItemCollapsibleState.None)];
-    }
 
-    const items = files.map(file => {
+    files.forEach(file => {
       const filePath = path.join(dir, file);
-      if (!fs.lstatSync(filePath).isFile()) {
-        return null;
+      if (fs.lstatSync(filePath).isDirectory()) {
+        const subItems = this.getLogItems(filePath, label);
+        if (subItems.length > 0) {
+          items.push(...subItems);
+        }
+      } else if (fs.lstatSync(filePath).isFile()) {
+        items.push(new LogItem(file, vscode.TreeItemCollapsibleState.None, {
+          command: 'magento-log-viewer.openFile',
+          title: 'Open Log File',
+          arguments: [filePath]
+        }));
       }
-      const lineCount = getLineCount(filePath);
-      return new LogItem(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.None, {
-        command: 'magento-log-viewer.openFile',
-        title: 'Open Log File',
-        arguments: [filePath]
-      });
-    }).filter(Boolean) as LogItem[];
+    });
 
     return items;
   }
