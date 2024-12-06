@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -33,6 +33,11 @@
       {
         "command": "magento-log-viewer.refreshLogFiles",
         "title": "Refresh Log Files",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "magento-log-viewer.refreshReportFiles",
+        "title": "Refresh Report Files",
         "icon": "$(refresh)"
       }
     ],
@@ -83,6 +88,11 @@
               "group": "navigation"
             }
           ]
+        },
+        {
+          "id": "reportFiles",
+          "name": "Report Files",
+          "contextualTitle": "Magento Reports"
         }
       ]
     },
@@ -96,6 +106,11 @@
         {
           "command": "magento-log-viewer.refreshLogFiles",
           "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
+          "group": "navigation"
+        },
+        {
+          "command": "magento-log-viewer.refreshReportFiles",
+          "when": "view == reportFiles && magentoLogViewer.hasMagentoRoot",
           "group": "navigation"
         }
       ]

@@ -6,6 +6,20 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [1.6.0] - 2023-10-07
+
+### Added
+
+- Improved report file titles by parsing content for better readability.
+- Added icons for different report types based on content.
+- Included folder names in titles for files in the "api" subdirectory.
+- Refactored code to improve performance
+- Extend badge counter to include report files
+
+### Fixed
+
+- Fixed issue with empty directories being included in the report list.
+
 ## [1.5.1] - 2024-12-05
 
 ### Fixed
