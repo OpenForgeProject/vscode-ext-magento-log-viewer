@@ -37,4 +37,17 @@ suite('Extension Test Suite', () => {
 		assert.notStrictEqual(isMagentoProject, undefined, "Settings section 'magentoLogViewer' is not added");
 	});
 
+	test('Extension should prompt if it is a Magento project', async () => {
+		const configuration = vscode.workspace.getConfiguration('magentoLogViewer');
+		const isMagentoProject = configuration.get('isMagentoProject');
+		assert.strictEqual(isMagentoProject, 'Please select', "Extension did not prompt if it is a Magento project");
+	});
+
+	test('Extension should have logo in activity bar', async () => {
+		const activityBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+		activityBarItem.text = '$(magento-logfile-viewer-logo)';
+		activityBarItem.show();
+		assert.strictEqual(activityBarItem.text, '$(magento-logfile-viewer-logo)', "Logo is not present in the activity bar");
+	});
+
 });
