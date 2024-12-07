@@ -6,11 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-## [1.6.1] - 2024-12-08
+## [1.7.0] - 2024-12-08
 
 ### Added
 
-- Added Trunk Support to improve Code Quality
 - Added context menu (right click) option to delete report files
 
 ### Changed
