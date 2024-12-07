@@ -25,7 +25,7 @@ export function selectMagentoRootFolder(config: vscode.WorkspaceConfiguration, c
           updateConfig(config, 'magentoLogViewer.magentoRoot', folderUri[0].fsPath).then(() => {
             showInformationMessage('Magento root folder successfully saved!');
             updateConfig(config, 'magentoLogViewer.isMagentoProject', 'Yes');
-            activateExtension(context, folderUri[0].fsPath);
+            activateExtension(context, folderUri[0].fsPath, new ReportViewerProvider(folderUri[0].fsPath));
           });
         }
       });
@@ -57,9 +57,8 @@ export function showErrorMessage(message: string): void {
 }
 
 // Activates the extension by setting up the log viewer and file system watcher.
-export function activateExtension(context: vscode.ExtensionContext, magentoRoot: string): void {
+export function activateExtension(context: vscode.ExtensionContext, magentoRoot: string, reportViewerProvider: ReportViewerProvider): void {
   const logViewerProvider = new LogViewerProvider(magentoRoot);
-  const reportViewerProvider = new ReportViewerProvider(magentoRoot);
 
   const logTreeView = vscode.window.createTreeView('logFiles', { treeDataProvider: logViewerProvider });
   const reportTreeView = vscode.window.createTreeView('reportFiles', { treeDataProvider: reportViewerProvider });
@@ -125,6 +124,16 @@ export function clearAllLogFiles(logViewerProvider: LogViewerProvider, magentoRo
       }
     }
   });
+}
+
+// Deletes a report file.
+export function deleteReportFile(filePath: string): void {
+  try {
+    fs.unlinkSync(filePath);
+    showInformationMessage(`Report file ${filePath} deleted successfully.`);
+  } catch (error) {
+    showErrorMessage(`Failed to delete report file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 // Updates the badge count for the tree view based on the number of log entries.

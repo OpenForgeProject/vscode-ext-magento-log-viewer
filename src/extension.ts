@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath } from './helpers';
+import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile } from './helpers';
+import { LogItem, ReportViewerProvider } from './logViewer';
 
 export function activate(context: vscode.ExtensionContext): void {
   const config = vscode.workspace.getConfiguration();
@@ -13,7 +14,18 @@ export function activate(context: vscode.ExtensionContext): void {
       showErrorMessage('Magento root path is not set or is not a directory.');
       return;
     }
-    activateExtension(context, magentoRoot);
+    const reportViewerProvider = new ReportViewerProvider(magentoRoot);
+    activateExtension(context, magentoRoot, reportViewerProvider);
+
+    vscode.commands.registerCommand('magento-log-viewer.deleteReportFile', (logItem: LogItem) => {
+      if (logItem && logItem.command && logItem.command.arguments && logItem.command.arguments[0]) {
+        const filePath = logItem.command.arguments[0];
+        deleteReportFile(filePath);
+        reportViewerProvider.refresh();
+      } else {
+        showErrorMessage('Failed to delete report file: Invalid file path.');
+      }
+    });
   }
 }
 

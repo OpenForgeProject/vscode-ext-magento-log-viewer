@@ -39,6 +39,11 @@
         "command": "magento-log-viewer.refreshReportFiles",
         "title": "Refresh Report Files",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "magento-log-viewer.deleteReportFile",
+        "title": "Delete Report File",
+        "icon": "$(trash)"
       }
     ],
     "configuration": {
@@ -115,6 +120,13 @@
         {
           "command": "magento-log-viewer.refreshReportFiles",
           "when": "view == reportFiles && magentoLogViewer.hasMagentoRoot",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "magento-log-viewer.deleteReportFile",
+          "when": "view == reportFiles && viewItem == reportItem",
           "group": "navigation"
         }
       ]

@@ -235,7 +235,10 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   }
 
   private getLogItems(dir: string, label: string): LogItem[] {
-    return getLogItems(dir, parseReportTitle, getIconForReport);
+    return getLogItems(dir, parseReportTitle, getIconForReport).map(item => {
+      item.contextValue = 'reportItem';
+      return item;
+    });
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogItem[] {
