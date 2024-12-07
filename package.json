@@ -47,7 +47,11 @@
       "properties": {
         "magentoLogViewer.isMagentoProject": {
           "type": "string",
-          "enum": ["Yes", "No", "Please select"],
+          "enum": [
+            "Yes",
+            "No",
+            "Please select"
+          ],
           "default": "Please select",
           "description": "This is a Magento project",
           "scope": "resource"
