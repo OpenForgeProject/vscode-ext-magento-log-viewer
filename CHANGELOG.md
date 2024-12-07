@@ -6,7 +6,19 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-## [1.6.0] - 2023-10-07
+## [1.6.1] - 2024-12-08
+
+### Added
+
+- Added Trunk Support to improve Code Quality
+
+### Changed
+
+- Changed `README.md` with latest features
+- Changed Extension Logo
+- Changed Changelog Dates for 1.6.0 Release Date
+
+## [1.6.0] - 2024-12-07
 
 ### Added
 

@@ -16,6 +16,7 @@ The Magento Log Viewer extension for Visual Studio Code provides a convenient wa
 - Status bar showing total log entries
 - Real-time log file monitoring
 - Badge in the tree view showing the total number of log entries
+- Improved report file titles by parsing content for better readability
 
 ## Setup
 
