@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Added
+- Support for Node.js 18.x in GitHub Actions
+- Automated tests for releases using GitHub Workflows
+
 ## [1.7.0] - 2024-12-08
 
 ### Added
