@@ -1,6 +1,6 @@
 # Magento Log Viewer
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/04d20d74a4bb4f7fb144d320f7008edb)](https://app.codacy.com/gh/OpenForgeProject/vscode-ext-magento-log-viewer/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/04d20d74a4bb4f7fb144d320f7008edb)](https://app.codacy.com/gh/OpenForgeProject/vscode-ext-magento-log-viewer/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![GitHub Actions](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/actions/workflows/test.yml/badge.svg)](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/actions/workflows/test.yml)
 
 The Magento Log Viewer extension for Visual Studio Code provides a convenient way to view and manage Magento log files directly in your workspace.
 
