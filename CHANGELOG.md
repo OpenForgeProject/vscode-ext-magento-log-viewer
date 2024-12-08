@@ -6,7 +6,20 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-## [1.6.0] - 2023-10-07
+## [1.7.0] - 2024-12-08
+
+### Added
+
+- Added a right click context menu to delete report files
+- Added tests to check the extension features automaticly
+
+### Changed
+
+- Changed `README.md` with latest features
+- Changed Extension Logo
+- Changed Changelog Dates for 1.6.0 Release Date
+
+## [1.6.0] - 2024-12-07
 
 ### Added
 
