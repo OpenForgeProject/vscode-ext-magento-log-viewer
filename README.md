@@ -6,6 +6,10 @@ The Magento Log Viewer extension for Visual Studio Code provides a convenient wa
 
 ![Magento Log Viewer Screenshot](resources/logVideo.gif)
 
+## Support this Open Source Tool
+
+If you find this extension useful, please consider supporting the development by becoming a sponsor. Your support helps to maintain and improve this project. [Become a Sponsor](https://github.com/sponsors/dermatz) ☕
+
 ## Features
 
 - Tree view of log files from Magento's `var/log` directory
