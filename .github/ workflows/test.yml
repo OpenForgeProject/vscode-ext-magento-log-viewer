@@ -1,4 +1,4 @@
-name: CI
+name: VS Code Extension Tests
 
 on:
   push:
