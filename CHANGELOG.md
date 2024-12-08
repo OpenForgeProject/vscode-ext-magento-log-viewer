@@ -10,7 +10,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ### Added
 
-- Added context menu (right click) option to delete report files
+- Added a right click context menu to delete report files
+- Added tests to check the extension features automaticly
 
 ### Changed
 
