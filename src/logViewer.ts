@@ -230,6 +230,9 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
     } else {
       const reportPath = path.join(this.workspaceRoot, 'var', 'report');
       const reportItems = this.getLogItems(reportPath, 'Reports');
+      if (reportItems.length === 0) {
+        return Promise.resolve([new LogItem('No report files found', vscode.TreeItemCollapsibleState.None)]);
+      }
       return Promise.resolve(reportItems);
     }
   }

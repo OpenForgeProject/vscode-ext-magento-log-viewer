@@ -288,3 +288,33 @@ export function getIconForReport(filePath: string): vscode.ThemeIcon {
     return new vscode.ThemeIcon('file');
   }
 }
+
+export function getReportItems(dir: string): LogItem[] {
+  if (!pathExists(dir)) {
+    return [];
+  }
+
+  const items: LogItem[] = [];
+  const files = fs.readdirSync(dir);
+
+  files.forEach(file => {
+    const filePath = path.join(dir, file);
+    if (fs.lstatSync(filePath).isDirectory()) {
+      const subItems = getReportItems(filePath);
+      if (subItems.length > 0) {
+        items.push(...subItems);
+      }
+    } else if (fs.lstatSync(filePath).isFile()) {
+      const title = parseReportTitle(filePath);
+      const reportFile = new LogItem(title, vscode.TreeItemCollapsibleState.None, {
+        command: 'magento-log-viewer.openFile',
+        title: 'Open Report File',
+        arguments: [filePath]
+      });
+      reportFile.iconPath = getIconForReport(filePath);
+      items.push(reportFile);
+    }
+  });
+
+  return items;
+}
