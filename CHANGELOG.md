@@ -6,7 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-## [1.7.1] - 2023-10-15
+## [1.7.1] - 2024-12-09
 
 ### Added
 - Added a message when there are no report files.
