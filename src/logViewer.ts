@@ -6,13 +6,15 @@ import { pathExists, getLineCount, getIconForLogLevel, getLogItems, parseReportT
 export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<LogItem | undefined | void> = this._onDidChangeTreeData.event;
-  private statusBarItem: vscode.StatusBarItem;
+  public static statusBarItem: vscode.StatusBarItem;
   private groupByMessage: boolean;
 
   constructor(private workspaceRoot: string) {
-    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    this.statusBarItem.command = 'magento-log-viewer.refreshLogFiles';
-    this.statusBarItem.show();
+    if (!LogViewerProvider.statusBarItem) {
+      LogViewerProvider.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+      LogViewerProvider.statusBarItem.command = 'magento-log-viewer.refreshLogFiles';
+      LogViewerProvider.statusBarItem.show();
+    }
     this.groupByMessage = vscode.workspace.getConfiguration('magentoLogViewer').get<boolean>('groupByMessage', true);
     this.updateBadge();
     this.updateRefreshButtonVisibility();
@@ -191,11 +193,11 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     const logPath = path.join(this.workspaceRoot, 'var', 'log');
     const logFiles = this.getLogFilesWithoutUpdatingBadge(logPath);
     const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
-    this.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
+    LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
   }
 
   dispose() {
-    this.statusBarItem.dispose();
+    // Do not dispose the status bar item here to avoid multiple creations
   }
 }
 
@@ -230,6 +232,9 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
     } else {
       const reportPath = path.join(this.workspaceRoot, 'var', 'report');
       const reportItems = this.getLogItems(reportPath, 'Reports');
+      if (reportItems.length === 0) {
+        return Promise.resolve([new LogItem('No report files found', vscode.TreeItemCollapsibleState.None)]);
+      }
       return Promise.resolve(reportItems);
     }
   }

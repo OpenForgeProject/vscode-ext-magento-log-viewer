@@ -1,4 +1,4 @@
-# Change Log
+# Changelog
 
 All notable changes to the "magento-log-viewer" extension will be documented in this file.
 
@@ -6,9 +6,15 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [1.7.1] - 2024-12-09
+
 ### Added
+- Added a message when there are no report files.
 - Support for Node.js 18.x in GitHub Actions
 - Automated tests for releases using GitHub Workflows
+
+### Fixed
+- Fixed an issue where the status bar item was being created multiple times.
 
 ## [1.7.0] - 2024-12-08
 
