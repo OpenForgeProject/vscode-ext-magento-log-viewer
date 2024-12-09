@@ -151,9 +151,7 @@ export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvide
     vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasLogFiles', totalEntries > 0);
 
     // Update status bar item
-    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
-    statusBarItem.show();
+    LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
   };
 
   logViewerProvider.onDidChangeTreeData(updateBadgeCount);
