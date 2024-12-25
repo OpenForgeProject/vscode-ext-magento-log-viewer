@@ -240,9 +240,31 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   }
 
   private getLogItems(dir: string, label: string): LogItem[] {
-    return getLogItems(dir, parseReportTitle, getIconForReport).map(item => {
+    const items = getLogItems(dir, parseReportTitle, getIconForReport).map(item => {
       item.contextValue = 'reportItem';
       return item;
+    });
+
+    const groupedItems = this.groupReportItems(items);
+    return groupedItems;
+  }
+
+  private groupReportItems(items: LogItem[]): LogItem[] {
+    const groupedByTitle = new Map<string, LogItem[]>();
+
+    items.forEach(item => {
+      const title = item.label;
+      const group = groupedByTitle.get(title) || [];
+      group.push(item);
+      groupedByTitle.set(title, group);
+    });
+
+    return Array.from(groupedByTitle.entries()).map(([title, group]) => {
+      if (group.length > 1) {
+        return new LogItem(`${title} (${group.length})`, vscode.TreeItemCollapsibleState.Collapsed, undefined, group);
+      } else {
+        return group[0];
+      }
     });
   }
 

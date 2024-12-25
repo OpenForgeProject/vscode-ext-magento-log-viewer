@@ -22,10 +22,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "magento-log-viewer.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "magento-log-viewer.clearAllLogFiles",
         "title": "Delete Logfiles",
         "icon": "$(trash)"
