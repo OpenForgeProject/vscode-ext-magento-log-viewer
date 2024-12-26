@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -15,6 +15,9 @@
   "categories": [
     "Other"
   ],
+  "sponsor": {
+    "url": "https://github.com/sponsors/dermatz"
+  },
   "activationEvents": [
     "onStartupFinished"
   ],
