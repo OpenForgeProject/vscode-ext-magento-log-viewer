@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [1.8.2] - 2025-01-20
+
+### Changed
+
+- Show "Is this a Magento Project?" only if a project or workspace has been loaded.
+
+
 ## [1.8.1] - 2024-12-26
 
 ### Added

@@ -5,13 +5,15 @@ import { LogViewerProvider, ReportViewerProvider, LogItem } from './logViewer';
 
 // Prompts the user to confirm if the current project is a Magento project.
 export function promptMagentoProjectSelection(config: vscode.WorkspaceConfiguration, context: vscode.ExtensionContext): void {
-  vscode.window.showInformationMessage('Is this a Magento project?', 'Yes', 'No').then(selection => {
-    if (selection === 'Yes') {
-      selectMagentoRootFolder(config, context);
-    } else {
-      updateConfig(config, 'magentoLogViewer.isMagentoProject', selection);
-    }
-  });
+  if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    vscode.window.showInformationMessage('Is this a Magento project?', 'Yes', 'No').then(selection => {
+      if (selection === 'Yes') {
+        selectMagentoRootFolder(config, context);
+      } else {
+        updateConfig(config, 'magentoLogViewer.isMagentoProject', selection);
+      }
+    });
+  }
 }
 
 // Prompts the user to select the Magento root folder and updates the configuration.
