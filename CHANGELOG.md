@@ -2,8 +2,6 @@
 
 All notable changes to the "magento-log-viewer" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
 ## Latest Release
 
 ## [1.10.0] - 2025-03-12
