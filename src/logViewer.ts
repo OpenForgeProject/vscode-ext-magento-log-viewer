@@ -8,6 +8,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   readonly onDidChangeTreeData: vscode.Event<LogItem | undefined | void> = this._onDidChangeTreeData.event;
   public static statusBarItem: vscode.StatusBarItem;
   private groupByMessage: boolean;
+  private disposables: vscode.Disposable[] = [];
 
   constructor(private workspaceRoot: string) {
     if (!LogViewerProvider.statusBarItem) {
@@ -15,7 +16,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       LogViewerProvider.statusBarItem.command = 'magento-log-viewer.refreshLogFiles';
       LogViewerProvider.statusBarItem.show();
     }
-    this.groupByMessage = vscode.workspace.getConfiguration('magentoLogViewer').get<boolean>('groupByMessage', true);
+
+    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+    this.groupByMessage = config.get<boolean>('groupByMessage', true);
     this.updateBadge();
     this.updateRefreshButtonVisibility();
   }
@@ -197,7 +201,17 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   }
 
   dispose() {
-    // Do not dispose the status bar item here to avoid multiple creations
+    this._onDidChangeTreeData.dispose();
+    if (LogViewerProvider.statusBarItem) {
+      LogViewerProvider.statusBarItem.dispose();
+      LogViewerProvider.statusBarItem = null as any;
+    }
+    while (this.disposables.length) {
+      const disposable = this.disposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
+    }
   }
 }
 
@@ -205,9 +219,12 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<LogItem | undefined | void> = this._onDidChangeTreeData.event;
   private groupByMessage: boolean;
+  private disposables: vscode.Disposable[] = [];
 
   constructor(private workspaceRoot: string) {
-    this.groupByMessage = vscode.workspace.getConfiguration('magentoLogViewer').get<boolean>('groupByMessage', true);
+    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+    this.groupByMessage = config.get<boolean>('groupByMessage', true);
   }
 
   refresh(): void {
@@ -289,7 +306,13 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   }
 
   dispose() {
-    // Implement dispose logic if needed
+    this._onDidChangeTreeData.dispose();
+    while (this.disposables.length) {
+      const disposable = this.disposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
+    }
   }
 }
 

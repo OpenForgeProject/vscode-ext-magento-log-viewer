@@ -24,9 +24,10 @@ export function selectMagentoRootFolder(config: vscode.WorkspaceConfiguration, c
       const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
       vscode.window.showOpenDialog({ defaultUri, canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
         if (folderUri?.[0]) {
-          updateConfig(config, 'magentoLogViewer.magentoRoot', folderUri[0].fsPath).then(() => {
+          const newConfig = vscode.workspace.getConfiguration('magentoLogViewer', folderUri[0]);
+          updateConfig(newConfig, 'magentoLogViewer.magentoRoot', folderUri[0].fsPath).then(() => {
             showInformationMessage('Magento root folder successfully saved!');
-            updateConfig(config, 'magentoLogViewer.isMagentoProject', 'Yes');
+            updateConfig(newConfig, 'magentoLogViewer.isMagentoProject', 'Yes');
             activateExtension(context, folderUri[0].fsPath, new ReportViewerProvider(folderUri[0].fsPath));
           });
         }

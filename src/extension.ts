@@ -2,14 +2,21 @@ import * as vscode from 'vscode';
 import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile } from './helpers';
 import { LogItem, ReportViewerProvider } from './logViewer';
 
+let disposables: vscode.Disposable[] = [];
+
 export function activate(context: vscode.ExtensionContext): void {
-  const config = vscode.workspace.getConfiguration();
-  const isMagentoProject = config.get<string>('magentoLogViewer.isMagentoProject', 'Please select');
+  // Get workspace folders
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  const workspaceUri = workspaceFolders?.[0]?.uri || null;
+
+  // Get configuration with resource scope
+  const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+  const isMagentoProject = config.get<string>('isMagentoProject', 'Please select');
 
   if (isMagentoProject === 'Please select') {
     promptMagentoProjectSelection(config, context);
   } else if (isMagentoProject === 'Yes') {
-    const magentoRoot = config.get<string>('magentoLogViewer.magentoRoot', '');
+    const magentoRoot = config.get<string>('magentoRoot', '');
     if (!magentoRoot || !isValidPath(magentoRoot)) {
       showErrorMessage('Magento root path is not set or is not a directory.');
       return;
@@ -17,7 +24,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const reportViewerProvider = new ReportViewerProvider(magentoRoot);
     activateExtension(context, magentoRoot, reportViewerProvider);
 
-    vscode.commands.registerCommand('magento-log-viewer.deleteReportFile', (logItem: LogItem) => {
+    const deleteCommand = vscode.commands.registerCommand('magento-log-viewer.deleteReportFile', (logItem: LogItem) => {
       if (logItem && logItem.command && logItem.command.arguments && logItem.command.arguments[0]) {
         const filePath = logItem.command.arguments[0];
         deleteReportFile(filePath);
@@ -26,7 +33,25 @@ export function activate(context: vscode.ExtensionContext): void {
         showErrorMessage('Failed to delete report file: Invalid file path.');
       }
     });
+
+    disposables.push(deleteCommand);
+    context.subscriptions.push(...disposables);
   }
 }
 
-export function deactivate(): void {}
+export function deactivate(): void {
+  // Clear any context values we set
+  vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasMagentoRoot', undefined);
+
+  // Dispose of all disposables
+  while (disposables.length) {
+    const disposable = disposables.pop();
+    if (disposable) {
+      try {
+        disposable.dispose();
+      } catch (err) {
+        console.error('Error disposing:', err);
+      }
+    }
+  }
+}
