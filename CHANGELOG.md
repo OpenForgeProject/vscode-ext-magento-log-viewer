@@ -6,8 +6,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Latest Release
 
-## [1.8.3] - 2025-03-12
+## [1.9.0] - 2025-03-12
 
+- feat: add color coding for log levels in log viewer
 - fix: project configuration handling and cleanup process for a smoother experience when opening or closing Magento projects.
 
 ## [1.8.2] - 2025-01-20
