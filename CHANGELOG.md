@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Latest Release
 
+## [1.10.0] - 2025-03-12
+
+- feat: add update notification for new extension version
+
 ## [1.9.0] - 2025-03-12
 
 - feat: add color coding for log levels in log viewer

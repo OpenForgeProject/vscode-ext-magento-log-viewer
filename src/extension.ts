@@ -1,15 +1,18 @@
 import * as vscode from 'vscode';
 import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile } from './helpers';
 import { LogItem, ReportViewerProvider } from './logViewer';
+import { showUpdateNotification } from './updateNotifier';
 
 let disposables: vscode.Disposable[] = [];
 
 export function activate(context: vscode.ExtensionContext): void {
-  // Get workspace folders
+
+  // Show Update-Popup
+  showUpdateNotification(context);
+
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const workspaceUri = workspaceFolders?.[0]?.uri || null;
 
-  // Get configuration with resource scope
   const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
   const isMagentoProject = config.get<string>('isMagentoProject', 'Please select');
 
