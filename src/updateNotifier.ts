@@ -11,7 +11,7 @@ export async function showUpdateNotification(context: vscode.ExtensionContext) {
 
     if (lastVersion !== currentVersion) {
         const action = await vscode.window.showInformationMessage(
-            `Magento Log Viewer wurde auf Version ${currentVersion} ✨!`,
+            `Magento Log Viewer was updated to Version ${currentVersion} ✨!`,
             '❤️ Support this Project',
             'Changelog',
             'GitHub'

@@ -4,6 +4,10 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+## [1.10.1] - 2025-03-12
+
+- fix: update notification message
+
 ## [1.10.0] - 2025-03-12
 
 - feat: add update notification for new extension version
