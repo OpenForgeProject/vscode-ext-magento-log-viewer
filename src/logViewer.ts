@@ -327,6 +327,21 @@ export class LogItem extends vscode.TreeItem {
     super(label, collapsibleState as vscode.TreeItemCollapsibleState);
     this.description = this.label.match(/\(\d+\)/)?.[0] || '';
     this.label = this.label.replace(/\(\d+\)/, '').trim();
+
+    // Füge Farben basierend auf Log-Level hinzu
+    if (this.label.includes('ERROR')) {
+      this.tooltip = 'Error Message';
+      this.resourceUri = vscode.Uri.parse('error');
+    } else if (this.label.includes('WARN')) {
+      this.tooltip = 'Warning Message';
+      this.resourceUri = vscode.Uri.parse('warning');
+    } else if (this.label.includes('DEBUG')) {
+      this.tooltip = 'Debug Message';
+      this.resourceUri = vscode.Uri.parse('debug');
+    } else if (this.label.includes('INFO')) {
+      this.tooltip = 'Info Message';
+      this.resourceUri = vscode.Uri.parse('info');
+    }
   }
 
   contextValue = 'logItem';

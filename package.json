@@ -74,6 +74,53 @@
         }
       }
     },
+    "colors": [
+      {
+        "id": "magentoLogViewer.errorColor",
+        "description": "Color for error log entries",
+        "defaults": {
+          "dark": "#f14c4c",
+          "light": "#cd3131",
+          "highContrast": "#ff0000"
+        }
+      },
+      {
+        "id": "magentoLogViewer.warningColor",
+        "description": "Color for warning log entries",
+        "defaults": {
+          "dark": "#cca700",
+          "light": "#ff8f00",
+          "highContrast": "#ffd700"
+        }
+      },
+      {
+        "id": "magentoLogViewer.debugColor",
+        "description": "Color for debug log entries",
+        "defaults": {
+          "dark": "#ffeb3b",
+          "light": "#ffd700",
+          "highContrast": "#ffff00"
+        }
+      },
+      {
+        "id": "magentoLogViewer.infoColor",
+        "description": "Color for info log entries",
+        "defaults": {
+          "dark": "#3794ff",
+          "light": "#0078d4",
+          "highContrast": "#0099ff"
+        }
+      },
+      {
+        "id": "magentoLogViewer.criticalColor",
+        "description": "Color for critical log entries",
+        "defaults": {
+          "dark": "#ff1493",
+          "light": "#ff1493",
+          "highContrast": "#ff69b4"
+        }
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {

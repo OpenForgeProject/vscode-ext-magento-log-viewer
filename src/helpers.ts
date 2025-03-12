@@ -215,12 +215,19 @@ export function getLineCount(filePath: string): number {
 
 // Returns the appropriate icon for the given log level.
 export function getIconForLogLevel(level: string): vscode.ThemeIcon {
-  switch (level) {
-    case 'ERROR': return new vscode.ThemeIcon('error');
-    case 'WARN': return new vscode.ThemeIcon('warning');
-    case 'DEBUG': return new vscode.ThemeIcon('debug');
-    case 'INFO': return new vscode.ThemeIcon('info');
-    default: return new vscode.ThemeIcon('circle-outline');
+  switch (level.toUpperCase()) {
+    case 'CRITICAL':
+      return new vscode.ThemeIcon('error', new vscode.ThemeColor('magentoLogViewer.criticalColor'));
+    case 'ERROR':
+      return new vscode.ThemeIcon('error', new vscode.ThemeColor('magentoLogViewer.errorColor'));
+    case 'WARN':
+      return new vscode.ThemeIcon('warning', new vscode.ThemeColor('magentoLogViewer.warningColor'));
+    case 'DEBUG':
+      return new vscode.ThemeIcon('debug', new vscode.ThemeColor('magentoLogViewer.debugColor'));
+    case 'INFO':
+      return new vscode.ThemeIcon('info', new vscode.ThemeColor('magentoLogViewer.infoColor'));
+    default:
+      return new vscode.ThemeIcon('circle-outline');
   }
 }
 
