@@ -61,7 +61,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     return normalizedDir === normalizedLogPath;
   }
 
-  private getLogItems(dir: string, label: string): LogItem[] {
+  private getLogItems(dir: string): LogItem[] {
     if (!pathExists(dir)) {
       return [new LogItem(`No items found`, vscode.TreeItemCollapsibleState.None)];
     }

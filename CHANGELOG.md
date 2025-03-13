@@ -2,6 +2,12 @@
 
 All notable changes to the "magento-log-viewer" extension will be documented in this file.
 
+## Next Release
+
+- fix: remove unused parameters to improve code quality
+
+---
+
 ## Latest Release
 
 ## [1.10.1] - 2025-03-12
