@@ -3,7 +3,7 @@ import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isV
 import { LogItem, ReportViewerProvider } from './logViewer';
 import { showUpdateNotification } from './updateNotifier';
 
-let disposables: vscode.Disposable[] = [];
+const disposables: vscode.Disposable[] = [];
 
 export function activate(context: vscode.ExtensionContext): void {
 
