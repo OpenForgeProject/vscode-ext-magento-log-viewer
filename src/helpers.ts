@@ -326,3 +326,50 @@ export function getReportItems(dir: string): LogItem[] {
 
   return items;
 }
+
+// Formats a timestamp from ISO format to localized user format
+export function formatTimestamp(timestamp: string): string {
+  try {
+    // Look for Magento log timestamp pattern: [2025-05-27T19:42:17.646000+00:00]
+    // First check for the exact format seen in the logs
+    // Using a more relaxed regex that will match the format in the screenshot
+    const regex = /(\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\+\d{2}:\d{2}\])/;
+    const match = timestamp.match(regex);
+
+    if (!match || !match[1]) {
+      return timestamp; // Return original if no timestamp format matches
+    }
+
+    // Extract the timestamp without brackets
+    const dateTimeStr = match[1].substring(1, match[1].length - 1);
+
+    try {
+      const date = new Date(dateTimeStr);
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return timestamp; // Return original if date parsing failed
+      }
+
+      // Format the date according to user's locale
+      const localizedTimestamp = date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+
+      // Replace the ISO timestamp with the localized one
+      return timestamp.replace(match[1], `[${localizedTimestamp}]`);
+    } catch (parseError) {
+      console.error("Error parsing date:", parseError);
+      return timestamp; // Return original on date parsing error
+    }
+  } catch (error) {
+    console.error('Failed to format timestamp:', error instanceof Error ? error.message : String(error));
+    return timestamp; // Return original on error
+  }
+}
