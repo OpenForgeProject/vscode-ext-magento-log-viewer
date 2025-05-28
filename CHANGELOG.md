@@ -1,6 +1,8 @@
 # Changelog
 
 All notable changes to the "magento-log-viewer" extension will be documented in this file.
+## [1.10.2] - 2025-xx-xx
+- fix: update configuration keys for Magento project selection
 
 ## Latest Release
 
