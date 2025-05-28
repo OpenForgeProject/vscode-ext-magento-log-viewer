@@ -2,21 +2,23 @@
 
 All notable changes to the "magento-log-viewer" extension will be documented in this file.
 
-
 ## Next release
 
+---
+
+## Latest Release
+
+### [1.11.0] - 2025-05-29
+
 - feat: improved timestamp formatting for log entries
+- i18n: add translations added
+- test: add log reader test suite with file existence and content validation
+- test: add report reader test suite with file existence and content validation
 - fix: Pre-compilation of regular expressions for timestamps: Prevents repeated compilation on each call.
 - fix: Caching for JSON reports: Avoids redundant reading and parsing of JSON files.
 - fix: Optimized line counting with caching: Reduces time spent counting lines in large files and avoids repeated calculations for unchanged files.
 - fix: Improved badge updates with throttling and debouncing: Prevents too frequent updates and implements more efficient counting methods.
 - fix: improve type safety in report handling functions
-- i18n: translations added
-- test: add log reader test suite with file existence and content validation
-- test: add report reader test suite with file existence and content validation
----
-
-## Latest Release
 
 ### [1.10.2] - 2025-05-28
 - update: `readme.md` update
