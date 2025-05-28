@@ -10,6 +10,7 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - fix: Caching for JSON reports: Avoids redundant reading and parsing of JSON files.
 - fix: Optimized line counting with caching: Reduces time spent counting lines in large files and avoids repeated calculations for unchanged files.
 - fix: Improved badge updates with throttling and debouncing: Prevents too frequent updates and implements more efficient counting methods.
+- fix: improve type safety in report handling functions
 - i18n: translations added
 
 ---

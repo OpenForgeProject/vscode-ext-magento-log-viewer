@@ -411,10 +411,10 @@ export function getLogItems(dir: string, parseTitle: (filePath: string) => strin
 }
 
 // Cache for JSON reports to avoid repeated parsing
-const reportCache = new Map<string, { content: any, timestamp: number }>();
+const reportCache = new Map<string, { content: unknown, timestamp: number }>();
 
 // Helper function for reading and parsing JSON reports with caching
-function getReportContent(filePath: string): any | null {
+function getReportContent(filePath: string): unknown | null {
   try {
     const stats = fs.statSync(filePath);
     const cachedReport = reportCache.get(filePath);
@@ -447,10 +447,18 @@ export function parseReportTitle(filePath: string): string {
     if (filePath.includes('/api/')) {
       const folderName = path.basename(path.dirname(filePath));
       const capitalizedFolderName = folderName.charAt(0).toUpperCase() + folderName.slice(1);
-      return `${capitalizedFolderName}: ${report}`;
+      return `${capitalizedFolderName}: ${String(report)}`;
     }
 
-    return report['0'] || path.basename(filePath);
+    // Type guard to check if report is a record type with string keys
+    if (report && typeof report === 'object' && report !== null) {
+      const reportObj = report as Record<string, unknown>;
+      if ('0' in reportObj && typeof reportObj['0'] === 'string') {
+        return reportObj['0'] || path.basename(filePath);
+      }
+    }
+
+    return path.basename(filePath);
   } catch (error) {
     return path.basename(filePath);
   }
@@ -467,8 +475,13 @@ export function getIconForReport(filePath: string): vscode.ThemeIcon {
       return new vscode.ThemeIcon('warning');
     }
 
-    if (report['0'] && report['0'].toLowerCase().includes('error')) {
-      return new vscode.ThemeIcon('error');
+    // Type guard to check if report is a record type with string keys
+    if (report && typeof report === 'object' && report !== null) {
+      const reportObj = report as Record<string, unknown>;
+      if ('0' in reportObj && typeof reportObj['0'] === 'string' &&
+          reportObj['0'].toLowerCase().includes('error')) {
+        return new vscode.ThemeIcon('error');
+      }
     }
 
     return new vscode.ThemeIcon('file');
