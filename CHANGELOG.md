@@ -2,12 +2,12 @@
 
 All notable changes to the "magento-log-viewer" extension will be documented in this file.
 
+## Latest Release
+
 ## [1.10.2] - 2025-05-28
 - update: `readme.md` update
 - fix: update notification for better performance
 - fix: update configuration keys for Magento project selection to correctly save "Is this a Magento project" response
-
-## Latest Release
 
 ## [1.10.1] - 2025-03-12
 
