@@ -9,8 +9,8 @@ export function promptMagentoProjectSelection(config: vscode.WorkspaceConfigurat
     vscode.window.showInformationMessage('Is this a Magento project?', 'Yes', 'No').then(selection => {
       if (selection === 'Yes') {
         selectMagentoRootFolder(config, context);
-      } else {
-        updateConfig(config, 'magentoLogViewer.isMagentoProject', selection);
+      } else if (selection === 'No') {
+        updateConfig(config, 'isMagentoProject', selection);
       }
     });
   }
@@ -25,9 +25,9 @@ export function selectMagentoRootFolder(config: vscode.WorkspaceConfiguration, c
       vscode.window.showOpenDialog({ defaultUri, canSelectFolders: true, canSelectMany: false, openLabel: 'Select Magento Root Folder' }).then(folderUri => {
         if (folderUri?.[0]) {
           const newConfig = vscode.workspace.getConfiguration('magentoLogViewer', folderUri[0]);
-          updateConfig(newConfig, 'magentoLogViewer.magentoRoot', folderUri[0].fsPath).then(() => {
+          updateConfig(newConfig, 'magentoRoot', folderUri[0].fsPath).then(() => {
             showInformationMessage('Magento root folder successfully saved!');
-            updateConfig(newConfig, 'magentoLogViewer.isMagentoProject', 'Yes');
+            updateConfig(newConfig, 'isMagentoProject', 'Yes');
             activateExtension(context, folderUri[0].fsPath, new ReportViewerProvider(folderUri[0].fsPath));
           });
         }
