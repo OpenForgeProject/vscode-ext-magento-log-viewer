@@ -1,5 +1,4 @@
 import * as assert from 'assert';
-import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -46,13 +45,16 @@ suite('Log Reader Test Suite', () => {
 
     test('LogViewerProvider should read log file correctly', async () => {
         // Create a LogViewerProvider instance with the temp directory as root
-        const logProvider = new LogViewerProvider(tempDir);
+        const logProvider = new LogViewerProvider(tempDir);        // Get access to private method (this requires modifying the class or using a type assertion)
+        // For this test, we'll use a type assertion to access the private method
 
-        // Get access to private method (this requires modifying the class or using a test-specific subclass)
-        // For this test, we'll test indirectly through the public API
+        // Use a specific interface that defines the method we need for testing
+        interface LogViewerInternals {
+            getLogFileLines(filePath: string): LogItem[];
+        }
 
-        // Use Reflection to access the private method (not ideal but works for testing)
-        const provider = logProvider as any;
+        // Cast to our specific interface instead of 'any'
+        const provider = logProvider as unknown as LogViewerInternals;
         const logItems = provider.getLogFileLines(logFilePath);
 
         // Get all log levels from the items
