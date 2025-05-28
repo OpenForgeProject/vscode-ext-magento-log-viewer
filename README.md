@@ -10,7 +10,7 @@ The Magento Log Viewer extension for Visual Studio Code provides a convenient wa
 
 - Tree view of log files from Magento's `var/log` directory
 - Section for Grouped log entries by severity level (ERROR, WARN, DEBUG, INFO)
-- Section for Report files with parsed and opimized titels
+- Section for Report files with parsed and optimized titles
 - Option to group log entries by message content
 - Direct file opening with line highlighting
 - One-click log file clearing with confirmation popup
@@ -18,6 +18,12 @@ The Magento Log Viewer extension for Visual Studio Code provides a convenient wa
 - Real-time log file monitoring
 - Badge in the tree view showing the total number of log entries
 - Improved report file titles by parsing content for better readability
+- Color-coded icons for different log levels (ERROR, WARN, DEBUG, INFO)
+- Individual report file deletion through context menu
+- Automatic update notifications for new extension versions
+- Line-by-line navigation within log files
+- Collapsible sections for identical report error titles
+- Project setting retention between workspace sessions
 
 ## Setup
 
@@ -37,6 +43,8 @@ Note: Settings are workspace-specific, allowing different configurations for eac
 - **Navigate**: Click on log entries to jump to specific lines
 - **Filter**: Expand log files to see entries grouped by severity
 - **Group by Message**: Enable or disable grouping of log entries by message content in the settings. When enabled, the counter will display "grouped" (e.g., `INFO (128, grouped)`).
+- **Delete Reports**: Right-click on a report file entry and select "Delete Report File" from the context menu
+- **View Updates**: Review update notifications when the extension is updated with links to changelog and GitHub
 
 ## Requirements
 
