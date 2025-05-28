@@ -139,14 +139,43 @@ export function deleteReportFile(filePath: string): void {
   }
 }
 
+// Cache für die Badge-Aktualisierung
+let lastUpdateTime = 0;
+const BADGE_UPDATE_THROTTLE = 1000; // Maximal eine Aktualisierung pro Sekunde
+
 // Updates the badge count for the tree view based on the number of log entries.
 export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
   const updateBadgeCount = () => {
-    const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(path.join(magentoRoot, 'var', 'log'));
-    const reportFiles = getAllReportFiles(path.join(magentoRoot, 'var', 'report'));
-
-    const totalLogEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
-    const totalReportFiles = reportFiles.length;
+    // Throttling - nur einmal pro Sekunde aktualisieren
+    const now = Date.now();
+    if (now - lastUpdateTime < BADGE_UPDATE_THROTTLE) {
+      return;
+    }
+    lastUpdateTime = now;
+    
+    const logPath = path.join(magentoRoot, 'var', 'log');
+    const reportPath = path.join(magentoRoot, 'var', 'report');
+    
+    // Prüfe, ob Verzeichnisse existieren, bevor wir sie lesen
+    const logFilesExist = pathExists(logPath);
+    const reportFilesExist = pathExists(reportPath);
+    
+    let totalLogEntries = 0;
+    let totalReportFiles = 0;
+    
+    if (logFilesExist) {
+      const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(logPath);
+      totalLogEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
+    }
+    
+    if (reportFilesExist) {
+      // Nur die Anzahl der Report-Dateien zählen, nicht den Inhalt laden
+      try {
+        totalReportFiles = countFilesInDirectory(reportPath);
+      } catch (error) {
+        console.error('Error counting report files:', error);
+      }
+    }
 
     const totalEntries = totalLogEntries + totalReportFiles;
     treeView.badge = { value: totalEntries, tooltip: `${totalEntries} log and report entries` };
@@ -157,11 +186,43 @@ export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvide
     LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
   };
 
-  logViewerProvider.onDidChangeTreeData(updateBadgeCount);
-  reportViewerProvider.onDidChangeTreeData(updateBadgeCount);
+  // Debounced event handler
+  let updateTimeout: NodeJS.Timeout | null = null;
+  const debouncedUpdate = () => {
+    if (updateTimeout) {
+      clearTimeout(updateTimeout);
+    }
+    updateTimeout = setTimeout(updateBadgeCount, 200);
+  };
+
+  logViewerProvider.onDidChangeTreeData(debouncedUpdate);
+  reportViewerProvider.onDidChangeTreeData(debouncedUpdate);
   updateBadgeCount();
 
   vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
+}
+
+// Helper-Funktion zum effizienten Zählen von Dateien in einem Verzeichnis
+function countFilesInDirectory(dir: string): number {
+  if (!pathExists(dir)) {
+    return 0;
+  }
+  
+  let count = 0;
+  const items = fs.readdirSync(dir);
+  
+  for (const item of items) {
+    const fullPath = path.join(dir, item);
+    const stats = fs.statSync(fullPath);
+    
+    if (stats.isFile()) {
+      count++;
+    } else if (stats.isDirectory()) {
+      count += countFilesInDirectory(fullPath);
+    }
+  }
+  
+  return count;
 }
 
 function getAllReportFiles(dir: string): LogItem[] {
@@ -207,10 +268,56 @@ export function pathExists(p: string): boolean {
   return true;
 }
 
+// Cache für die Zeilenzahl von Dateien
+const lineCountCache = new Map<string, { count: number, timestamp: number }>();
+
 // Returns the number of lines in the specified file.
 export function getLineCount(filePath: string): number {
-  const fileContent = fs.readFileSync(filePath, 'utf-8');
-  return fileContent.split('\n').length;
+  try {
+    const stats = fs.statSync(filePath);
+    const cachedCount = lineCountCache.get(filePath);
+    
+    if (cachedCount && cachedCount.timestamp >= stats.mtime.getTime()) {
+      return cachedCount.count;
+    }
+    
+    // Effizientere Zählung mit Streams für große Dateien
+    if (stats.size > 1024 * 1024) { // Für Dateien > 1MB
+      // Falls die Datei sehr groß ist, schätzen wir die Zeilenanzahl
+      // basierend auf einer Stichprobe der ersten 100KB
+      const sampleSize = 102400; // 100KB
+      const buffer = Buffer.alloc(sampleSize);
+      const fd = fs.openSync(filePath, 'r');
+      const bytesRead = fs.readSync(fd, buffer, 0, sampleSize, 0);
+      fs.closeSync(fd);
+      
+      const sample = buffer.toString('utf-8', 0, bytesRead);
+      const lines = sample.split('\n').length - 1;
+      
+      // Schätzung der Gesamtzeilenanzahl basierend auf der Stichprobe
+      const estimatedLines = Math.ceil(lines * (stats.size / bytesRead));
+      
+      lineCountCache.set(filePath, {
+        count: estimatedLines,
+        timestamp: stats.mtime.getTime()
+      });
+      
+      return estimatedLines;
+    } else {
+      // Für kleinere Dateien lesen wir sie vollständig ein
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const lineCount = fileContent.split('\n').length;
+      
+      lineCountCache.set(filePath, {
+        count: lineCount,
+        timestamp: stats.mtime.getTime()
+      });
+      
+      return lineCount;
+    }
+  } catch (error) {
+    return 0; // Im Fehlerfall 0 zurückgeben
+  }
 }
 
 // Returns the appropriate icon for the given log level.
@@ -261,10 +368,39 @@ export function getLogItems(dir: string, parseTitle: (filePath: string) => strin
   return items;
 }
 
-export function parseReportTitle(filePath: string): string {
+// Cache für JSON-Reports um wiederholtes Parsen zu vermeiden
+const reportCache = new Map<string, { content: any, timestamp: number }>();
+
+// Hilfsfunktion zum Lesen und Parsen von JSON-Reports mit Caching
+function getReportContent(filePath: string): any | null {
   try {
+    const stats = fs.statSync(filePath);
+    const cachedReport = reportCache.get(filePath);
+    
+    if (cachedReport && cachedReport.timestamp >= stats.mtime.getTime()) {
+      return cachedReport.content;
+    }
+    
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const report = JSON.parse(fileContent);
+    
+    reportCache.set(filePath, {
+      content: report,
+      timestamp: stats.mtime.getTime()
+    });
+    
+    return report;
+  } catch (error) {
+    return null;
+  }
+}
+
+export function parseReportTitle(filePath: string): string {
+  try {
+    const report = getReportContent(filePath);
+    if (!report) {
+      return path.basename(filePath);
+    }
 
     if (filePath.includes('/api/')) {
       const folderName = path.basename(path.dirname(filePath));
@@ -280,8 +416,10 @@ export function parseReportTitle(filePath: string): string {
 
 export function getIconForReport(filePath: string): vscode.ThemeIcon {
   try {
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const report = JSON.parse(fileContent);
+    const report = getReportContent(filePath);
+    if (!report) {
+      return new vscode.ThemeIcon('file');
+    }
 
     if (filePath.includes('/api/')) {
       return new vscode.ThemeIcon('warning');
@@ -327,14 +465,14 @@ export function getReportItems(dir: string): LogItem[] {
   return items;
 }
 
+// Vorkompilierter regulärer Ausdruck für Zeitstempel
+const timestampRegex = /(\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\+\d{2}:\d{2}\])/;
+
 // Formats a timestamp from ISO format to localized user format
 export function formatTimestamp(timestamp: string): string {
   try {
     // Look for Magento log timestamp pattern: [2025-05-27T19:42:17.646000+00:00]
-    // First check for the exact format seen in the logs
-    // Using a more relaxed regex that will match the format in the screenshot
-    const regex = /(\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\+\d{2}:\d{2}\])/;
-    const match = timestamp.match(regex);
+    const match = timestamp.match(timestampRegex);
 
     if (!match || !match[1]) {
       return timestamp; // Return original if no timestamp format matches
