@@ -66,6 +66,16 @@
         "command": "magento-log-viewer.deleteReportFile",
         "title": "Delete Report File",
         "icon": "$(trash)"
+      },
+      {
+        "command": "magento-log-viewer.openFile",
+        "title": "Open Log File",
+        "icon": "$(file)"
+      },
+      {
+        "command": "magento-log-viewer.openFileAtLine",
+        "title": "Open Log File at Line",
+        "icon": "$(go-to-file)"
       }
     ],
     "configuration": {

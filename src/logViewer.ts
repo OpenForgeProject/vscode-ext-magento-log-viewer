@@ -75,15 +75,29 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       const filePath = path.join(dir, file);
       if (!fs.lstatSync(filePath).isFile()) {
         return null;
-      }
-      const lineCount = getLineCount(filePath);
-      const logFile = new LogItem(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.Collapsed, {
-        command: 'magento-log-viewer.openFile',
-        title: 'Open Log File',
-        arguments: [filePath]
-      });
+      }      // First determine the children (log entries)
+      const children = this.getLogFileLines(filePath);
+
+      // Then count the actual number of log entries (instead of line count)
+      const logEntryCount = children.reduce((total, level) => {
+        // Extract the count from the label, e.g. "ERROR (5)"
+        const match = level.label.match(/\((\d+)(?:,\s*grouped)?\)/);
+        return total + (match ? parseInt(match[1], 10) : 0);
+      }, 0);
+
+      // Only if there are log entries or the file is empty (0)
+      const displayCount = logEntryCount > 0 ? logEntryCount : 0;
+      const logFile = new LogItem(`${file} (${displayCount})`,
+        // Only make expandable if there are actual entries
+        displayCount > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+        {
+          command: 'magento-log-viewer.openFile',
+          title: 'Open Log File',
+          arguments: [filePath]
+        }
+      );
       logFile.iconPath = new vscode.ThemeIcon('file');
-      logFile.children = this.getLogFileLines(filePath);
+      logFile.children = displayCount > 0 ? children : [];
       return logFile;
     }).filter(Boolean) as LogItem[];
 
@@ -175,9 +189,23 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
         const filePath = path.join(dir, file);
         if (!fs.lstatSync(filePath).isFile()) {
           return null;
+        }        // Count the actual log entries instead of just lines
+        let logEntryCount = 0;
+        try {
+          const fileContent = fs.readFileSync(filePath, 'utf-8');
+          const lines = fileContent.split('\n');
+
+          // Only count valid log entries matching the expected pattern
+          lines.forEach(line => {
+            if (line.match(/\.(\w+):/)) { // The pattern for log entries
+              logEntryCount++;
+            }
+          });
+        } catch (error) {
+            console.error(`Error reading file ${filePath}:`, error);
         }
-        const lineCount = getLineCount(filePath);
-        return new LogItem(`${file} (${lineCount})`, vscode.TreeItemCollapsibleState.None, {
+
+        return new LogItem(`${file} (${logEntryCount})`, vscode.TreeItemCollapsibleState.None, {
           command: 'magento-log-viewer.openFile',
           title: 'Open Log File',
           arguments: [filePath]
@@ -332,7 +360,7 @@ export class LogItem extends vscode.TreeItem {
     this.description = this.label.match(/\(\d+\)/)?.[0] || '';
     this.label = this.label.replace(/\(\d+\)/, '').trim();
 
-    // Füge Farben basierend auf Log-Level hinzu
+    // Add colors based on log level
     if (this.label.includes('ERROR')) {
       this.tooltip = 'Error Message';
       this.resourceUri = vscode.Uri.parse('error');
