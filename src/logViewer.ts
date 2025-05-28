@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { pathExists, getLineCount, getIconForLogLevel, getLogItems, parseReportTitle, getIconForReport } from './helpers';
+import { pathExists, getLineCount, getIconForLogLevel, getLogItems, parseReportTitle, getIconForReport, formatTimestamp } from './helpers';
 
 export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
@@ -127,8 +127,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
           return new LogItem(label, vscode.TreeItemCollapsibleState.Collapsed, undefined,
             messageEntries.map(entry => {
               const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
+              // Format the timestamp in the log entry
+              const formattedLine = formatTimestamp(entry.line);
               return new LogItem(
-                `Line ${lineNumber}:  ${entry.line}`,
+                `Line ${lineNumber}:  ${formattedLine}`,
                 vscode.TreeItemCollapsibleState.None,
                 {
                   command: 'magento-log-viewer.openFileAtLine',
@@ -147,8 +149,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
         const logFile = new LogItem(`${level} (${entries.length})`, vscode.TreeItemCollapsibleState.Collapsed, undefined,
           entries.map(entry => {
             const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
+            // Format the timestamp in the log entry
+            const formattedLine = formatTimestamp(entry.line);
             return new LogItem(
-              `Line ${lineNumber}:  ${entry.line}`,
+              `Line ${lineNumber}:  ${formattedLine}`,
               vscode.TreeItemCollapsibleState.None,
               {
                 command: 'magento-log-viewer.openFileAtLine',
