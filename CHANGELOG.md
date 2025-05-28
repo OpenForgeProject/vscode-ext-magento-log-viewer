@@ -13,7 +13,7 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - fix: improve type safety in report handling functions
 - i18n: translations added
 - test: add log reader test suite with file existence and content validation
-
+- test: add report reader test suite with file existence and content validation
 ---
 
 ## Latest Release
