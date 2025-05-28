@@ -90,10 +90,26 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
 // Registers commands for the extension.
 export function registerCommands(context: vscode.ExtensionContext, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
   vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
-  vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => reportViewerProvider.refresh());
-  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string, lineNumber?: number) => {
+  vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => reportViewerProvider.refresh());  // Improved command registration for openFile
+  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string | unknown, lineNumber?: number) => {
+    // If filePath is not a string, show a selection box with available log files
+    if (typeof filePath !== 'string') {
+      handleOpenFileWithoutPath(magentoRoot);
+      return;
+    }
+
+    // If it's just a line number (e.g. "/20")
+    if (filePath.startsWith('/') && !filePath.includes('/')) {
+      const possibleLineNumber = parseInt(filePath.substring(1));
+      if (!isNaN(possibleLineNumber)) {
+        handleOpenFileWithoutPath(magentoRoot, possibleLineNumber);
+        return;
+      }
+    }
+
     openFile(filePath, lineNumber);
   });
+
   vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath: string, lineNumber: number) => {
     openFile(filePath, lineNumber);
   });
@@ -104,11 +120,37 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
 
 // Opens a file in the editor at the specified line number.
 export function openFile(filePath: string, lineNumber?: number): void {
-  if (typeof filePath === 'string') {
+  try {
+    if (typeof filePath !== 'string' || !filePath) {
+      showErrorMessage('Cannot open file: Invalid file path');
+      return;
+    }
+
+    // Check if the path is absolute or just contains a line number like "/20"
+    if (filePath.startsWith('/') && !filePath.includes('/var/log/') && !filePath.includes('/var/report/')) {
+      // Possibly only a line number was specified, e.g. "/20"
+      const possibleLineNumber = parseInt(filePath.substring(1));
+      if (!isNaN(possibleLineNumber)) {
+        // We have a valid line number, but no file path
+        showErrorMessage(`Cannot open file: Only a line number (${possibleLineNumber}) was specified, but no file path`);
+        return;
+      }
+    }
+
+    // Make sure the path exists
+    if (!fs.existsSync(filePath)) {
+      showErrorMessage(`Cannot open file: File does not exist: ${filePath}`);
+      return;
+    }
+
     const options: vscode.TextDocumentShowOptions = lineNumber !== undefined && typeof lineNumber === 'number' ? {
       selection: new vscode.Range(new vscode.Position(lineNumber, 0), new vscode.Position(lineNumber, 0))
     } : {};
+
     vscode.window.showTextDocument(vscode.Uri.file(filePath), options);
+  } catch (error) {
+    showErrorMessage(`Error opening file: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Error opening file:', error);
   }
 }
 
@@ -139,37 +181,37 @@ export function deleteReportFile(filePath: string): void {
   }
 }
 
-// Cache für die Badge-Aktualisierung
+// Cache for badge updates
 let lastUpdateTime = 0;
-const BADGE_UPDATE_THROTTLE = 1000; // Maximal eine Aktualisierung pro Sekunde
+const BADGE_UPDATE_THROTTLE = 1000; // Maximum one update per second
 
 // Updates the badge count for the tree view based on the number of log entries.
 export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
   const updateBadgeCount = () => {
-    // Throttling - nur einmal pro Sekunde aktualisieren
+    // Throttling - only update once per second
     const now = Date.now();
     if (now - lastUpdateTime < BADGE_UPDATE_THROTTLE) {
       return;
     }
     lastUpdateTime = now;
-    
+
     const logPath = path.join(magentoRoot, 'var', 'log');
     const reportPath = path.join(magentoRoot, 'var', 'report');
-    
-    // Prüfe, ob Verzeichnisse existieren, bevor wir sie lesen
+
+    // Check if directories exist before reading them
     const logFilesExist = pathExists(logPath);
     const reportFilesExist = pathExists(reportPath);
-    
+
     let totalLogEntries = 0;
     let totalReportFiles = 0;
-    
+
     if (logFilesExist) {
       const logFiles = logViewerProvider.getLogFilesWithoutUpdatingBadge(logPath);
       totalLogEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
     }
-    
+
     if (reportFilesExist) {
-      // Nur die Anzahl der Report-Dateien zählen, nicht den Inhalt laden
+      // Only count the number of report files, not load their content
       try {
         totalReportFiles = countFilesInDirectory(reportPath);
       } catch (error) {
@@ -202,26 +244,26 @@ export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvide
   vscode.commands.executeCommand('setContext', 'magentoLogViewerBadge', 0);
 }
 
-// Helper-Funktion zum effizienten Zählen von Dateien in einem Verzeichnis
+// Helper function for efficiently counting files in a directory
 function countFilesInDirectory(dir: string): number {
   if (!pathExists(dir)) {
     return 0;
   }
-  
+
   let count = 0;
   const items = fs.readdirSync(dir);
-  
+
   for (const item of items) {
     const fullPath = path.join(dir, item);
     const stats = fs.statSync(fullPath);
-    
+
     if (stats.isFile()) {
       count++;
     } else if (stats.isDirectory()) {
       count += countFilesInDirectory(fullPath);
     }
   }
-  
+
   return count;
 }
 
@@ -268,7 +310,7 @@ export function pathExists(p: string): boolean {
   return true;
 }
 
-// Cache für die Zeilenzahl von Dateien
+// Cache for file line counts
 const lineCountCache = new Map<string, { count: number, timestamp: number }>();
 
 // Returns the number of lines in the specified file.
@@ -276,47 +318,47 @@ export function getLineCount(filePath: string): number {
   try {
     const stats = fs.statSync(filePath);
     const cachedCount = lineCountCache.get(filePath);
-    
+
     if (cachedCount && cachedCount.timestamp >= stats.mtime.getTime()) {
       return cachedCount.count;
     }
-    
-    // Effizientere Zählung mit Streams für große Dateien
-    if (stats.size > 1024 * 1024) { // Für Dateien > 1MB
-      // Falls die Datei sehr groß ist, schätzen wir die Zeilenanzahl
-      // basierend auf einer Stichprobe der ersten 100KB
+
+    // More efficient counting with streams for large files
+    if (stats.size > 1024 * 1024) { // For files > 1MB
+      // If the file is very large, estimate the line count
+      // based on a sample of the first 100KB
       const sampleSize = 102400; // 100KB
       const buffer = Buffer.alloc(sampleSize);
       const fd = fs.openSync(filePath, 'r');
       const bytesRead = fs.readSync(fd, buffer, 0, sampleSize, 0);
       fs.closeSync(fd);
-      
+
       const sample = buffer.toString('utf-8', 0, bytesRead);
       const lines = sample.split('\n').length - 1;
-      
-      // Schätzung der Gesamtzeilenanzahl basierend auf der Stichprobe
+
+      // Estimate the total line count based on the sample
       const estimatedLines = Math.ceil(lines * (stats.size / bytesRead));
-      
+
       lineCountCache.set(filePath, {
         count: estimatedLines,
         timestamp: stats.mtime.getTime()
       });
-      
+
       return estimatedLines;
     } else {
-      // Für kleinere Dateien lesen wir sie vollständig ein
+      // For smaller files, we read them completely
       const fileContent = fs.readFileSync(filePath, 'utf-8');
       const lineCount = fileContent.split('\n').length;
-      
+
       lineCountCache.set(filePath, {
         count: lineCount,
         timestamp: stats.mtime.getTime()
       });
-      
+
       return lineCount;
     }
   } catch (error) {
-    return 0; // Im Fehlerfall 0 zurückgeben
+    return 0; // Return 0 in case of error
   }
 }
 
@@ -368,27 +410,27 @@ export function getLogItems(dir: string, parseTitle: (filePath: string) => strin
   return items;
 }
 
-// Cache für JSON-Reports um wiederholtes Parsen zu vermeiden
+// Cache for JSON reports to avoid repeated parsing
 const reportCache = new Map<string, { content: any, timestamp: number }>();
 
-// Hilfsfunktion zum Lesen und Parsen von JSON-Reports mit Caching
+// Helper function for reading and parsing JSON reports with caching
 function getReportContent(filePath: string): any | null {
   try {
     const stats = fs.statSync(filePath);
     const cachedReport = reportCache.get(filePath);
-    
+
     if (cachedReport && cachedReport.timestamp >= stats.mtime.getTime()) {
       return cachedReport.content;
     }
-    
+
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const report = JSON.parse(fileContent);
-    
+
     reportCache.set(filePath, {
       content: report,
       timestamp: stats.mtime.getTime()
     });
-    
+
     return report;
   } catch (error) {
     return null;
@@ -509,5 +551,71 @@ export function formatTimestamp(timestamp: string): string {
   } catch (error) {
     console.error('Failed to format timestamp:', error instanceof Error ? error.message : String(error));
     return timestamp; // Return original on error
+  }
+}
+
+// Shows a dialog to select a log file when no path is provided
+export function handleOpenFileWithoutPath(magentoRoot: string, lineNumber?: number): void {
+  try {
+    // Collect log and report files
+    const logPath = path.join(magentoRoot, 'var', 'log');
+    const reportPath = path.join(magentoRoot, 'var', 'report');
+    const logFiles: string[] = [];
+    const reportFiles: string[] = [];
+
+    // Check if the directories exist
+    if (pathExists(logPath)) {
+      const files = fs.readdirSync(logPath);
+      files.forEach(file => {
+        const filePath = path.join(logPath, file);
+        if (fs.lstatSync(filePath).isFile()) {
+          logFiles.push(filePath);
+        }
+      });
+    }
+
+    if (pathExists(reportPath)) {
+      const files = fs.readdirSync(reportPath);
+      files.forEach(file => {
+        const filePath = path.join(reportPath, file);
+        if (fs.lstatSync(filePath).isFile()) {
+          reportFiles.push(filePath);
+        }
+      });
+    }
+
+    // Create a list of options for the quick pick
+    const options: { label: string; description: string; filePath: string }[] = [
+      ...logFiles.map(filePath => ({
+        label: path.basename(filePath),
+        description: 'Log File',
+        filePath
+      })),
+      ...reportFiles.map(filePath => ({
+        label: path.basename(filePath),
+        description: 'Report File',
+        filePath
+      }))
+    ];
+
+    // If no files were found
+    if (options.length === 0) {
+      showErrorMessage('No log or report files found.');
+      return;
+    }
+
+    // Show a quick pick dialog
+    vscode.window.showQuickPick(options, {
+      placeHolder: lineNumber !== undefined ?
+        `Select a file to navigate to line ${lineNumber}` :
+        'Select a log or report file'
+    }).then(selection => {
+      if (selection) {
+        openFile(selection.filePath, lineNumber);
+      }
+    });
+  } catch (error) {
+    showErrorMessage(`Error fetching log files: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Error fetching log files:', error);
   }
 }
