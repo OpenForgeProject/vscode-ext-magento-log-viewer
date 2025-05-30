@@ -181,6 +181,23 @@ export function deleteReportFile(filePath: string): void {
   }
 }
 
+// Clears all report files in the Magento report directory.
+export function clearAllReportFiles(reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
+  vscode.window.showWarningMessage('Are you sure you want to delete all report files?', 'Yes', 'No').then(selection => {
+    if (selection === 'Yes') {
+      const reportPath = path.join(magentoRoot, 'var', 'report');
+      if (pathExists(reportPath)) {
+        const files = fs.readdirSync(reportPath);
+        files.forEach(file => fs.unlinkSync(path.join(reportPath, file)));
+        reportViewerProvider.refresh();
+        showInformationMessage('All report files have been cleared.');
+      } else {
+        showInformationMessage('No report files found to clear.');
+      }
+    }
+  });
+}
+
 // Cache for badge updates
 let lastUpdateTime = 0;
 const BADGE_UPDATE_THROTTLE = 1000; // Maximum one update per second

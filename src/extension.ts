@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile } from './helpers';
+import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearAllReportFiles } from './helpers';
 import { LogItem, ReportViewerProvider } from './logViewer';
 import { showUpdateNotification } from './updateNotifier';
 
@@ -37,7 +37,12 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     });
 
+    const clearAllReportsCommand = vscode.commands.registerCommand('magento-log-viewer.clearAllReportFiles', () => {
+      clearAllReportFiles(reportViewerProvider, magentoRoot);
+    });
+
     disposables.push(deleteCommand);
+    disposables.push(clearAllReportsCommand);
     context.subscriptions.push(...disposables);
   }
 }

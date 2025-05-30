@@ -257,6 +257,7 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
     const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
     const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
     this.groupByMessage = config.get<boolean>('groupByMessage', true);
+    this.updateBadge();
   }
 
   refresh(): void {
@@ -265,6 +266,14 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
       return;
     }
     this._onDidChangeTreeData.fire();
+    this.updateBadge();
+  }
+
+  private updateBadge(): void {
+    const reportPath = path.join(this.workspaceRoot, 'var', 'report');
+    const reportFiles = this.getLogFilesWithoutUpdatingBadge(reportPath);
+    const hasReports = reportFiles.length > 0;
+    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasReportFiles', hasReports);
   }
 
   getTreeItem(element: LogItem): vscode.TreeItem {

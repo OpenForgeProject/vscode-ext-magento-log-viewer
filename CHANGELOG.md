@@ -8,6 +8,10 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+### [1.12.0] - 2025-05-30
+
+- feat: Add functionality to delete report files
+
 ### [1.11.0] - 2025-05-29
 
 - feat: improved timestamp formatting for log entries
@@ -21,6 +25,7 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - fix: improve type safety in report handling functions
 
 ### [1.10.2] - 2025-05-28
+
 - update: `readme.md` update
 - fix: update notification for better performance
 - fix: update configuration keys for Magento project selection to correctly save "Is this a Magento project" response
