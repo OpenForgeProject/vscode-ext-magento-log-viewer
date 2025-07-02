@@ -10,6 +10,9 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   private groupByMessage: boolean;
   private disposables: vscode.Disposable[] = [];
   private isInitialized: boolean = false;
+  public searchTerm: string = '';
+  public searchCaseSensitive: boolean = false;
+  public searchUseRegex: boolean = false;
 
   constructor(private workspaceRoot: string) {
     if (!LogViewerProvider.statusBarItem) {
@@ -21,6 +24,8 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
     const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
     this.groupByMessage = config.get<boolean>('groupByMessage', true);
+    this.searchCaseSensitive = config.get<boolean>('searchCaseSensitive', false);
+    this.searchUseRegex = config.get<boolean>('searchUseRegex', false);
     this.updateRefreshButtonVisibility();
 
     // Delay initial heavy operations to avoid competing with indexing
@@ -41,6 +46,56 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
 
   private updateRefreshButtonVisibility(): void {
     vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasMagentoRoot', !!this.workspaceRoot);
+    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasActiveSearch', !!this.searchTerm);
+  }
+
+  // Search functionality
+  public async searchInLogs(): Promise<void> {
+    const searchOptions = await vscode.window.showInputBox({
+      prompt: 'Search in log entries...',
+      placeHolder: 'Enter search term (supports regex if enabled in settings)',
+      value: this.searchTerm
+    });
+
+    if (searchOptions !== undefined) {
+      this.searchTerm = searchOptions;
+      this.updateRefreshButtonVisibility();
+      this.refresh();
+
+      if (this.searchTerm) {
+        vscode.window.showInformationMessage(`Searching for: "${this.searchTerm}"`);
+      }
+    }
+  }
+
+  public clearSearch(): void {
+    this.searchTerm = '';
+    this.updateRefreshButtonVisibility();
+    this.refresh();
+    vscode.window.showInformationMessage('Search cleared');
+  }
+
+  public matchesSearchTerm(text: string): boolean {
+    if (!this.searchTerm) {
+      return true; // No search term, show all
+    }
+
+    try {
+      if (this.searchUseRegex) {
+        const flags = this.searchCaseSensitive ? 'g' : 'gi';
+        const regex = new RegExp(this.searchTerm, flags);
+        return regex.test(text);
+      } else {
+        const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
+        const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
+        return searchText.includes(searchTerm);
+      }
+    } catch (error) {
+      // Invalid regex, fall back to simple string search
+      const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
+      const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
+      return searchText.includes(searchTerm);
+    }
   }
 
   refresh(): void {
@@ -134,7 +189,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     return items;
   }
 
-  private getLogFileLines(filePath: string): LogItem[] {
+  public getLogFileLines(filePath: string): LogItem[] {
     const fileContent = getCachedFileContent(filePath);
     if (!fileContent) {
       return [];
@@ -144,7 +199,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     return groupedLines;
   }
 
-  private groupLogEntries(lines: string[], filePath: string): LogItem[] {
+  public groupLogEntries(lines: string[], filePath: string): LogItem[] {
     const groupedByType = new Map<string, { message: string, line: string, lineNumber: number }[]>();
 
     lines.forEach((line, index) => {
@@ -152,9 +207,13 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       if (match) {
         const level = match[1].toUpperCase();
         const message = line.replace(/^\[.*?\]\s*\.\w+:\s*/, '');
-        const entries = groupedByType.get(level) || [];
-        entries.push({ message, line, lineNumber: index });
-        groupedByType.set(level, entries);
+
+        // Apply search filter
+        if (this.matchesSearchTerm(line) || this.matchesSearchTerm(message)) {
+          const entries = groupedByType.get(level) || [];
+          entries.push({ message, line, lineNumber: index });
+          groupedByType.set(level, entries);
+        }
       }
     });
 
@@ -163,9 +222,12 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
         const groupedByMessage = new Map<string, { line: string, lineNumber: number }[]>();
 
         entries.forEach(entry => {
-          const messageGroup = groupedByMessage.get(entry.message) || [];
-          messageGroup.push({ line: entry.line, lineNumber: entry.lineNumber });
-          groupedByMessage.set(entry.message, messageGroup);
+          // Apply additional search filtering on message level
+          if (this.matchesSearchTerm(entry.message) || this.matchesSearchTerm(entry.line)) {
+            const messageGroup = groupedByMessage.get(entry.message) || [];
+            messageGroup.push({ line: entry.line, lineNumber: entry.lineNumber });
+            groupedByMessage.set(entry.message, messageGroup);
+          }
         });
 
         const messageGroups = Array.from(groupedByMessage.entries()).map(([message, messageEntries]) => {
@@ -189,30 +251,42 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
           );
         }).sort((a, b) => a.label.localeCompare(b.label)); // Sort message groups alphabetically
 
-        const logFile = new LogItem(`${level} (${entries.length}, grouped)`, vscode.TreeItemCollapsibleState.Collapsed, undefined, messageGroups);
-        logFile.iconPath = getIconForLogLevel(level);
-        return logFile;
+        // Only add log level if it has matching entries after filtering
+        if (messageGroups.length > 0) {
+          const logFile = new LogItem(`${level} (${entries.length}, grouped)`, vscode.TreeItemCollapsibleState.Collapsed, undefined, messageGroups);
+          logFile.iconPath = getIconForLogLevel(level);
+          return logFile;
+        }
+        return null;
       } else {
-        const logFile = new LogItem(`${level} (${entries.length})`, vscode.TreeItemCollapsibleState.Collapsed, undefined,
-          entries.map(entry => {
-            const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
-            // Format the timestamp in the log entry
-            const formattedLine = formatTimestamp(entry.line);
-            return new LogItem(
-              `Line ${lineNumber}:  ${formattedLine}`,
-              vscode.TreeItemCollapsibleState.None,
-              {
-                command: 'magento-log-viewer.openFileAtLine',
-                title: 'Open Log File at Line',
-                arguments: [filePath, entry.lineNumber]
-              }
-            );
-          }).sort((a, b) => a.label.localeCompare(b.label)) // Sort entries alphabetically
+        // Filter entries in non-grouped mode too
+        const filteredEntries = entries.filter(entry =>
+          this.matchesSearchTerm(entry.message) || this.matchesSearchTerm(entry.line)
         );
-        logFile.iconPath = getIconForLogLevel(level);
-        return logFile;
+
+        if (filteredEntries.length > 0) {
+          const logFile = new LogItem(`${level} (${filteredEntries.length})`, vscode.TreeItemCollapsibleState.Collapsed, undefined,
+            filteredEntries.map(entry => {
+              const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
+              // Format the timestamp in the log entry
+              const formattedLine = formatTimestamp(entry.line);
+              return new LogItem(
+                `Line ${lineNumber}:  ${formattedLine}`,
+                vscode.TreeItemCollapsibleState.None,
+                {
+                  command: 'magento-log-viewer.openFileAtLine',
+                  title: 'Open Log File at Line',
+                  arguments: [filePath, entry.lineNumber]
+                }
+              );
+            }).sort((a, b) => a.label.localeCompare(b.label)) // Sort entries alphabetically
+          );
+          logFile.iconPath = getIconForLogLevel(level);
+          return logFile;
+        }
+        return null;
       }
-    }).sort((a, b) => a.label.localeCompare(b.label)); // Sort log files alphabetically
+    }).filter((item): item is LogItem => item !== null).sort((a, b) => a.label.localeCompare(b.label)); // Sort log files alphabetically
   }
 
   getLogFilesWithoutUpdatingBadge(dir: string): LogItem[] {
@@ -264,7 +338,9 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     const logPath = path.join(this.workspaceRoot, 'var', 'log');
     const logFiles = this.getLogFilesWithoutUpdatingBadge(logPath);
     const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
-    LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
+
+    const searchInfo = this.searchTerm ? ` | Search: "${this.searchTerm}"` : '';
+    LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}${searchInfo}`;
   }
 
   dispose() {

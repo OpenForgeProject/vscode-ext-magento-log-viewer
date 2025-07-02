@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -76,6 +76,16 @@
         "command": "magento-log-viewer.openFileAtLine",
         "title": "Open Log File at Line",
         "icon": "$(go-to-file)"
+      },
+      {
+        "command": "magento-log-viewer.searchLogs",
+        "title": "Search in Logs",
+        "icon": "$(search)"
+      },
+      {
+        "command": "magento-log-viewer.clearSearch",
+        "title": "Clear Search",
+        "icon": "$(clear-all)"
       }
     ],
     "configuration": {
@@ -103,6 +113,18 @@
           "type": "boolean",
           "default": true,
           "description": "Group log entries by message content",
+          "scope": "resource"
+        },
+        "magentoLogViewer.searchCaseSensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable case-sensitive search in log entries",
+          "scope": "resource"
+        },
+        "magentoLogViewer.searchUseRegex": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable regular expression search in log entries",
           "scope": "resource"
         }
       }
@@ -187,14 +209,24 @@
     "menus": {
       "view/title": [
         {
+          "command": "magento-log-viewer.searchLogs",
+          "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
+          "group": "navigation@1"
+        },
+        {
+          "command": "magento-log-viewer.clearSearch",
+          "when": "view == logFiles && magentoLogViewer.hasActiveSearch",
+          "group": "navigation@2"
+        },
+        {
           "command": "magento-log-viewer.clearAllLogFiles",
           "when": "view == logFiles && magentoLogViewer.hasLogFiles",
-          "group": "navigation"
+          "group": "navigation@3"
         },
         {
           "command": "magento-log-viewer.refreshLogFiles",
           "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
-          "group": "navigation"
+          "group": "navigation@4"
         },
         {
           "command": "magento-log-viewer.refreshReportFiles",

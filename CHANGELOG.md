@@ -8,6 +8,14 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+### [1.14.0] - 2025-07-02
+
+- feat: Added Quick Search/Filter Box functionality for log entries
+- feat: Real-time filtering of log entries with case-sensitive and regex support
+- feat: Search UI integration with navigation buttons in tree view header
+- feat: Active search indicator with clear search capability
+- ui: Enhanced log viewer with search term highlighting and status display
+
 ### [1.13.0] - 2025-07-02
 
 - perf: Enhanced file system caching with intelligent memory management

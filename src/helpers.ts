@@ -96,7 +96,11 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
 // Registers commands for the extension.
 export function registerCommands(context: vscode.ExtensionContext, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
   vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
-  vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => reportViewerProvider.refresh());  // Improved command registration for openFile
+  vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => reportViewerProvider.refresh());
+
+  // Search commands
+  vscode.commands.registerCommand('magento-log-viewer.searchLogs', () => logViewerProvider.searchInLogs());
+  vscode.commands.registerCommand('magento-log-viewer.clearSearch', () => logViewerProvider.clearSearch());  // Improved command registration for openFile
   vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string | unknown, lineNumber?: number) => {
     // If filePath is not a string, show a selection box with available log files
     if (typeof filePath !== 'string') {
