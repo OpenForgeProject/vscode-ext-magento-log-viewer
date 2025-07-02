@@ -75,12 +75,18 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
   const reportPath = path.join(magentoRoot, 'var', 'report');
 
   const logWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(logPath, '*'));
-  logWatcher.onDidChange(() => logViewerProvider.refresh());
+  logWatcher.onDidChange((uri) => {
+    invalidateFileCache(uri.fsPath);
+    logViewerProvider.refresh();
+  });
   logWatcher.onDidCreate(() => logViewerProvider.refresh());
   logWatcher.onDidDelete(() => logViewerProvider.refresh());
 
   const reportWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(reportPath, '*'));
-  reportWatcher.onDidChange(() => reportViewerProvider.refresh());
+  reportWatcher.onDidChange((uri) => {
+    invalidateFileCache(uri.fsPath);
+    reportViewerProvider.refresh();
+  });
   reportWatcher.onDidCreate(() => reportViewerProvider.refresh());
   reportWatcher.onDidDelete(() => reportViewerProvider.refresh());
 
@@ -179,23 +185,6 @@ export function deleteReportFile(filePath: string): void {
   } catch (error) {
     showErrorMessage(`Failed to delete report file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
   }
-}
-
-// Clears all report files in the Magento report directory.
-export function clearAllReportFiles(reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
-  vscode.window.showWarningMessage('Are you sure you want to delete all report files?', 'Yes', 'No').then(selection => {
-    if (selection === 'Yes') {
-      const reportPath = path.join(magentoRoot, 'var', 'report');
-      if (pathExists(reportPath)) {
-        const files = fs.readdirSync(reportPath);
-        files.forEach(file => fs.unlinkSync(path.join(reportPath, file)));
-        reportViewerProvider.refresh();
-        showInformationMessage('All report files have been cleared.');
-      } else {
-        showInformationMessage('No report files found to clear.');
-      }
-    }
-  });
 }
 
 // Cache for badge updates
@@ -363,8 +352,12 @@ export function getLineCount(filePath: string): number {
 
       return estimatedLines;
     } else {
-      // For smaller files, we read them completely
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      // For smaller files, use cached content
+      const fileContent = getCachedFileContent(filePath);
+      if (!fileContent) {
+        return 0;
+      }
+
       const lineCount = fileContent.split('\n').length;
 
       lineCountCache.set(filePath, {
@@ -430,6 +423,11 @@ export function getLogItems(dir: string, parseTitle: (filePath: string) => strin
 // Cache for JSON reports to avoid repeated parsing
 const reportCache = new Map<string, { content: unknown, timestamp: number }>();
 
+// Cache for file contents to avoid repeated reads
+const fileContentCache = new Map<string, { content: string, timestamp: number }>();
+const FILE_CACHE_MAX_SIZE = 50; // Maximum number of files to cache
+const FILE_CACHE_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB max file size for caching
+
 // Helper function for reading and parsing JSON reports with caching
 function getReportContent(filePath: string): unknown | null {
   try {
@@ -440,7 +438,11 @@ function getReportContent(filePath: string): unknown | null {
       return cachedReport.content;
     }
 
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const fileContent = getCachedFileContent(filePath);
+    if (!fileContent) {
+      return null;
+    }
+
     const report = JSON.parse(fileContent);
 
     reportCache.set(filePath, {
@@ -452,6 +454,64 @@ function getReportContent(filePath: string): unknown | null {
   } catch (error) {
     return null;
   }
+}
+
+// Enhanced file content caching function
+export function getCachedFileContent(filePath: string): string | null {
+  try {
+    // Check if file exists first
+    if (!fs.existsSync(filePath)) {
+      return null;
+    }
+
+    const stats = fs.statSync(filePath);
+
+    // Don't cache files larger than 5MB to prevent memory issues
+    if (stats.size > FILE_CACHE_MAX_FILE_SIZE) {
+      return fs.readFileSync(filePath, 'utf-8');
+    }
+
+    const cachedContent = fileContentCache.get(filePath);
+
+    // Return cached content if it's still valid
+    if (cachedContent && cachedContent.timestamp >= stats.mtime.getTime()) {
+      return cachedContent.content;
+    }
+
+    // Read file content
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    // Manage cache size - remove oldest entries if cache is full
+    if (fileContentCache.size >= FILE_CACHE_MAX_SIZE) {
+      const oldestKey = fileContentCache.keys().next().value;
+      if (oldestKey) {
+        fileContentCache.delete(oldestKey);
+      }
+    }
+
+    // Cache the content
+    fileContentCache.set(filePath, {
+      content,
+      timestamp: stats.mtime.getTime()
+    });
+
+    return content;
+  } catch (error) {
+    console.error(`Error reading file ${filePath}:`, error);
+    return null;
+  }
+}
+
+// Function to clear file content cache (useful for testing or memory management)
+export function clearFileContentCache(): void {
+  fileContentCache.clear();
+}
+
+// Function to invalidate cache for a specific file
+export function invalidateFileCache(filePath: string): void {
+  fileContentCache.delete(filePath);
+  reportCache.delete(filePath);
+  lineCountCache.delete(filePath);
 }
 
 export function parseReportTitle(filePath: string): string {

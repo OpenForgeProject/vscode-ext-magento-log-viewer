@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { pathExists, getLineCount, getIconForLogLevel, getLogItems, parseReportTitle, getIconForReport, formatTimestamp } from './helpers';
+import { pathExists, getLineCount, getIconForLogLevel, getLogItems, parseReportTitle, getIconForReport, formatTimestamp, getCachedFileContent } from './helpers';
 
 export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
@@ -9,6 +9,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   public static statusBarItem: vscode.StatusBarItem;
   private groupByMessage: boolean;
   private disposables: vscode.Disposable[] = [];
+  private isInitialized: boolean = false;
 
   constructor(private workspaceRoot: string) {
     if (!LogViewerProvider.statusBarItem) {
@@ -20,8 +21,22 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
     const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
     this.groupByMessage = config.get<boolean>('groupByMessage', true);
-    this.updateBadge();
     this.updateRefreshButtonVisibility();
+
+    // Delay initial heavy operations to avoid competing with indexing
+    this.initializeAsync();
+  }
+
+  private async initializeAsync(): Promise<void> {
+    try {
+      // Wait a bit for VS Code indexing to settle
+      await new Promise(resolve => setTimeout(resolve, 300));
+      this.updateBadge();
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Error during LogViewerProvider initialization:', error);
+      this.isInitialized = true; // Set to true anyway to prevent blocking
+    }
   }
 
   private updateRefreshButtonVisibility(): void {
@@ -46,12 +61,27 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       return Promise.resolve([]);
     }
 
+    // Show loading state if not yet initialized
+    if (!this.isInitialized) {
+      return Promise.resolve([new LogItem('Loading log files...', vscode.TreeItemCollapsibleState.None)]);
+    }
+
     if (element) {
       return Promise.resolve(element.children || []);
     } else {
-      const logPath = path.join(this.workspaceRoot, 'var', 'log');
-      const logItems = this.getLogItems(logPath, 'Logs');
-      return Promise.resolve(logItems);
+      return new Promise((resolve) => {
+        // Use setTimeout to yield control and prevent blocking the UI thread
+        setTimeout(() => {
+          try {
+            const logPath = path.join(this.workspaceRoot, 'var', 'log');
+            const logItems = this.getLogItems(logPath, 'Logs');
+            resolve(logItems);
+          } catch (error) {
+            console.error('Error getting log children:', error);
+            resolve([new LogItem('Error loading log files', vscode.TreeItemCollapsibleState.None)]);
+          }
+        }, 0);
+      });
     }
   }
 
@@ -105,7 +135,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   }
 
   private getLogFileLines(filePath: string): LogItem[] {
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const fileContent = getCachedFileContent(filePath);
+    if (!fileContent) {
+      return [];
+    }
     const lines = fileContent.split('\n');
     const groupedLines = this.groupLogEntries(lines, filePath);
     return groupedLines;
@@ -192,15 +225,17 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
         }        // Count the actual log entries instead of just lines
         let logEntryCount = 0;
         try {
-          const fileContent = fs.readFileSync(filePath, 'utf-8');
-          const lines = fileContent.split('\n');
+          const fileContent = getCachedFileContent(filePath);
+          if (fileContent) {
+            const lines = fileContent.split('\n');
 
-          // Only count valid log entries matching the expected pattern
-          lines.forEach(line => {
-            if (line.match(/\.(\w+):/)) { // The pattern for log entries
-              logEntryCount++;
-            }
-          });
+            // Only count valid log entries matching the expected pattern
+            lines.forEach(line => {
+              if (line.match(/\.(\w+):/)) { // The pattern for log entries
+                logEntryCount++;
+              }
+            });
+          }
         } catch (error) {
             console.error(`Error reading file ${filePath}:`, error);
         }
@@ -252,12 +287,26 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   readonly onDidChangeTreeData: vscode.Event<LogItem | undefined | void> = this._onDidChangeTreeData.event;
   private groupByMessage: boolean;
   private disposables: vscode.Disposable[] = [];
+  private isInitialized: boolean = false;
 
   constructor(private workspaceRoot: string) {
     const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
     const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
     this.groupByMessage = config.get<boolean>('groupByMessage', true);
-    this.updateBadge();
+
+    // Initialize asynchronously to avoid competing with indexing
+    this.initializeAsync();
+  }
+
+  private async initializeAsync(): Promise<void> {
+    try {
+      // Wait a bit for VS Code indexing to settle
+      await new Promise(resolve => setTimeout(resolve, 300));
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Error during ReportViewerProvider initialization:', error);
+      this.isInitialized = true; // Set to true anyway to prevent blocking
+    }
   }
 
   refresh(): void {
@@ -266,14 +315,6 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
       return;
     }
     this._onDidChangeTreeData.fire();
-    this.updateBadge();
-  }
-
-  private updateBadge(): void {
-    const reportPath = path.join(this.workspaceRoot, 'var', 'report');
-    const reportFiles = this.getLogFilesWithoutUpdatingBadge(reportPath);
-    const hasReports = reportFiles.length > 0;
-    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasReportFiles', hasReports);
   }
 
   getTreeItem(element: LogItem): vscode.TreeItem {
@@ -285,15 +326,31 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
       return Promise.resolve([]);
     }
 
+    // Show loading state if not yet initialized
+    if (!this.isInitialized) {
+      return Promise.resolve([new LogItem('Loading report files...', vscode.TreeItemCollapsibleState.None)]);
+    }
+
     if (element) {
       return Promise.resolve(element.children || []);
     } else {
-      const reportPath = path.join(this.workspaceRoot, 'var', 'report');
-      const reportItems = this.getLogItems(reportPath, 'Reports');
-      if (reportItems.length === 0) {
-        return Promise.resolve([new LogItem('No report files found', vscode.TreeItemCollapsibleState.None)]);
-      }
-      return Promise.resolve(reportItems);
+      return new Promise((resolve) => {
+        // Use setTimeout to yield control and prevent blocking the UI thread
+        setTimeout(() => {
+          try {
+            const reportPath = path.join(this.workspaceRoot, 'var', 'report');
+            const reportItems = this.getLogItems(reportPath, 'Reports');
+            if (reportItems.length === 0) {
+              resolve([new LogItem('No report files found', vscode.TreeItemCollapsibleState.None)]);
+            } else {
+              resolve(reportItems);
+            }
+          } catch (error) {
+            console.error('Error getting report children:', error);
+            resolve([new LogItem('Error loading report files', vscode.TreeItemCollapsibleState.None)]);
+          }
+        }, 0);
+      });
     }
   }
 

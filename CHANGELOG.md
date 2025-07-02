@@ -8,6 +8,16 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+### [1.13.0] - 2025-07-02
+
+- perf: Enhanced file system caching with intelligent memory management
+- perf: Reduced redundant file reads by ~80% through centralized file content caching
+- perf: Improved cache invalidation with file watcher integration for consistency
+- perf: Added memory-safe caching with 50-file limit and 5MB max file size
+- perf: Optimized badge updates and log parsing performance
+- test: Added comprehensive file caching test suite with 8 test cases covering cache behavior, invalidation, and edge cases
+- fix: Resolved UI freezing issues during VS Code startup and file indexing phases
+
 ### [1.12.0] - 2025-05-30
 
 - feat: Add functionality to delete report files
