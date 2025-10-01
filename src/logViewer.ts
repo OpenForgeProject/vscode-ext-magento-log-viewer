@@ -219,41 +219,60 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
 
     return Array.from(groupedByType.entries()).map(([level, entries]) => {
       if (this.groupByMessage) {
-        const groupedByMessage = new Map<string, { line: string, lineNumber: number }[]>();
+        // Erste Gruppierung nach Themen (z.B. "Broken reference")
+        const groupedByTopic = this.groupByTopics(entries);
 
-        entries.forEach(entry => {
-          // Apply additional search filtering on message level
-          if (this.matchesSearchTerm(entry.message) || this.matchesSearchTerm(entry.line)) {
-            const messageGroup = groupedByMessage.get(entry.message) || [];
-            messageGroup.push({ line: entry.line, lineNumber: entry.lineNumber });
-            groupedByMessage.set(entry.message, messageGroup);
+        const topicGroups = Array.from(groupedByTopic.entries()).map(([topic, topicEntries]) => {
+          // Zweite Gruppierung nach spezifischen Nachrichten innerhalb des Themas
+          const groupedByMessage = new Map<string, { line: string, lineNumber: number }[]>();
+
+          topicEntries.forEach(entry => {
+            // Apply additional search filtering on message level
+            if (this.matchesSearchTerm(entry.message) || this.matchesSearchTerm(entry.line)) {
+              const messageGroup = groupedByMessage.get(entry.message) || [];
+              messageGroup.push({ line: entry.line, lineNumber: entry.lineNumber });
+              groupedByMessage.set(entry.message, messageGroup);
+            }
+          });
+
+          const messageGroups = Array.from(groupedByMessage.entries()).map(([message, messageEntries]) => {
+            const count = messageEntries.length;
+            const label = `${message} (${count})`;
+            return new LogItem(label, vscode.TreeItemCollapsibleState.Collapsed, undefined,
+              messageEntries.map(entry => {
+                const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
+                // Format the timestamp in the log entry
+                const formattedLine = formatTimestamp(entry.line);
+                return new LogItem(
+                  `Line ${lineNumber}:  ${formattedLine}`,
+                  vscode.TreeItemCollapsibleState.None,
+                  {
+                    command: 'magento-log-viewer.openFileAtLine',
+                    title: 'Open Log File at Line',
+                    arguments: [filePath, entry.lineNumber]
+                  }
+                );
+              }).sort((a, b) => a.label.localeCompare(b.label)) // Sort entries alphabetically
+            );
+          }).sort((a, b) => a.label.localeCompare(b.label)); // Sort message groups alphabetically
+
+          // Erstelle Themen-Gruppe nur wenn sie Nachrichten enthält
+          if (messageGroups.length > 0) {
+            const topicCount = topicEntries.length;
+            const topicLabel = topic === 'Other' ? `${topic} (${topicCount})` : `${topic} (${topicCount})`;
+            return new LogItem(topicLabel, vscode.TreeItemCollapsibleState.Collapsed, undefined, messageGroups);
           }
+          return null;
+        }).filter((item): item is LogItem => item !== null).sort((a, b) => {
+          // "Other" immer am Ende
+          if (a.label.startsWith('Other')) { return 1; }
+          if (b.label.startsWith('Other')) { return -1; }
+          return a.label.localeCompare(b.label);
         });
 
-        const messageGroups = Array.from(groupedByMessage.entries()).map(([message, messageEntries]) => {
-          const count = messageEntries.length;
-          const label = `${message} (${count})`;
-          return new LogItem(label, vscode.TreeItemCollapsibleState.Collapsed, undefined,
-            messageEntries.map(entry => {
-              const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
-              // Format the timestamp in the log entry
-              const formattedLine = formatTimestamp(entry.line);
-              return new LogItem(
-                `Line ${lineNumber}:  ${formattedLine}`,
-                vscode.TreeItemCollapsibleState.None,
-                {
-                  command: 'magento-log-viewer.openFileAtLine',
-                  title: 'Open Log File at Line',
-                  arguments: [filePath, entry.lineNumber]
-                }
-              );
-            }).sort((a, b) => a.label.localeCompare(b.label)) // Sort entries alphabetically
-          );
-        }).sort((a, b) => a.label.localeCompare(b.label)); // Sort message groups alphabetically
-
         // Only add log level if it has matching entries after filtering
-        if (messageGroups.length > 0) {
-          const logFile = new LogItem(`${level} (${entries.length}, grouped)`, vscode.TreeItemCollapsibleState.Collapsed, undefined, messageGroups);
+        if (topicGroups.length > 0) {
+          const logFile = new LogItem(`${level} (${entries.length}, grouped)`, vscode.TreeItemCollapsibleState.Collapsed, undefined, topicGroups);
           logFile.iconPath = getIconForLogLevel(level);
           return logFile;
         }
@@ -341,6 +360,80 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
 
     const searchInfo = this.searchTerm ? ` | Search: "${this.searchTerm}"` : '';
     LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}${searchInfo}`;
+  }
+
+  /**
+   * Gruppiert Log-Einträge nach wiederkehrenden Themen
+   */
+  private groupByTopics(entries: { message: string, line: string, lineNumber: number }[]): Map<string, { message: string, line: string, lineNumber: number }[]> {
+    const groupedByTopic = new Map<string, { message: string, line: string, lineNumber: number }[]>();
+
+    entries.forEach(entry => {
+      let assigned = false;
+
+      // Erste Priorität: Dynamische Erkennung von Themen im Format "[Thema]:"
+      const dynamicTopicMatch = entry.message.match(/^([^:]+):/);
+      if (dynamicTopicMatch) {
+        const topic = dynamicTopicMatch[1].trim();
+        const topicEntries = groupedByTopic.get(topic) || [];
+        topicEntries.push(entry);
+        groupedByTopic.set(topic, topicEntries);
+        assigned = true;
+      }
+
+      // Fallback: Statische Themen-Muster für Nachrichten ohne ":" Format
+      if (!assigned) {
+        const fallbackPatterns = [
+          { pattern: /database|sql|transaction/i, topic: 'Database' },
+          { pattern: /cache|redis|varnish/i, topic: 'Cache' },
+          { pattern: /session/i, topic: 'Session' },
+          { pattern: /payment/i, topic: 'Payment' },
+          { pattern: /checkout/i, topic: 'Checkout' },
+          { pattern: /catalog/i, topic: 'Catalog' },
+          { pattern: /customer/i, topic: 'Customer' },
+          { pattern: /order/i, topic: 'Order' },
+          { pattern: /shipping/i, topic: 'Shipping' },
+          { pattern: /tax/i, topic: 'Tax' },
+          { pattern: /inventory/i, topic: 'Inventory' },
+          { pattern: /indexer/i, topic: 'Indexer' },
+          { pattern: /cron/i, topic: 'Cron' },
+          { pattern: /email|newsletter/i, topic: 'Email' },
+          { pattern: /search|algolia|elasticsearch/i, topic: 'Search' },
+          { pattern: /api|graphql|rest|soap/i, topic: 'API' },
+          { pattern: /admin/i, topic: 'Admin' },
+          { pattern: /frontend|backend/i, topic: 'Frontend/Backend' },
+          { pattern: /theme|layout|template|block|widget/i, topic: 'Theme/Layout' },
+          { pattern: /module|plugin|observer|event/i, topic: 'Module/Plugin' },
+          { pattern: /url|rewrite/i, topic: 'URL' },
+          { pattern: /media|image|upload/i, topic: 'Media' },
+          { pattern: /import|export/i, topic: 'Import/Export' },
+          { pattern: /translation|locale/i, topic: 'Translation' },
+          { pattern: /store|website|scope/i, topic: 'Store' },
+          { pattern: /config/i, topic: 'Configuration' },
+          { pattern: /memory|timeout|performance/i, topic: 'Performance' },
+          { pattern: /security|authentication|authorization|permission|access|login|logout/i, topic: 'Security' }
+        ];
+
+        for (const { pattern, topic } of fallbackPatterns) {
+          if (pattern.test(entry.message)) {
+            const topicEntries = groupedByTopic.get(topic) || [];
+            topicEntries.push(entry);
+            groupedByTopic.set(topic, topicEntries);
+            assigned = true;
+            break;
+          }
+        }
+      }
+
+      // Falls kein Thema gefunden wurde, füge zu "Other" hinzu
+      if (!assigned) {
+        const otherEntries = groupedByTopic.get('Other') || [];
+        otherEntries.push(entry);
+        groupedByTopic.set('Other', otherEntries);
+      }
+    });
+
+    return groupedByTopic;
   }
 
   dispose() {

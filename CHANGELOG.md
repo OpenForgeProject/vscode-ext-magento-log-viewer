@@ -8,6 +8,10 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+### [1.15.0] - 2025-10-01
+
+- feat: Added support for an additional grouping level for log entries by title
+
 ### [1.14.0] - 2025-07-02
 
 - feat: Added Quick Search/Filter Box functionality for log entries
