@@ -631,15 +631,15 @@ export async function getCachedFileContentAsync(filePath: string): Promise<strin
 // Stream-based reading for very large files
 async function readLargeFileAsync(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
+    const chunks: string[] = [];
     const stream = fs.createReadStream(filePath, { encoding: 'utf8' });
 
-    stream.on('data', (chunk: Buffer) => {
+    stream.on('data', (chunk: string) => {
       chunks.push(chunk);
     });
 
     stream.on('end', () => {
-      resolve(Buffer.concat(chunks).toString('utf8'));
+      resolve(chunks.join(''));
     });
 
     stream.on('error', (error) => {
@@ -647,9 +647,7 @@ async function readLargeFileAsync(filePath: string): Promise<string> {
       reject(error);
     });
   });
-}
-
-// Enhanced file content caching function (synchronous - for compatibility)
+}// Enhanced file content caching function (synchronous - for compatibility)
 export function getCachedFileContent(filePath: string): string | null {
   try {
     // Check if file exists first

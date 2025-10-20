@@ -4,7 +4,7 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
-### [1.16.0] - TBD
+### [1.16.0] - 2025-10-20
 
 - perf: Implemented dynamic cache configuration based on available system memory
 - perf: Added intelligent cache size management with automatic optimization under memory pressure
@@ -21,6 +21,8 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - fix: Improved memory usage estimation and monitoring for cached file contents
 - fix: Eliminated redundant `pathExists` function implementations across modules
 - fix: Consolidated all path existence checks to use centralized helpers functions
+- test: Added comprehensive test coverage for new cache configuration options
+- test: Added async file operations test suite with large file handling validation
 
 ---
 
