@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import * as path from 'path';
-import { pathExists, getLineCount, getIconForLogLevel, getLogItems, parseReportTitle, getIconForReport, formatTimestamp, getCachedFileContent } from './helpers';
+import { pathExists, pathExistsAsync, getLineCount, getIconForLogLevel, getLogItems, parseReportTitle, getIconForReport, formatTimestamp, getCachedFileContent } from './helpers';
 
 export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
@@ -125,18 +126,86 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       return Promise.resolve(element.children || []);
     } else {
       return new Promise((resolve) => {
-        // Use setTimeout to yield control and prevent blocking the UI thread
-        setTimeout(() => {
-          try {
-            const logPath = path.join(this.workspaceRoot, 'var', 'log');
-            const logItems = this.getLogItems(logPath, 'Logs');
-            resolve(logItems);
-          } catch (error) {
-            console.error('Error getting log children:', error);
-            resolve([new LogItem('Error loading log files', vscode.TreeItemCollapsibleState.None)]);
-          }
-        }, 0);
+        // Use async processing to prevent blocking the UI thread
+        this.getLogItemsAsync(this.workspaceRoot).then(logItems => {
+          resolve(logItems);
+        }).catch((error: Error) => {
+          console.error('Error getting log children:', error);
+          resolve([new LogItem('Error loading log files', vscode.TreeItemCollapsibleState.None)]);
+        });
       });
+    }
+  }
+
+  private async getLogItemsAsync(workspaceRoot: string): Promise<LogItem[]> {
+    const logPath = path.join(workspaceRoot, 'var', 'log');
+
+    if (!(await pathExistsAsync(logPath))) {
+      return [new LogItem(`No items found`, vscode.TreeItemCollapsibleState.None)];
+    }
+
+    try {
+      const files = await fsPromises.readdir(logPath);
+      if (files.length === 0) {
+        return [new LogItem(`No items found`, vscode.TreeItemCollapsibleState.None)];
+      }
+
+      // Process files in batches for better performance
+      const items: LogItem[] = [];
+      const batchSize = 5;
+
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+
+        const batchPromises = batch.map(async (file) => {
+          const filePath = path.join(logPath, file);
+
+          try {
+            const stats = await fsPromises.stat(filePath);
+            if (!stats.isFile()) {
+              return null;
+            }
+
+            // Get children synchronously for now (can be optimized later)
+            const children = this.getLogFileLines(filePath);
+
+            // Count the actual number of log entries
+            const logEntryCount = children.reduce((total, level) => {
+              const match = level.label.match(/\((\d+)(?:,\s*grouped)?\)/);
+              return total + (match ? parseInt(match[1], 10) : 0);
+            }, 0);
+
+            const displayCount = logEntryCount > 0 ? logEntryCount : 0;
+            const logFile = new LogItem(`${file} (${displayCount})`,
+              displayCount > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+              {
+                command: 'magento-log-viewer.openFile',
+                title: 'Open Log File',
+                arguments: [filePath]
+              }
+            );
+            logFile.iconPath = new vscode.ThemeIcon('file');
+            logFile.children = displayCount > 0 ? children : [];
+            return logFile;
+          } catch (error) {
+            console.error(`Error processing file ${filePath}:`, error);
+            return null;
+          }
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        items.push(...batchResults.filter(Boolean) as LogItem[]);
+
+        // Small delay between batches to prevent UI blocking
+        if (i + batchSize < files.length) {
+          await new Promise(resolve => setTimeout(resolve, 1));
+        }
+      }
+
+      return items;
+    } catch (error) {
+      console.error(`Error reading directory ${logPath}:`, error);
+      return [new LogItem('Error loading log files', vscode.TreeItemCollapsibleState.None)];
     }
   }
 
@@ -342,15 +411,6 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     } else {
       return [];
     }
-  }
-
-  public pathExists(p: string): boolean {
-    try {
-      fs.accessSync(p);
-    } catch (err) {
-      return false;
-    }
-    return true;
   }
 
   private updateBadge(): void {

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import { LogViewerProvider, ReportViewerProvider, LogItem } from './logViewer';
 
 // Prompts the user to confirm if the current project is a Magento project.
@@ -108,10 +109,10 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
     const message = `Cache: ${stats.size}/${stats.maxSize} files | Memory: ${stats.memoryUsage} | Max file size: ${Math.round(stats.maxFileSize / 1024 / 1024)} MB`;
     vscode.window.showInformationMessage(message);
   });  // Improved command registration for openFile
-  vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string | unknown, lineNumber?: number) => {
+  vscode.commands.registerCommand('magento-log-viewer.openFile', async (filePath: string | unknown, lineNumber?: number) => {
     // If filePath is not a string, show a selection box with available log files
     if (typeof filePath !== 'string') {
-      handleOpenFileWithoutPath(magentoRoot);
+      await handleOpenFileWithoutPathAsync(magentoRoot);
       return;
     }
 
@@ -119,7 +120,7 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
     if (filePath.startsWith('/') && !filePath.includes('/')) {
       const possibleLineNumber = parseInt(filePath.substring(1));
       if (!isNaN(possibleLineNumber)) {
-        handleOpenFileWithoutPath(magentoRoot, possibleLineNumber);
+        await handleOpenFileWithoutPathAsync(magentoRoot, possibleLineNumber);
         return;
       }
     }
@@ -176,7 +177,7 @@ export function clearAllLogFiles(logViewerProvider: LogViewerProvider, magentoRo
   vscode.window.showWarningMessage('Are you sure you want to delete all log files?', 'Yes', 'No').then(selection => {
     if (selection === 'Yes') {
       const logPath = path.join(magentoRoot, 'var', 'log');
-      if (logViewerProvider.pathExists(logPath)) {
+      if (pathExists(logPath)) {
         const files = fs.readdirSync(logPath);
         files.forEach(file => fs.unlinkSync(path.join(logPath, file)));
         logViewerProvider.refresh();
@@ -317,7 +318,25 @@ export function isValidPath(filePath: string): boolean {
   }
 }
 
-// Checks if the given path exists.
+/**
+ * Checks if the given path exists (asynchronous version)
+ * @param p Path to check
+ * @returns Promise<boolean> - true if path exists, false otherwise
+ */
+export async function pathExistsAsync(p: string): Promise<boolean> {
+  try {
+    await fsPromises.access(p);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Checks if the given path exists (synchronous fallback for compatibility)
+ * @param p Path to check
+ * @returns boolean - true if path exists, false otherwise
+ */
 export function pathExists(p: string): boolean {
   try {
     fs.accessSync(p);
@@ -399,6 +418,63 @@ export function getIconForLogLevel(level: string): vscode.ThemeIcon {
     default:
       return new vscode.ThemeIcon('circle-outline');
   }
+}
+
+// Asynchronous version of getLogItems for better performance
+export async function getLogItemsAsync(dir: string, parseTitle: (filePath: string) => string, getIcon: (filePath: string) => vscode.ThemeIcon): Promise<LogItem[]> {
+  if (!(await pathExistsAsync(dir))) {
+    return [];
+  }
+
+  const items: LogItem[] = [];
+
+  try {
+    const files = await fsPromises.readdir(dir);
+
+    // Process files in batches to avoid overwhelming the system
+    const batchSize = 10;
+    for (let i = 0; i < files.length; i += batchSize) {
+      const batch = files.slice(i, i + batchSize);
+
+      const batchPromises = batch.map(async (file) => {
+        const filePath = path.join(dir, file);
+
+        try {
+          const stats = await fsPromises.stat(filePath);
+
+          if (stats.isDirectory()) {
+            const subItems = await getLogItemsAsync(filePath, parseTitle, getIcon);
+            return subItems.length > 0 ? subItems : [];
+          } else if (stats.isFile()) {
+            const title = parseTitle(filePath);
+            const logFile = new LogItem(title, vscode.TreeItemCollapsibleState.None, {
+              command: 'magento-log-viewer.openFile',
+              title: 'Open Log File',
+              arguments: [filePath]
+            });
+            logFile.iconPath = getIcon(filePath);
+            return [logFile];
+          }
+        } catch (error) {
+          console.error(`Error processing file ${filePath}:`, error);
+        }
+
+        return [];
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      items.push(...batchResults.flat());
+
+      // Small delay between batches to prevent blocking
+      if (i + batchSize < files.length) {
+        await new Promise(resolve => setTimeout(resolve, 1));
+      }
+    }
+  } catch (error) {
+    console.error(`Error reading directory ${dir}:`, error);
+  }
+
+  return items;
 }
 
 export function getLogItems(dir: string, parseTitle: (filePath: string) => string, getIcon: (filePath: string) => vscode.ThemeIcon): LogItem[] {
@@ -498,7 +574,82 @@ function getReportContent(filePath: string): unknown | null {
   }
 }
 
-// Enhanced file content caching function
+// Enhanced file content caching function (asynchronous)
+export async function getCachedFileContentAsync(filePath: string): Promise<string | null> {
+  try {
+    // Check if file exists first
+    if (!(await pathExistsAsync(filePath))) {
+      return null;
+    }
+
+    const stats = await fsPromises.stat(filePath);
+
+    // For very large files (>50MB), use streaming
+    if (stats.size > 50 * 1024 * 1024) {
+      return readLargeFileAsync(filePath);
+    }
+
+    // Don't cache files larger than configured limit to prevent memory issues
+    if (stats.size > CACHE_CONFIG.maxFileSize) {
+      return await fsPromises.readFile(filePath, 'utf-8');
+    }
+
+    const cachedContent = fileContentCache.get(filePath);
+
+    // Return cached content if it's still valid
+    if (cachedContent && cachedContent.timestamp >= stats.mtime.getTime()) {
+      return cachedContent.content;
+    }
+
+    // Read file content asynchronously
+    const content = await fsPromises.readFile(filePath, 'utf-8');
+
+    // Manage cache size - remove oldest entries if cache is full
+    if (fileContentCache.size >= CACHE_CONFIG.maxSize) {
+      // Remove multiple old entries if we're significantly over the limit
+      const entriesToRemove = Math.max(1, Math.floor(CACHE_CONFIG.maxSize * 0.1));
+      const keys = Array.from(fileContentCache.keys());
+
+      for (let i = 0; i < entriesToRemove && keys.length > 0; i++) {
+        fileContentCache.delete(keys[i]);
+      }
+    }
+
+    // Cache the content
+    fileContentCache.set(filePath, {
+      content,
+      timestamp: stats.mtime.getTime()
+    });
+
+    return content;
+  } catch (error) {
+    console.error(`Error reading file ${filePath}:`, error);
+    return null;
+  }
+}
+
+// Stream-based reading for very large files
+async function readLargeFileAsync(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const stream = fs.createReadStream(filePath, { encoding: 'utf8' });
+
+    stream.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+
+    stream.on('end', () => {
+      resolve(Buffer.concat(chunks).toString('utf8'));
+    });
+
+    stream.on('error', (error) => {
+      console.error(`Error reading large file ${filePath}:`, error);
+      reject(error);
+    });
+  });
+}
+
+// Enhanced file content caching function (synchronous - for compatibility)
 export function getCachedFileContent(filePath: string): string | null {
   try {
     // Check if file exists first
@@ -731,7 +882,90 @@ export function formatTimestamp(timestamp: string): string {
   }
 }
 
-// Shows a dialog to select a log file when no path is provided
+// Shows a dialog to select a log file when no path is provided (async version)
+export async function handleOpenFileWithoutPathAsync(magentoRoot: string, lineNumber?: number): Promise<void> {
+  try {
+    // Collect log and report files asynchronously
+    const logPath = path.join(magentoRoot, 'var', 'log');
+    const reportPath = path.join(magentoRoot, 'var', 'report');
+    const logFiles: string[] = [];
+    const reportFiles: string[] = [];
+
+    // Check directories and read files in parallel
+    const [logExists, reportExists] = await Promise.all([
+      pathExistsAsync(logPath),
+      pathExistsAsync(reportPath)
+    ]);
+
+    const fileReadPromises: Promise<void>[] = [];
+
+    if (logExists) {
+      fileReadPromises.push(
+        fsPromises.readdir(logPath).then(files => {
+          return Promise.all(files.map(async file => {
+            const filePath = path.join(logPath, file);
+            const stats = await fsPromises.stat(filePath);
+            if (stats.isFile()) {
+              logFiles.push(filePath);
+            }
+          }));
+        }).then(() => {})
+      );
+    }
+
+    if (reportExists) {
+      fileReadPromises.push(
+        fsPromises.readdir(reportPath).then(files => {
+          return Promise.all(files.map(async file => {
+            const filePath = path.join(reportPath, file);
+            const stats = await fsPromises.stat(filePath);
+            if (stats.isFile()) {
+              reportFiles.push(filePath);
+            }
+          }));
+        }).then(() => {})
+      );
+    }
+
+    await Promise.all(fileReadPromises);
+
+    // Create a list of options for the quick pick
+    const options: { label: string; description: string; filePath: string }[] = [
+      ...logFiles.map(filePath => ({
+        label: path.basename(filePath),
+        description: 'Log File',
+        filePath
+      })),
+      ...reportFiles.map(filePath => ({
+        label: path.basename(filePath),
+        description: 'Report File',
+        filePath
+      }))
+    ];
+
+    // If no files were found
+    if (options.length === 0) {
+      showErrorMessage('No log or report files found.');
+      return;
+    }
+
+    // Show a quick pick dialog
+    const selection = await vscode.window.showQuickPick(options, {
+      placeHolder: lineNumber !== undefined ?
+        `Select a file to navigate to line ${lineNumber}` :
+        'Select a log or report file'
+    });
+
+    if (selection) {
+      openFile(selection.filePath, lineNumber);
+    }
+  } catch (error) {
+    showErrorMessage(`Error fetching log files: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Error fetching log files:', error);
+  }
+}
+
+// Shows a dialog to select a log file when no path is provided (sync fallback)
 export function handleOpenFileWithoutPath(magentoRoot: string, lineNumber?: number): void {
   try {
     // Collect log and report files

@@ -9,12 +9,18 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - perf: Implemented dynamic cache configuration based on available system memory
 - perf: Added intelligent cache size management with automatic optimization under memory pressure
 - perf: Enhanced cache statistics and monitoring capabilities for better performance insights
+- perf: Replaced synchronous file operations with asynchronous alternatives to prevent UI blocking
+- perf: Added stream-based reading for large files (>50MB) to improve memory efficiency
+- perf: Implemented batch processing for directory reads to prevent system overload
 - feat: Added user-configurable cache settings: `cacheMaxFiles`, `cacheMaxFileSize`, `enableCacheStatistics`
 - feat: Added "Show Cache Statistics" command for real-time cache monitoring
 - feat: Cache now automatically scales from 20-100 files and 1-10MB based on available memory
+- feat: Added asynchronous file content reading with automatic fallback to synchronous for compatibility
 - fix: Cache management now removes multiple old entries efficiently instead of one-by-one cleanup
 - fix: Added automatic cache optimization when system memory usage exceeds 80%
 - fix: Improved memory usage estimation and monitoring for cached file contents
+- fix: Eliminated redundant `pathExists` function implementations across modules
+- fix: Consolidated all path existence checks to use centralized helpers functions
 
 ---
 
