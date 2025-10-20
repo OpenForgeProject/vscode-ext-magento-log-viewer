@@ -1,4 +1,6 @@
 name: VS Code Extension Tests
+permissions:
+  contents: read
 
 on:
   push:
