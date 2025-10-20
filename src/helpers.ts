@@ -100,7 +100,14 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
 
   // Search commands
   vscode.commands.registerCommand('magento-log-viewer.searchLogs', () => logViewerProvider.searchInLogs());
-  vscode.commands.registerCommand('magento-log-viewer.clearSearch', () => logViewerProvider.clearSearch());  // Improved command registration for openFile
+  vscode.commands.registerCommand('magento-log-viewer.clearSearch', () => logViewerProvider.clearSearch());
+
+  // Cache management commands
+  vscode.commands.registerCommand('magento-log-viewer.showCacheStatistics', () => {
+    const stats = getCacheStatistics();
+    const message = `Cache: ${stats.size}/${stats.maxSize} files | Memory: ${stats.memoryUsage} | Max file size: ${Math.round(stats.maxFileSize / 1024 / 1024)} MB`;
+    vscode.window.showInformationMessage(message);
+  });  // Improved command registration for openFile
   vscode.commands.registerCommand('magento-log-viewer.openFile', (filePath: string | unknown, lineNumber?: number) => {
     // If filePath is not a string, show a selection box with available log files
     if (typeof filePath !== 'string') {
@@ -429,8 +436,39 @@ const reportCache = new Map<string, { content: unknown, timestamp: number }>();
 
 // Cache for file contents to avoid repeated reads
 const fileContentCache = new Map<string, { content: string, timestamp: number }>();
-const FILE_CACHE_MAX_SIZE = 50; // Maximum number of files to cache
-const FILE_CACHE_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB max file size for caching
+
+// Dynamic cache configuration based on available memory and user settings
+const getCacheConfig = () => {
+  // Get user configuration
+  const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+  const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+
+  const userMaxFiles = config.get<number>('cacheMaxFiles', 0);
+  const userMaxFileSize = config.get<number>('cacheMaxFileSize', 0);
+
+  // If user has set specific values, use them
+  if (userMaxFiles > 0 && userMaxFileSize > 0) {
+    return {
+      maxSize: userMaxFiles,
+      maxFileSize: userMaxFileSize * 1024 * 1024 // Convert MB to bytes
+    };
+  }
+
+  // Otherwise use automatic calculation
+  const totalMemory = process.memoryUsage().heapTotal;
+  const availableMemory = totalMemory - process.memoryUsage().heapUsed;
+
+  // Use up to 10% of available heap memory for caching
+  const maxCacheMemory = Math.min(availableMemory * 0.1, 50 * 1024 * 1024); // Max 50MB
+
+  const autoMaxSize = userMaxFiles > 0 ? userMaxFiles : Math.max(20, Math.min(100, Math.floor(maxCacheMemory / (2 * 1024 * 1024))));
+  const autoMaxFileSize = userMaxFileSize > 0 ? userMaxFileSize * 1024 * 1024 : Math.max(1024 * 1024, Math.min(10 * 1024 * 1024, maxCacheMemory / 10));
+
+  return {
+    maxSize: autoMaxSize,
+    maxFileSize: autoMaxFileSize
+  };
+};const CACHE_CONFIG = getCacheConfig();
 
 // Helper function for reading and parsing JSON reports with caching
 function getReportContent(filePath: string): unknown | null {
@@ -470,8 +508,8 @@ export function getCachedFileContent(filePath: string): string | null {
 
     const stats = fs.statSync(filePath);
 
-    // Don't cache files larger than 5MB to prevent memory issues
-    if (stats.size > FILE_CACHE_MAX_FILE_SIZE) {
+    // Don't cache files larger than configured limit to prevent memory issues
+    if (stats.size > CACHE_CONFIG.maxFileSize) {
       return fs.readFileSync(filePath, 'utf-8');
     }
 
@@ -486,10 +524,13 @@ export function getCachedFileContent(filePath: string): string | null {
     const content = fs.readFileSync(filePath, 'utf-8');
 
     // Manage cache size - remove oldest entries if cache is full
-    if (fileContentCache.size >= FILE_CACHE_MAX_SIZE) {
-      const oldestKey = fileContentCache.keys().next().value;
-      if (oldestKey) {
-        fileContentCache.delete(oldestKey);
+    if (fileContentCache.size >= CACHE_CONFIG.maxSize) {
+      // Remove multiple old entries if we're significantly over the limit
+      const entriesToRemove = Math.max(1, Math.floor(CACHE_CONFIG.maxSize * 0.1));
+      const keys = Array.from(fileContentCache.keys());
+
+      for (let i = 0; i < entriesToRemove && keys.length > 0; i++) {
+        fileContentCache.delete(keys[i]);
       }
     }
 
@@ -511,11 +552,53 @@ export function clearFileContentCache(): void {
   fileContentCache.clear();
 }
 
-// Function to invalidate cache for a specific file
+// Function to get cache statistics for monitoring
+export function getCacheStatistics(): { size: number; maxSize: number; maxFileSize: number; memoryUsage: string } {
+  const currentConfig = getCacheConfig();
+  const memoryUsed = Array.from(fileContentCache.values())
+    .reduce((total, item) => total + (item.content.length * 2), 0); // Rough estimate (UTF-16)
+
+  const stats = {
+    size: fileContentCache.size,
+    maxSize: currentConfig.maxSize,
+    maxFileSize: currentConfig.maxFileSize,
+    memoryUsage: `${Math.round(memoryUsed / 1024 / 1024 * 100) / 100} MB`
+  };
+
+  // Log statistics if enabled in settings
+  const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+  const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+  const enableLogging = config.get<boolean>('enableCacheStatistics', false);
+
+  if (enableLogging) {
+    console.log('Magento Log Viewer Cache Statistics:', stats);
+  }
+
+  return stats;
+}// Function to invalidate cache for a specific file
 export function invalidateFileCache(filePath: string): void {
   fileContentCache.delete(filePath);
   reportCache.delete(filePath);
   lineCountCache.delete(filePath);
+}
+
+// Function to optimize cache size based on current memory pressure
+export function optimizeCacheSize(): void {
+  const memoryUsage = process.memoryUsage();
+  const heapUsedRatio = memoryUsage.heapUsed / memoryUsage.heapTotal;
+
+  // If memory usage is high (>80%), aggressively clean cache
+  if (heapUsedRatio > 0.8) {
+    const targetSize = Math.floor(fileContentCache.size * 0.5);
+    const keys = Array.from(fileContentCache.keys());
+    const entriesToRemove = fileContentCache.size - targetSize;
+
+    for (let i = 0; i < entriesToRemove && keys.length > 0; i++) {
+      fileContentCache.delete(keys[i]);
+    }
+
+    console.log(`Cache optimized: Removed ${entriesToRemove} entries due to memory pressure`);
+  }
 }
 
 export function parseReportTitle(filePath: string): string {

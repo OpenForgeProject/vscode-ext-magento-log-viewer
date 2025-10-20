@@ -86,6 +86,11 @@
         "command": "magento-log-viewer.clearSearch",
         "title": "Clear Search",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "magento-log-viewer.showCacheStatistics",
+        "title": "Show Cache Statistics",
+        "icon": "$(info)"
       }
     ],
     "configuration": {
@@ -125,6 +130,28 @@
           "type": "boolean",
           "default": false,
           "description": "Enable regular expression search in log entries",
+          "scope": "resource"
+        },
+        "magentoLogViewer.cacheMaxFiles": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 500,
+          "description": "Maximum number of files to cache in memory (0 = automatic based on available memory)",
+          "scope": "resource"
+        },
+        "magentoLogViewer.cacheMaxFileSize": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Maximum file size to cache in MB (0 = automatic based on available memory)",
+          "scope": "resource"
+        },
+        "magentoLogViewer.enableCacheStatistics": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show cache statistics in developer console (useful for debugging performance)",
           "scope": "resource"
         }
       }
@@ -227,6 +254,11 @@
           "command": "magento-log-viewer.refreshLogFiles",
           "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
           "group": "navigation@4"
+        },
+        {
+          "command": "magento-log-viewer.showCacheStatistics",
+          "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
+          "group": "navigation@5"
         },
         {
           "command": "magento-log-viewer.refreshReportFiles",

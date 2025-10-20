@@ -4,6 +4,18 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+### [1.16.0] - TBD
+
+- perf: Implemented dynamic cache configuration based on available system memory
+- perf: Added intelligent cache size management with automatic optimization under memory pressure
+- perf: Enhanced cache statistics and monitoring capabilities for better performance insights
+- feat: Added user-configurable cache settings: `cacheMaxFiles`, `cacheMaxFileSize`, `enableCacheStatistics`
+- feat: Added "Show Cache Statistics" command for real-time cache monitoring
+- feat: Cache now automatically scales from 20-100 files and 1-10MB based on available memory
+- fix: Cache management now removes multiple old entries efficiently instead of one-by-one cleanup
+- fix: Added automatic cache optimization when system memory usage exceeds 80%
+- fix: Improved memory usage estimation and monitoring for cached file contents
+
 ---
 
 ## Latest Release
