@@ -2,7 +2,17 @@
 
 All notable changes to the "magento-log-viewer" extension will be documented in this file.
 
+
 ## Next release
+
+---
+
+## Latest Release
+
+### [1.17.0] - 2025-10-21
+
+- config: Set default Magento root to `./` (relative to workspace)
+- config: Renamed "Is Magento Project" setting to "Enable Magento Log Viewer" (boolean toggle for activation)
 
 ### [1.16.0] - 2025-10-20
 
@@ -23,10 +33,6 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - fix: Consolidated all path existence checks to use centralized helpers functions
 - test: Added comprehensive test coverage for new cache configuration options
 - test: Added async file operations test suite with large file handling validation
-
----
-
-## Latest Release
 
 ### [1.15.0] - 2025-10-01
 
