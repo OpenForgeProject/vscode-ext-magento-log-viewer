@@ -634,8 +634,9 @@ async function readLargeFileAsync(filePath: string): Promise<string> {
     const chunks: string[] = [];
     const stream = fs.createReadStream(filePath, { encoding: 'utf8' });
 
-    stream.on('data', (chunk: string) => {
-      chunks.push(chunk);
+    stream.on('data', (chunk: string | Buffer) => {
+      const chunkStr = typeof chunk === 'string' ? chunk : chunk.toString();
+      chunks.push(chunkStr);
     });
 
     stream.on('end', () => {
