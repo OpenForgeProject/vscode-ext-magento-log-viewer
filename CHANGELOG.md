@@ -5,6 +5,9 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+- ux: Automatic folder picker dialog when Magento root path is not set or invalid
+- ux: Improved error handling with direct path selection option
+
 ---
 
 ## Latest Release

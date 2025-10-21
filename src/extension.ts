@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache } from './helpers';
+import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolder, selectMagentoRootFolderDirect } from './helpers';
 import { LogItem, ReportViewerProvider } from './logViewer';
 import { showUpdateNotification } from './updateNotifier';
 
@@ -31,7 +31,15 @@ export function activate(context: vscode.ExtensionContext): void {
       } else if (isMagentoProject === 'Yes') {
         const magentoRoot = config.get<string>('magentoRoot', '');
         if (!magentoRoot || !isValidPath(magentoRoot)) {
-          showErrorMessage('Magento root path is not set or is not a directory.');
+          // Show error message and automatically open folder picker
+          vscode.window.showErrorMessage(
+            'Magento root path is not set or is not a directory.',
+            'Select Magento Root Folder'
+          ).then(selection => {
+            if (selection === 'Select Magento Root Folder') {
+              selectMagentoRootFolderDirect(config, context);
+            }
+          });
           return;
         }
 

@@ -97,10 +97,15 @@
       "type": "object",
       "title": "Magento Log Viewer",
       "properties": {
-        "magentoLogViewer.enable": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable Magento Log Viewer for this workspace",
+        "magentoLogViewer.isMagentoProject": {
+          "type": "string",
+          "enum": [
+            "Yes",
+            "No",
+            "Please select"
+          ],
+          "default": "Please select",
+          "description": "This is a Magento project",
           "scope": "resource"
         },
         "magentoLogViewer.magentoRoot": {

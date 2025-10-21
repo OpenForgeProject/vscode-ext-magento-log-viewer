@@ -37,6 +37,28 @@ export function selectMagentoRootFolder(config: vscode.WorkspaceConfiguration, c
   });
 }
 
+// Directly opens the folder selection dialog without showing the information message first.
+export function selectMagentoRootFolderDirect(config: vscode.WorkspaceConfiguration, context: vscode.ExtensionContext): void {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+  vscode.window.showOpenDialog({
+    defaultUri,
+    canSelectFolders: true,
+    canSelectMany: false,
+    openLabel: 'Select Magento Root Folder',
+    title: 'Select Magento Root Folder'
+  }).then(folderUri => {
+    if (folderUri?.[0]) {
+      const newConfig = vscode.workspace.getConfiguration('magentoLogViewer', folderUri[0]);
+      updateConfig(newConfig, 'magentoRoot', folderUri[0].fsPath).then(() => {
+        showInformationMessage('Magento root folder successfully saved!');
+        updateConfig(newConfig, 'isMagentoProject', 'Yes');
+        activateExtension(context, folderUri[0].fsPath, new ReportViewerProvider(folderUri[0].fsPath));
+      });
+    }
+  });
+}
+
 // Updates the specified configuration key with the given value.
 export function updateConfig(config: vscode.WorkspaceConfiguration, key: string, value: unknown): Thenable<void> {
   return config.update(key, value, vscode.ConfigurationTarget.Workspace);
