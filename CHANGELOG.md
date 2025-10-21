@@ -9,6 +9,10 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+### [1.17.1] - 2025-10-21
+
+- revert config setting: Set default Magento root from `./` to empty
+
 ### [1.17.0] - 2025-10-21
 
 - config: Set default Magento root to `./` (relative to workspace)
