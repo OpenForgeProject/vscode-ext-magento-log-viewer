@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.17.1",
+  "version": "1.18.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -96,6 +96,16 @@
         "command": "magento-log-viewer.selectMagentoRootFromSettings",
         "title": "Magento Log Viewer: Select Root Folder",
         "category": "Magento Log Viewer"
+      },
+      {
+        "command": "magento-log-viewer.cleanupOldLogFiles",
+        "title": "Clean Up Old Log Files",
+        "icon": "$(clock)"
+      },
+      {
+        "command": "magento-log-viewer.togglePeriodicCleanup",
+        "title": "Toggle Periodic Cleanup",
+        "icon": "$(sync)"
       }
     ],
     "configuration": {
@@ -157,6 +167,33 @@
           "type": "boolean",
           "default": false,
           "description": "Show cache statistics in developer console (useful for debugging performance)",
+          "scope": "resource"
+        },
+        "magentoLogViewer.enableAutoCleanup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically delete log files older than the specified time period",
+          "scope": "resource"
+        },
+        "magentoLogViewer.autoCleanupMaxAge": {
+          "type": "string",
+          "default": "30d",
+          "pattern": "^\\d+(min|[hdwM])$",
+          "patternErrorMessage": "Format: Number followed by min (minutes), h (hours), d (days), w (weeks), or M (months). Example: 30min, 2h, 7d, 2w, 3M",
+          "markdownDescription": "Maximum age of log files before automatic deletion. Format: Number + unit (min=minutes, h=hours, d=days, w=weeks, M=months). Examples: `30min`, `2h`, `7d`, `2w`, `3M`",
+          "scope": "resource"
+        },
+        "magentoLogViewer.enablePeriodicCleanup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable periodic automatic cleanup that runs at regular intervals (like cron)",
+          "scope": "resource"
+        },
+        "magentoLogViewer.periodicCleanupInterval": {
+          "type": "string",
+          "default": "1h",
+          "enum": ["5min", "10min", "15min", "30min", "1h", "2h", "6h", "12h", "24h"],
+          "markdownDescription": "How often to run the periodic cleanup. Examples: `5min`, `30min`, `1h`, `6h`, `24h`",
           "scope": "resource"
         }
       }
@@ -264,6 +301,16 @@
           "command": "magento-log-viewer.showCacheStatistics",
           "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
           "group": "navigation@5"
+        },
+        {
+          "command": "magento-log-viewer.cleanupOldLogFiles",
+          "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
+          "group": "navigation@6"
+        },
+        {
+          "command": "magento-log-viewer.togglePeriodicCleanup",
+          "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
+          "group": "navigation@7"
         },
         {
           "command": "magento-log-viewer.refreshReportFiles",

@@ -25,8 +25,8 @@ The Magento Log Viewer extension for Visual Studio Code provides a convenient wa
 - Individual report file deletion through context menu
 - Automatic update notifications for new extension versions
 - Line-by-line navigation within log files
-- Collapsible sections for identical report error titles
-- Project setting retention between workspace sessions
+- Collapsible sections for identical report error titles\n- Project setting retention between workspace sessions\n- **Automatic Log File Cleanup** - Configurable auto-deletion of old log files based on age (disabled by default)
+- **Periodic Cleanup (Cron-like)** - Run cleanup automatically at regular intervals (5min to 24h)
 
 ## Setup
 
@@ -50,9 +50,7 @@ Note: Settings are workspace-specific, allowing different configurations for eac
 - **Refresh**: Click the refresh icon or wait for auto-update
 - **Navigate**: Click on log entries to jump to specific lines
 - **Filter**: Expand log files to see entries grouped by severity
-- **Group by Message**: Enable or disable grouping of log entries by message content in the settings. When enabled, the counter will display "grouped" (e.g., `INFO (128, grouped)`).
-- **Delete Reports**: Right-click on a report file entry and select "Delete Report File" from the context menu
-- **View Updates**: Review update notifications when the extension is updated with links to changelog and GitHub
+- **Group by Message**: Enable or disable grouping of log entries by message content in the settings. When enabled, the counter will display "grouped" (e.g., `INFO (128, grouped)`).\n- **Delete Reports**: Right-click on a report file entry and select "Delete Report File" from the context menu\n- **Auto Cleanup**: Automatically delete old log files based on configured age\n  - **Enable/Disable**: Control automatic cleanup via `magentoLogViewer.enableAutoCleanup` setting (disabled by default)\n  - **Configure Age**: Set maximum file age with `magentoLogViewer.autoCleanupMaxAge` (default: \"30d\")\n  - **Supported Formats**: Use time formats like \"30min\" (30 minutes), \"2h\" (2 hours), \"7d\" (7 days), \"2w\" (2 weeks), \"3M\" (3 months)\n  - **Manual Cleanup**: Click the clock icon in the log view header to run cleanup manually\n  - **Automatic Run**: Cleanup runs silently on extension startup (if enabled)\n- **View Updates**: Review update notifications when the extension is updated with links to changelog and GitHub
 
 ## Requirements
 

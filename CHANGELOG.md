@@ -5,9 +5,16 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
-- config: Default Magento root is now the workspace root if unset; paths are stored relative to workspace
-- ux: Added "Select Root Folder" command for easy Magento root configuration and automatic folder picker when path is missing or invalid
-- fix: Log and report files now load automatically without manual refresh; improved error handling with direct path selection
+- config: Default Magento root uses workspace root if unset; paths stored relative to workspace
+- ux: "Select Root Folder" command for easy Magento root setup; auto folder picker if path missing/invalid
+- fix: Log and report files auto-load; improved error handling with direct path selection
+  - Files older than configured age are automatically deleted with proper cache invalidation
+  - **NEW**: Added periodic cleanup functionality (cron-like scheduling)
+    - New setting `magentoLogViewer.enablePeriodicCleanup` to enable periodic cleanup
+    - New setting `magentoLogViewer.periodicCleanupInterval` with predefined intervals (5min-24h)
+    - Toggle button (sync icon) for quick enable/disable of periodic cleanup
+    - Automatic restart of periodic cleanup when configuration changes
+    - Proper cleanup disposal on extension deactivation
 
 ---
 

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolder, selectMagentoRootFolderDirect, getEffectiveMagentoRoot, selectMagentoRootFromSettings } from './helpers';
+import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolder, selectMagentoRootFolderDirect, getEffectiveMagentoRoot, selectMagentoRootFromSettings, autoCleanupOldLogFiles, stopPeriodicCleanup } from './helpers';
 import { LogItem, ReportViewerProvider } from './logViewer';
 import { showUpdateNotification } from './updateNotifier';
 
@@ -78,6 +78,9 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
+  // Stop periodic cleanup
+  stopPeriodicCleanup();
+
   // Clear any context values we set
   vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasMagentoRoot', undefined);
 

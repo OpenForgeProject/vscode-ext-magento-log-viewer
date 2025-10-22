@@ -178,24 +178,64 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
   reportWatcher.onDidDelete(() => reportViewerProvider.refresh());
 
   context.subscriptions.push(logWatcher, reportWatcher);
+
+  // Run automatic cleanup on activation (silently in background)
+  setTimeout(async () => {
+    try {
+      await autoCleanupOldLogFiles(magentoRoot, false); // false = no UI notifications
+
+      // Refresh providers after cleanup to update the UI
+      logViewerProvider.refresh();
+      reportViewerProvider.refresh();
+    } catch (error) {
+      console.error('Error during automatic log cleanup on startup:', error);
+    }
+  }, 2000); // Wait 2 seconds after activation to avoid interfering with startup
+
+  // Start periodic cleanup if enabled
+  startPeriodicCleanup(context, magentoRoot, logViewerProvider, reportViewerProvider);
+
+  // Watch for configuration changes to restart periodic cleanup
+  const configWatcher = vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration('magentoLogViewer.enablePeriodicCleanup') ||
+        event.affectsConfiguration('magentoLogViewer.periodicCleanupInterval')) {
+      startPeriodicCleanup(context, magentoRoot, logViewerProvider, reportViewerProvider);
+    }
+  });
+  context.subscriptions.push(configWatcher);
 }
 
 // Registers commands for the extension.
 export function registerCommands(context: vscode.ExtensionContext, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
-  vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh());
-  vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => reportViewerProvider.refresh());
+  const commands = [];
+
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh()));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => reportViewerProvider.refresh()));
+
+  // Register manual cleanup command
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.cleanupOldLogFiles', async () => {
+    const result = await autoCleanupOldLogFiles(magentoRoot, true);
+
+    // Refresh providers after cleanup to update the UI
+    if (result.deletedCount > 0) {
+      logViewerProvider.refresh();
+      reportViewerProvider.refresh();
+    }
+  }));
 
   // Search commands
-  vscode.commands.registerCommand('magento-log-viewer.searchLogs', () => logViewerProvider.searchInLogs());
-  vscode.commands.registerCommand('magento-log-viewer.clearSearch', () => logViewerProvider.clearSearch());
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.searchLogs', () => logViewerProvider.searchInLogs()));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.clearSearch', () => logViewerProvider.clearSearch()));
 
   // Cache management commands
-  vscode.commands.registerCommand('magento-log-viewer.showCacheStatistics', () => {
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.showCacheStatistics', () => {
     const stats = getCacheStatistics();
     const message = `Cache: ${stats.size}/${stats.maxSize} files | Memory: ${stats.memoryUsage} | Max file size: ${Math.round(stats.maxFileSize / 1024 / 1024)} MB`;
     vscode.window.showInformationMessage(message);
-  });  // Improved command registration for openFile
-  vscode.commands.registerCommand('magento-log-viewer.openFile', async (filePath: string | unknown, lineNumber?: number) => {
+  }));
+
+  // Improved command registration for openFile
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.openFile', async (filePath: string | unknown, lineNumber?: number) => {
     // If filePath is not a string, show a selection box with available log files
     if (typeof filePath !== 'string') {
       await handleOpenFileWithoutPathAsync(magentoRoot);
@@ -212,14 +252,34 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
     }
 
     openFile(filePath, lineNumber);
-  });
+  }));
 
-  vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath: string, lineNumber: number) => {
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.openFileAtLine', (filePath: string, lineNumber: number) => {
     openFile(filePath, lineNumber);
-  });
-  vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
+  }));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
     clearAllLogFiles(logViewerProvider, magentoRoot);
-  });
+  }));
+
+  // Register periodic cleanup management commands
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.togglePeriodicCleanup', async () => {
+    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+    const currentlyEnabled = config.get<boolean>('enablePeriodicCleanup', false);
+
+    await config.update('enablePeriodicCleanup', !currentlyEnabled, vscode.ConfigurationTarget.Workspace);
+
+    if (!currentlyEnabled) {
+      startPeriodicCleanup(context, magentoRoot, logViewerProvider, reportViewerProvider);
+      vscode.window.showInformationMessage('✅ Periodic log cleanup enabled');
+    } else {
+      stopPeriodicCleanup();
+      vscode.window.showInformationMessage('⏹️ Periodic log cleanup disabled');
+    }
+  }));
+
+  // Add all commands to context subscriptions
+  context.subscriptions.push(...commands);
 }
 
 // Opens a file in the editor at the specified line number.
@@ -1084,6 +1144,251 @@ export async function handleOpenFileWithoutPathAsync(magentoRoot: string, lineNu
     showErrorMessage(`Error fetching log files: ${error instanceof Error ? error.message : String(error)}`);
     console.error('Error fetching log files:', error);
   }
+}
+
+/**
+ * Parses a time duration string like "30min", "2h", "7d", "1w", "3M" into milliseconds
+ * @param duration Duration string (e.g., "30min", "2h", "7d")
+ * @returns Number of milliseconds or null if invalid
+ */
+export function parseTimeDuration(duration: string): number | null {
+  // Match patterns: 30min, 2h, 7d, 1w, 3M
+  const match = duration.match(/^(\d+)(min|[hdwM])$/);
+  if (!match) {
+    return null;
+  }
+
+  const value = parseInt(match[1]);
+  const unit = match[2];
+
+  const multipliers = {
+    min: 60 * 1000,                    // minutes
+    h: 60 * 60 * 1000,                // hours
+    d: 24 * 60 * 60 * 1000,           // days
+    w: 7 * 24 * 60 * 60 * 1000,       // weeks
+    M: 30 * 24 * 60 * 60 * 1000       // months (approximated as 30 days)
+  };
+
+  return value * multipliers[unit as keyof typeof multipliers];
+}
+
+/**
+ * Checks if a file is older than the specified duration
+ * @param filePath Path to the file
+ * @param maxAge Duration string (e.g., "30d", "2h")
+ * @returns true if file is older than maxAge
+ */
+export function isFileOlderThan(filePath: string, maxAge: string): boolean {
+  try {
+    const maxAgeMs = parseTimeDuration(maxAge);
+    if (maxAgeMs === null) {
+      console.warn(`Invalid time duration format: ${maxAge}`);
+      return false;
+    }
+
+    const stats = fs.statSync(filePath);
+    const fileAge = Date.now() - stats.mtime.getTime();
+    return fileAge > maxAgeMs;
+  } catch (error) {
+    console.error(`Error checking file age for ${filePath}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Automatically cleans up old log files based on configuration
+ * @param magentoRoot Path to Magento root directory
+ * @param showNotifications Whether to show UI notifications
+ * @returns Promise with cleanup results
+ */
+export async function autoCleanupOldLogFiles(magentoRoot: string, showNotifications: boolean = false): Promise<{ deletedCount: number; errors: string[] }> {
+  const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+  const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+
+  const isEnabled = config.get<boolean>('enableAutoCleanup', false);
+  const maxAge = config.get<string>('autoCleanupMaxAge', '30d');
+
+  if (!isEnabled) {
+    if (showNotifications) {
+      vscode.window.showInformationMessage('Automatic log cleanup is disabled');
+    }
+    return { deletedCount: 0, errors: [] };
+  }
+
+  // Validate duration format
+  const maxAgeMs = parseTimeDuration(maxAge);
+  if (maxAgeMs === null) {
+    const error = `Invalid time duration format: ${maxAge}. Use format like 30d, 2h, 1w, 3m`;
+    if (showNotifications) {
+      vscode.window.showErrorMessage(error);
+    }
+    return { deletedCount: 0, errors: [error] };
+  }
+
+  const logPath = path.join(magentoRoot, 'var', 'log');
+
+  if (!pathExists(logPath)) {
+    const error = 'Log directory not found';
+    if (showNotifications) {
+      vscode.window.showWarningMessage(error);
+    }
+    return { deletedCount: 0, errors: [error] };
+  }
+
+  let deletedCount = 0;
+  const errors: string[] = [];
+
+  try {
+    const files = await fsPromises.readdir(logPath);
+
+    for (const file of files) {
+      const filePath = path.join(logPath, file);
+
+      try {
+        const stats = await fsPromises.stat(filePath);
+
+        // Only process actual files (not directories)
+        if (!stats.isFile()) {
+          continue;
+        }
+
+        // Check if file is older than configured age
+        if (isFileOlderThan(filePath, maxAge)) {
+          await fsPromises.unlink(filePath);
+          deletedCount++;
+
+          // Invalidate cache for deleted file
+          invalidateFileCache(filePath);
+
+          const fileAgeMs = Date.now() - stats.mtime.getTime();
+          const fileAgeDays = Math.round(fileAgeMs / (1000 * 60 * 60 * 24));
+          const fileAgeHours = Math.round(fileAgeMs / (1000 * 60 * 60));
+          console.log(`Auto-deleted old log file: ${file} (age: ${fileAgeDays} days / ${fileAgeHours} hours)`);
+        }
+      } catch (fileError) {
+        const errorMsg = `Failed to process ${file}: ${fileError instanceof Error ? fileError.message : String(fileError)}`;
+        errors.push(errorMsg);
+        console.error(errorMsg);
+      }
+    }    // Show result notifications if requested
+    if (showNotifications) {
+      if (deletedCount > 0) {
+        vscode.window.showInformationMessage(`✅ Deleted ${deletedCount} old log file(s) (older than ${maxAge})`);
+      } else if (errors.length === 0) {
+        vscode.window.showInformationMessage(`No log files older than ${maxAge} found`);
+      }
+    }
+
+    if (errors.length > 0 && showNotifications) {
+      vscode.window.showWarningMessage(`Cleanup completed with ${errors.length} error(s). Check console for details.`);
+    }
+
+  } catch (error) {
+    const errorMsg = `Failed to read log directory: ${error instanceof Error ? error.message : String(error)}`;
+    errors.push(errorMsg);
+    if (showNotifications) {
+      vscode.window.showErrorMessage(errorMsg);
+    }
+  }
+
+  return { deletedCount, errors };
+}
+
+// Global variable to store the periodic cleanup timer
+let periodicCleanupTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Starts or restarts periodic cleanup based on current configuration
+ * @param context VS Code extension context
+ * @param magentoRoot Path to Magento root directory
+ * @param logViewerProvider Log viewer provider for UI updates
+ * @param reportViewerProvider Report viewer provider for UI updates
+ */
+export function startPeriodicCleanup(
+  context: vscode.ExtensionContext,
+  magentoRoot: string,
+  logViewerProvider: LogViewerProvider,
+  reportViewerProvider: ReportViewerProvider
+): void {
+  // Stop any existing periodic cleanup
+  stopPeriodicCleanup();
+
+  const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+  const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+
+  const isEnabled = config.get<boolean>('enablePeriodicCleanup', false);
+  const interval = config.get<string>('periodicCleanupInterval', '1h');
+
+  if (!isEnabled) {
+    return;
+  }
+
+  // Parse interval to milliseconds
+  const intervalMs = parsePeriodicInterval(interval);
+  if (intervalMs === null) {
+    console.error(`Invalid periodic cleanup interval: ${interval}`);
+    return;
+  }
+
+  console.log(`Starting periodic log cleanup every ${interval} (${intervalMs}ms)`);
+
+  // Set up periodic cleanup
+  periodicCleanupTimer = setInterval(async () => {
+    try {
+      const result = await autoCleanupOldLogFiles(magentoRoot, false); // Silent cleanup
+
+      if (result.deletedCount > 0) {
+        console.log(`Periodic cleanup: Deleted ${result.deletedCount} old log file(s)`);
+
+        // Refresh UI after cleanup
+        logViewerProvider.refresh();
+        reportViewerProvider.refresh();
+      }
+
+      if (result.errors.length > 0) {
+        console.error(`Periodic cleanup errors: ${result.errors.join(', ')}`);
+      }
+    } catch (error) {
+      console.error('Error during periodic log cleanup:', error);
+    }
+  }, intervalMs);
+
+  // Add cleanup timer to context subscriptions for proper disposal
+  context.subscriptions.push({
+    dispose: () => stopPeriodicCleanup()
+  });
+}
+
+/**
+ * Stops the periodic cleanup timer
+ */
+export function stopPeriodicCleanup(): void {
+  if (periodicCleanupTimer) {
+    clearInterval(periodicCleanupTimer);
+    periodicCleanupTimer = null;
+    console.log('Stopped periodic log cleanup');
+  }
+}
+
+/**
+ * Parses periodic cleanup interval string to milliseconds
+ * @param interval Interval string (e.g., "5min", "1h", "24h")
+ * @returns Number of milliseconds or null if invalid
+ */
+function parsePeriodicInterval(interval: string): number | null {
+  const validIntervals: Record<string, number> = {
+    '5min': 5 * 60 * 1000,
+    '10min': 10 * 60 * 1000,
+    '15min': 15 * 60 * 1000,
+    '30min': 30 * 60 * 1000,
+    '1h': 60 * 60 * 1000,
+    '2h': 2 * 60 * 60 * 1000,
+    '6h': 6 * 60 * 60 * 1000,
+    '12h': 12 * 60 * 60 * 1000,
+    '24h': 24 * 60 * 60 * 1000
+  };
+
+  return validIntervals[interval] || null;
 }
 
 // Shows a dialog to select a log file when no path is provided (sync fallback)
