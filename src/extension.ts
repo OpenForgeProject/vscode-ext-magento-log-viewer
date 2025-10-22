@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolder, selectMagentoRootFolderDirect } from './helpers';
+import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolder, selectMagentoRootFolderDirect, getEffectiveMagentoRoot, selectMagentoRootFromSettings } from './helpers';
 import { LogItem, ReportViewerProvider } from './logViewer';
 import { showUpdateNotification } from './updateNotifier';
 
@@ -9,6 +9,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Show Update-Popup first (lightweight operation)
   showUpdateNotification(context);
+
+  // Register the settings button command
+  const selectMagentoRootCommand = vscode.commands.registerCommand('magento-log-viewer.selectMagentoRootFromSettings', () => {
+    selectMagentoRootFromSettings();
+  });
+  disposables.push(selectMagentoRootCommand);
+  context.subscriptions.push(selectMagentoRootCommand);
 
   // Initialize extension in a more intelligent way
   const initializeExtension = async () => {
@@ -29,7 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (isMagentoProject === 'Please select') {
         promptMagentoProjectSelection(config, context);
       } else if (isMagentoProject === 'Yes') {
-        const magentoRoot = config.get<string>('magentoRoot', '');
+        const magentoRoot = getEffectiveMagentoRoot(workspaceUri);
         if (!magentoRoot || !isValidPath(magentoRoot)) {
           // Show error message and automatically open folder picker
           vscode.window.showErrorMessage(

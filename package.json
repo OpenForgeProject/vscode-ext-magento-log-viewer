@@ -91,6 +91,11 @@
         "command": "magento-log-viewer.showCacheStatistics",
         "title": "Show Cache Statistics",
         "icon": "$(info)"
+      },
+      {
+        "command": "magento-log-viewer.selectMagentoRootFromSettings",
+        "title": "Magento Log Viewer: Select Root Folder",
+        "category": "Magento Log Viewer"
       }
     ],
     "configuration": {
@@ -111,7 +116,7 @@
         "magentoLogViewer.magentoRoot": {
           "type": "string",
           "default": "",
-          "description": "Path to the Magento root folder",
+          "markdownDescription": "Path to the Magento root folder. Use Command Palette: `Magento Log Viewer: Select Root Folder` to browse and select a folder.",
           "scope": "resource"
         },
         "magentoLogViewer.groupByMessage": {

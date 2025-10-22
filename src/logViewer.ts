@@ -39,9 +39,15 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       await new Promise(resolve => setTimeout(resolve, 300));
       this.updateBadge();
       this.isInitialized = true;
+
+      // Trigger refresh to show the actual log files instead of "Loading log files..."
+      this._onDidChangeTreeData.fire();
     } catch (error) {
       console.error('Error during LogViewerProvider initialization:', error);
       this.isInitialized = true; // Set to true anyway to prevent blocking
+
+      // Still trigger refresh even on error to show the UI
+      this._onDidChangeTreeData.fire();
     }
   }
 
@@ -532,9 +538,15 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
       // Wait a bit for VS Code indexing to settle
       await new Promise(resolve => setTimeout(resolve, 300));
       this.isInitialized = true;
+
+      // Trigger refresh to show the actual report files instead of "Loading report files..."
+      this._onDidChangeTreeData.fire();
     } catch (error) {
       console.error('Error during ReportViewerProvider initialization:', error);
       this.isInitialized = true; // Set to true anyway to prevent blocking
+
+      // Still trigger refresh even on error to show the UI
+      this._onDidChangeTreeData.fire();
     }
   }
 

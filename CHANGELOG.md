@@ -5,8 +5,9 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
-- ux: Automatic folder picker dialog when Magento root path is not set or invalid
-- ux: Improved error handling with direct path selection option
+- config: Default Magento root is now the workspace root if unset; paths are stored relative to workspace
+- ux: Added "Select Root Folder" command for easy Magento root configuration and automatic folder picker when path is missing or invalid
+- fix: Log and report files now load automatically without manual refresh; improved error handling with direct path selection
 
 ---
 
