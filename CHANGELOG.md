@@ -5,6 +5,17 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+
+---
+
+## Latest Release
+
+### [1.18.1] - 2025-11-21
+
+- fix: node module dependency vulnerabilities
+
+### [1.18.0] - 2025-10-22
+
 - config: Default Magento root uses workspace root if unset; paths stored relative to workspace
 - ux: "Select Root Folder" command for easy Magento root setup; auto folder picker if path missing/invalid
 - fix: Log and report files auto-load; improved error handling with direct path selection
@@ -15,10 +26,6 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
     - Toggle button (sync icon) for quick enable/disable of periodic cleanup
     - Automatic restart of periodic cleanup when configuration changes
     - Proper cleanup disposal on extension deactivation
-
----
-
-## Latest Release
 
 ### [1.17.1] - 2025-10-21
 
