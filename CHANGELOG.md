@@ -10,6 +10,11 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+### [1.19.0] - 2025-12-02
+
+- update: Updated npm dependencies to latest versions for improved security and performance
+- feat: Added Feature-Request: Delete all report files #20 - thanks to @Morgy93
+
 ### [1.18.1] - 2025-11-21
 
 - fix: node module dependency vulnerabilities
