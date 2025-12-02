@@ -226,6 +226,8 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
   // Search commands
   commands.push(vscode.commands.registerCommand('magento-log-viewer.searchLogs', () => logViewerProvider.searchInLogs()));
   commands.push(vscode.commands.registerCommand('magento-log-viewer.clearSearch', () => logViewerProvider.clearSearch()));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.searchReports', () => reportViewerProvider.searchInReports()));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.clearSearchReports', () => reportViewerProvider.clearSearch()));
 
   // Cache management commands
   commands.push(vscode.commands.registerCommand('magento-log-viewer.showCacheStatistics', () => {
@@ -259,6 +261,9 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
   }));
   commands.push(vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
     clearAllLogFiles(logViewerProvider, magentoRoot);
+  }));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.clearAllReportFiles', () => {
+    clearAllReportFiles(reportViewerProvider, magentoRoot);
   }));
 
   // Register periodic cleanup management commands
@@ -330,6 +335,40 @@ export function clearAllLogFiles(logViewerProvider: LogViewerProvider, magentoRo
         showInformationMessage('All log files have been cleared.');
       } else {
         showInformationMessage('No log files found to clear.');
+      }
+    }
+  });
+}
+
+// Clears all report files in the Magento report directory.
+export function clearAllReportFiles(reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
+  vscode.window.showWarningMessage('Are you sure you want to delete all report files?', 'Yes', 'No').then(selection => {
+    if (selection === 'Yes') {
+      const reportPath = path.join(magentoRoot, 'var', 'report');
+      if (pathExists(reportPath)) {
+        const deleteReportFilesRecursively = (dir: string) => {
+          const files = fs.readdirSync(dir);
+          files.forEach(file => {
+            const filePath = path.join(dir, file);
+            const stats = fs.lstatSync(filePath);
+            if (stats.isFile()) {
+              fs.unlinkSync(filePath);
+            } else if (stats.isDirectory()) {
+              deleteReportFilesRecursively(filePath);
+              // Remove empty directory
+              try {
+                fs.rmdirSync(filePath);
+              } catch (error) {
+                // Directory not empty, ignore
+              }
+            }
+          });
+        };
+        deleteReportFilesRecursively(reportPath);
+        reportViewerProvider.refresh();
+        showInformationMessage('All report files have been cleared.');
+      } else {
+        showInformationMessage('No report files found to clear.');
       }
     }
   });

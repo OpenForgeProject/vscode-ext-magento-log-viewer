@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.18.1",
+  "version": "1.19.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -86,6 +86,21 @@
         "command": "magento-log-viewer.clearSearch",
         "title": "Clear Search",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "magento-log-viewer.searchReports",
+        "title": "Search in Reports",
+        "icon": "$(search)"
+      },
+      {
+        "command": "magento-log-viewer.clearSearchReports",
+        "title": "Clear Search Reports",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "magento-log-viewer.clearAllReportFiles",
+        "title": "Delete Report Files",
+        "icon": "$(trash)"
       },
       {
         "command": "magento-log-viewer.showCacheStatistics",
@@ -313,9 +328,24 @@
           "group": "navigation@7"
         },
         {
+          "command": "magento-log-viewer.searchReports",
+          "when": "view == reportFiles && magentoLogViewer.hasMagentoRoot",
+          "group": "navigation@1"
+        },
+        {
+          "command": "magento-log-viewer.clearSearchReports",
+          "when": "view == reportFiles && magentoLogViewer.hasActiveSearchReports",
+          "group": "navigation@2"
+        },
+        {
+          "command": "magento-log-viewer.clearAllReportFiles",
+          "when": "view == reportFiles && magentoLogViewer.hasMagentoRoot",
+          "group": "navigation@3"
+        },
+        {
           "command": "magento-log-viewer.refreshReportFiles",
           "when": "view == reportFiles && magentoLogViewer.hasMagentoRoot",
-          "group": "navigation"
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [

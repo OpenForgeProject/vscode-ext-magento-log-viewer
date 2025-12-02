@@ -523,14 +523,25 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   private groupByMessage: boolean;
   private disposables: vscode.Disposable[] = [];
   private isInitialized: boolean = false;
+  public searchTerm: string = '';
+  public searchCaseSensitive: boolean = false;
+  public searchUseRegex: boolean = false;
 
   constructor(private workspaceRoot: string) {
     const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
     const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
     this.groupByMessage = config.get<boolean>('groupByMessage', true);
+    this.searchCaseSensitive = config.get<boolean>('searchCaseSensitive', false);
+    this.searchUseRegex = config.get<boolean>('searchUseRegex', false);
+    this.updateRefreshButtonVisibility();
 
     // Initialize asynchronously to avoid competing with indexing
     this.initializeAsync();
+  }
+
+  private updateRefreshButtonVisibility(): void {
+    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasMagentoRoot', !!this.workspaceRoot);
+    vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasActiveSearchReports', !!this.searchTerm);
   }
 
   private async initializeAsync(): Promise<void> {
@@ -547,6 +558,55 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
 
       // Still trigger refresh even on error to show the UI
       this._onDidChangeTreeData.fire();
+    }
+  }
+
+  // Search functionality
+  public async searchInReports(): Promise<void> {
+    const searchOptions = await vscode.window.showInputBox({
+      prompt: 'Search in report files...',
+      placeHolder: 'Enter search term (supports regex if enabled in settings)',
+      value: this.searchTerm
+    });
+
+    if (searchOptions !== undefined) {
+      this.searchTerm = searchOptions;
+      this.updateRefreshButtonVisibility();
+      this.refresh();
+
+      if (this.searchTerm) {
+        vscode.window.showInformationMessage(`Searching for: "${this.searchTerm}"`);
+      }
+    }
+  }
+
+  public clearSearch(): void {
+    this.searchTerm = '';
+    this.updateRefreshButtonVisibility();
+    this.refresh();
+    vscode.window.showInformationMessage('Search cleared');
+  }
+
+  public matchesSearchTerm(text: string): boolean {
+    if (!this.searchTerm) {
+      return true; // No search term, show all
+    }
+
+    try {
+      if (this.searchUseRegex) {
+        const flags = this.searchCaseSensitive ? 'g' : 'gi';
+        const regex = new RegExp(this.searchTerm, flags);
+        return regex.test(text);
+      } else {
+        const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
+        const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
+        return searchText.includes(searchTerm);
+      }
+    } catch (error) {
+      // Invalid regex, fall back to simple string search
+      const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
+      const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
+      return searchText.includes(searchTerm);
     }
   }
 
@@ -596,12 +656,42 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   }
 
   private getLogItems(dir: string, label: string): LogItem[] {
-    const items = getLogItems(dir, parseReportTitle, getIconForReport).map(item => {
+    const allItems = getLogItems(dir, parseReportTitle, getIconForReport);
+
+    // Apply search filter
+    const filteredItems = allItems.filter(item => {
+      if (!this.searchTerm) {
+        return true;
+      }
+
+      // Search in filename and content
+      const filename = item.label;
+      const filepath = item.command?.arguments?.[0] as string;
+
+      // Check filename
+      if (this.matchesSearchTerm(filename)) {
+        return true;
+      }
+
+      // Check file content if filepath exists
+      if (filepath) {
+        try {
+          const fileContent = getCachedFileContent(filepath);
+          if (fileContent && this.matchesSearchTerm(fileContent)) {
+            return true;
+          }
+        } catch (error) {
+          // Ignore file read errors for search
+        }
+      }
+
+      return false;
+    }).map(item => {
       item.contextValue = 'reportItem';
       return item;
     });
 
-    const groupedItems = this.groupReportItems(items);
+    const groupedItems = this.groupReportItems(filteredItems);
     return groupedItems;
   }
 
