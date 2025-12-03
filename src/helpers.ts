@@ -67,58 +67,46 @@ export function selectMagentoRootFolderDirect(config: vscode.WorkspaceConfigurat
 export async function selectMagentoRootFromSettings(): Promise<void> {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const workspaceUri = workspaceFolders?.[0]?.uri || null;
-
-  // Get current configuration for display
   const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
-  const currentPath = config.get<string>('magentoRoot', '');
-  const currentPathDisplay = currentPath || 'Not set (using workspace root)';
 
-  // Show info about current setting
-  const proceed = await vscode.window.showInformationMessage(
-    `Current Magento root: ${currentPathDisplay}\n\nDo you want to select a new Magento root folder?`,
-    'Select New Folder',
-    'Cancel'
-  );
+  // Open folder picker directly without confirmation dialog
+  const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
 
-  if (proceed === 'Select New Folder') {
-    const defaultUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+  const folderUri = await vscode.window.showOpenDialog({
+    defaultUri,
+    canSelectFolders: true,
+    canSelectMany: false,
+    openLabel: 'Select Magento Root Folder',
+    title: 'Select Magento Root Folder'
+  });
 
-    const folderUri = await vscode.window.showOpenDialog({
-      defaultUri,
-      canSelectFolders: true,
-      canSelectMany: false,
-      openLabel: 'Select Magento Root Folder',
-      title: 'Select Magento Root Folder'
-    });
+  if (folderUri?.[0]) {
+    try {
+      // Store the relative path instead of absolute path
+      const relativePath = vscode.workspace.asRelativePath(folderUri[0].fsPath);
+      await updateConfig(config, 'magentoRoot', relativePath);
 
-    if (folderUri?.[0]) {
-      try {
-        // Store the relative path instead of absolute path
-        const relativePath = vscode.workspace.asRelativePath(folderUri[0].fsPath);
-        await updateConfig(config, 'magentoRoot', relativePath);
-
-        // Also set the project as Magento project if not already set
-        const isMagentoProject = config.get<string>('isMagentoProject', 'Please select');
-        if (isMagentoProject !== 'Yes') {
-          await updateConfig(config, 'isMagentoProject', 'Yes');
-        }
-
-        // Show success message with the new path
-        showInformationMessage(`✅ Magento root updated to: ${relativePath}`);
-
-        // Suggest reloading the window for changes to take effect
-        const reload = await vscode.window.showInformationMessage(
-          'Reload the window for all changes to take effect.',
-          'Reload Window',
-          'Later'
-        );
-
-        if (reload === 'Reload Window') {
-          vscode.commands.executeCommand('workbench.action.reloadWindow');
-        }
-      } catch (error) {
-        showErrorMessage(`Failed to update Magento root path: ${error instanceof Error ? error.message : String(error)}`);
+      // Also set the project as Magento project if not already set
+      const isMagentoProject = config.get<string>('isMagentoProject', 'Please select');
+      if (isMagentoProject !== 'Yes') {
+        await updateConfig(config, 'isMagentoProject', 'Yes');
       }
+
+      // Show success message with the new path
+      showInformationMessage(`✅ Magento root updated to: ${relativePath}`);
+
+      // Suggest reloading the window for changes to take effect
+      const reload = await vscode.window.showInformationMessage(
+        'Reload the window for all changes to take effect.',
+        'Reload Window',
+        'Later'
+      );
+
+      if (reload === 'Reload Window') {
+        vscode.commands.executeCommand('workbench.action.reloadWindow');
+      }
+    } catch (error) {
+      showErrorMessage(`Failed to update Magento root path: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

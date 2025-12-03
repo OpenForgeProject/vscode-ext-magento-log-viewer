@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.20.0",
+  "version": "1.22.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -138,96 +138,138 @@
         "icon": "$(sync)"
       }
     ],
-    "configuration": {
-      "type": "object",
-      "title": "Magento Log Viewer",
-      "properties": {
-        "magentoLogViewer.isMagentoProject": {
-          "type": "string",
-          "enum": [
-            "Yes",
-            "No",
-            "Please select"
-          ],
-          "default": "Please select",
-          "description": "This is a Magento project",
-          "scope": "resource"
-        },
-        "magentoLogViewer.magentoRoot": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Path to the Magento root folder. Use Command Palette: `Magento Log Viewer: Select Root Folder` to browse and select a folder.",
-          "scope": "resource"
-        },
-        "magentoLogViewer.groupByMessage": {
-          "type": "boolean",
-          "default": true,
-          "description": "Group log entries by message content",
-          "scope": "resource"
-        },
-        "magentoLogViewer.searchCaseSensitive": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable case-sensitive search in log entries",
-          "scope": "resource"
-        },
-        "magentoLogViewer.searchUseRegex": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable regular expression search in log entries",
-          "scope": "resource"
-        },
-        "magentoLogViewer.cacheMaxFiles": {
-          "type": "number",
-          "default": 0,
-          "minimum": 0,
-          "maximum": 500,
-          "description": "Maximum number of files to cache in memory (0 = automatic based on available memory)",
-          "scope": "resource"
-        },
-        "magentoLogViewer.cacheMaxFileSize": {
-          "type": "number",
-          "default": 0,
-          "minimum": 0,
-          "maximum": 100,
-          "description": "Maximum file size to cache in MB (0 = automatic based on available memory)",
-          "scope": "resource"
-        },
-        "magentoLogViewer.enableCacheStatistics": {
-          "type": "boolean",
-          "default": false,
-          "description": "Show cache statistics in developer console (useful for debugging performance)",
-          "scope": "resource"
-        },
-        "magentoLogViewer.enableAutoCleanup": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically delete log files older than the specified time period",
-          "scope": "resource"
-        },
-        "magentoLogViewer.autoCleanupMaxAge": {
-          "type": "string",
-          "default": "30d",
-          "pattern": "^\\d+(min|[hdwM])$",
-          "patternErrorMessage": "Format: Number followed by min (minutes), h (hours), d (days), w (weeks), or M (months). Example: 30min, 2h, 7d, 2w, 3M",
-          "markdownDescription": "Maximum age of log files before automatic deletion. Format: Number + unit (min=minutes, h=hours, d=days, w=weeks, M=months). Examples: `30min`, `2h`, `7d`, `2w`, `3M`",
-          "scope": "resource"
-        },
-        "magentoLogViewer.enablePeriodicCleanup": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable periodic automatic cleanup that runs at regular intervals (like cron)",
-          "scope": "resource"
-        },
-        "magentoLogViewer.periodicCleanupInterval": {
-          "type": "string",
-          "default": "1h",
-          "enum": ["5min", "10min", "15min", "30min", "1h", "2h", "6h", "12h", "24h"],
-          "markdownDescription": "How often to run the periodic cleanup. Examples: `5min`, `30min`, `1h`, `6h`, `24h`",
-          "scope": "resource"
+    "configuration": [
+      {
+        "order": 1,
+        "id": "setup",
+        "title": "Project Setup",
+        "properties": {
+          "magentoLogViewer.isMagentoProject": {
+            "type": "string",
+            "enum": [
+              "Yes",
+              "No",
+              "Please select"
+            ],
+            "enumDescriptions": [
+              "Enable log viewer for this Magento project",
+              "Disable log viewer (not a Magento project)",
+              "Choose whether this is a Magento project"
+            ],
+            "default": "Please select",
+            "description": "Enable Magento Log Viewer for this workspace",
+            "scope": "resource"
+          },
+          "magentoLogViewer.magentoRoot": {
+            "type": "string",
+            "default": "./",
+            "pattern": "^([A-Za-z]:\\\\|/|\\.\\/).*$",
+            "patternErrorMessage": "Please enter a valid folder path (e.g., /var/www/magento or C:\\xampp\\htdocs\\magento)",
+            "markdownDescription": "**Magento installation folder path.**  \n\n[Browse for Magento Root Folder](command:magento-log-viewer.selectMagentoRootFromSettings)  \n\nOr enter the path manually below (default: current workspace folder):",
+            "scope": "resource"
+          }
+        }
+      },
+      {
+        "order": 2,
+        "id": "viewing",
+        "title": "Log Viewing",
+        "properties": {
+          "magentoLogViewer.groupByMessage": {
+            "type": "boolean",
+            "default": true,
+            "description": "Group identical log messages together to reduce clutter and improve readability",
+            "scope": "resource"
+          },
+          "magentoLogViewer.searchCaseSensitive": {
+            "type": "boolean",
+            "default": false,
+            "description": "Make log search case-sensitive (e.g., 'Error' vs 'error' will be treated as different)",
+            "scope": "resource"
+          },
+          "magentoLogViewer.searchUseRegex": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable advanced search patterns (regular expressions) for complex log filtering",
+            "scope": "resource"
+          }
+        }
+      },
+      {
+        "order": 3,
+        "id": "cleanup",
+        "title": "Auto Cleanup",
+        "properties": {
+          "magentoLogViewer.enableAutoCleanup": {
+            "type": "boolean",
+            "default": false,
+            "description": "Automatically delete old log files to prevent disk space issues",
+            "scope": "resource"
+          },
+          "magentoLogViewer.autoCleanupMaxAge": {
+            "type": "string",
+            "default": "7d",
+            "pattern": "^\\d+(min|[hdwM])$",
+            "patternErrorMessage": "Format: Number followed by min (minutes), h (hours), d (days), w (weeks), or M (months). Example: 30min, 2h, 7d, 2w, 3M",
+            "markdownDescription": "**How long to keep log files before deletion.**\n\n**Examples:**\n- `30min` = 30 minutes\n- `2h` = 2 hours\n- `7d` = 7 days\n- `2w` = 2 weeks\n- `3M` = 3 months",
+            "scope": "resource"
+          },
+          "magentoLogViewer.enablePeriodicCleanup": {
+            "type": "boolean",
+            "default": false,
+            "description": "Run automatic cleanup continuously at regular intervals (like a background task)",
+            "scope": "resource"
+          },
+          "magentoLogViewer.periodicCleanupInterval": {
+            "type": "string",
+            "default": "6h",
+            "enum": ["5min", "10min", "15min", "30min", "1h", "2h", "6h", "12h", "24h"],
+            "enumDescriptions": [
+              "Every 5 minutes (very frequent, high performance impact)",
+              "Every 10 minutes (frequent)",
+              "Every 15 minutes (frequent)",
+              "Every 30 minutes (moderate)",
+              "Every hour (recommended for most cases)",
+              "Every 2 hours (balanced)",
+              "Every 6 hours (recommended for development)",
+              "Every 12 hours (infrequent)",
+              "Once daily (least performance impact)"
+            ],
+            "markdownDescription": "**How often to check for old files to delete.**\n\n- **More frequent** = cleaner disk space\n- **Less frequent** = better performance\n- **Recommended:** `1h` for production, `6h` for development",
+            "scope": "resource"
+          }
+        }
+      },
+      {
+        "order": 4,
+        "id": "performance",
+        "title": "Performance & Cache",
+        "properties": {
+          "magentoLogViewer.cacheMaxFiles": {
+            "type": "number",
+            "default": 50,
+            "minimum": 0,
+            "maximum": 500,
+            "description": "Maximum files to keep in memory for faster access (0 = automatic, typical values: 10-50 for development, 100+ for production)",
+            "scope": "resource"
+          },
+          "magentoLogViewer.cacheMaxFileSize": {
+            "type": "number",
+            "default": 10,
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Maximum file size to cache in MB (0 = automatic, typical: 5-10 MB for most log files, 50+ MB for large log files)",
+            "scope": "resource"
+          },
+          "magentoLogViewer.enableCacheStatistics": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show cache performance information in Developer Console (useful for troubleshooting slow performance)",
+            "scope": "resource"
+          }
         }
       }
-    },
+    ],
     "colors": [
       {
         "id": "magentoLogViewer.errorColor",
