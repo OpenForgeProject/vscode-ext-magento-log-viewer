@@ -200,6 +200,11 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
     if (event.affectsConfiguration('magentoLogViewer.enablePeriodicCleanup') ||
         event.affectsConfiguration('magentoLogViewer.periodicCleanupInterval')) {
       startPeriodicCleanup(context, magentoRoot, logViewerProvider, reportViewerProvider);
+      updatePeriodicCleanupContext();
+    }
+
+    if (event.affectsConfiguration('magentoLogViewer.enableAutoCleanup')) {
+      updatePeriodicCleanupContext();
     }
   });
   context.subscriptions.push(configWatcher);
@@ -209,8 +214,14 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
 export function registerCommands(context: vscode.ExtensionContext, logViewerProvider: LogViewerProvider, reportViewerProvider: ReportViewerProvider, magentoRoot: string): void {
   const commands = [];
 
-  commands.push(vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => logViewerProvider.refresh()));
-  commands.push(vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => reportViewerProvider.refresh()));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.refreshLogFiles', () => {
+    logViewerProvider.refresh();
+    vscode.window.showInformationMessage('✅ Log files refreshed');
+  }));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.refreshReportFiles', () => {
+    reportViewerProvider.refresh();
+    vscode.window.showInformationMessage('✅ Report files refreshed');
+  }));
 
   // Register manual cleanup command
   commands.push(vscode.commands.registerCommand('magento-log-viewer.cleanupOldLogFiles', async () => {
@@ -228,13 +239,6 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
   commands.push(vscode.commands.registerCommand('magento-log-viewer.clearSearch', () => logViewerProvider.clearSearch()));
   commands.push(vscode.commands.registerCommand('magento-log-viewer.searchReports', () => reportViewerProvider.searchInReports()));
   commands.push(vscode.commands.registerCommand('magento-log-viewer.clearSearchReports', () => reportViewerProvider.clearSearch()));
-
-  // Cache management commands
-  commands.push(vscode.commands.registerCommand('magento-log-viewer.showCacheStatistics', () => {
-    const stats = getCacheStatistics();
-    const message = `Cache: ${stats.size}/${stats.maxSize} files | Memory: ${stats.memoryUsage} | Max file size: ${Math.round(stats.maxFileSize / 1024 / 1024)} MB`;
-    vscode.window.showInformationMessage(message);
-  }));
 
   // Improved command registration for openFile
   commands.push(vscode.commands.registerCommand('magento-log-viewer.openFile', async (filePath: string | unknown, lineNumber?: number) => {
@@ -262,6 +266,9 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
   commands.push(vscode.commands.registerCommand('magento-log-viewer.clearAllLogFiles', () => {
     clearAllLogFiles(logViewerProvider, magentoRoot);
   }));
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.clearAllLogFilesAuto', () => {
+    clearAllLogFiles(logViewerProvider, magentoRoot);
+  }));
   commands.push(vscode.commands.registerCommand('magento-log-viewer.clearAllReportFiles', () => {
     clearAllReportFiles(reportViewerProvider, magentoRoot);
   }));
@@ -281,10 +288,42 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
       stopPeriodicCleanup();
       vscode.window.showInformationMessage('⏹️ Periodic log cleanup disabled');
     }
+
+    // Update context variable
+    updatePeriodicCleanupContext();
+  }));
+
+  // Register separate enable/disable commands
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.enablePeriodicCleanup', async () => {
+    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+
+    await config.update('enablePeriodicCleanup', true, vscode.ConfigurationTarget.Workspace);
+    startPeriodicCleanup(context, magentoRoot, logViewerProvider, reportViewerProvider);
+    vscode.window.showInformationMessage('✅ Automatic cleanup enabled');
+    updatePeriodicCleanupContext();
+  }));
+
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.disablePeriodicCleanup', async () => {
+    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+
+    await config.update('enablePeriodicCleanup', false, vscode.ConfigurationTarget.Workspace);
+    stopPeriodicCleanup();
+    vscode.window.showInformationMessage('⏹️ Automatic cleanup disabled');
+    updatePeriodicCleanupContext();
+  }));
+
+  // Register settings command
+  commands.push(vscode.commands.registerCommand('magento-log-viewer.openSettings', () => {
+    vscode.commands.executeCommand('workbench.action.openSettings', 'magentoLogViewer');
   }));
 
   // Add all commands to context subscriptions
   context.subscriptions.push(...commands);
+
+  // Initialize context variables
+  updatePeriodicCleanupContext();
 }
 
 // Opens a file in the editor at the specified line number.
@@ -1494,4 +1533,17 @@ export function handleOpenFileWithoutPath(magentoRoot: string, lineNumber?: numb
     showErrorMessage(`Error fetching log files: ${error instanceof Error ? error.message : String(error)}`);
     console.error('Error fetching log files:', error);
   }
+}
+
+/**
+ * Updates the context variable for periodic cleanup status
+ */
+export function updatePeriodicCleanupContext(): void {
+  const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+  const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+  const isPeriodicEnabled = config.get<boolean>('enablePeriodicCleanup', false);
+  const isAutoEnabled = config.get<boolean>('enableAutoCleanup', false);
+
+  vscode.commands.executeCommand('setContext', 'magentoLogViewer.periodicCleanupEnabled', isPeriodicEnabled);
+  vscode.commands.executeCommand('setContext', 'magentoLogViewer.autoCleanupEnabled', isAutoEnabled);
 }

@@ -10,6 +10,15 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+### [1.20.0] - 2024-12-03
+
+- feat: Enhanced UI organization with maintenance submenus and dynamic cleanup indicators
+- ui: Added "Maintenance" dropdown menus to organize cleanup, refresh, and settings commands
+- ui: Implemented dynamic delete button titles - shows "(auto cleanup enabled)" when automatic cleanup is enabled
+- ui: Added feedback messages for all refresh operations and improved button naming clarity
+- config: Enhanced context monitoring for real-time UI updates based on cleanup settings
+- ux: Consistent menu structures across Log Files and Report Files views for better usability
+
 ### [1.19.0] - 2025-12-02
 
 - update: Updated npm dependencies to latest versions for improved security and performance

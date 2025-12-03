@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -50,6 +50,11 @@
       {
         "command": "magento-log-viewer.clearAllLogFiles",
         "title": "Delete Logfiles",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "magento-log-viewer.clearAllLogFilesAuto",
+        "title": "Delete Logfiles (auto cleanup enabled)",
         "icon": "$(trash)"
       },
       {
@@ -103,19 +108,29 @@
         "icon": "$(trash)"
       },
       {
-        "command": "magento-log-viewer.showCacheStatistics",
-        "title": "Show Cache Statistics",
-        "icon": "$(info)"
-      },
-      {
         "command": "magento-log-viewer.selectMagentoRootFromSettings",
         "title": "Magento Log Viewer: Select Root Folder",
         "category": "Magento Log Viewer"
       },
       {
         "command": "magento-log-viewer.cleanupOldLogFiles",
-        "title": "Clean Up Old Log Files",
+        "title": "Manual remove old files",
         "icon": "$(clock)"
+      },
+      {
+        "command": "magento-log-viewer.enablePeriodicCleanup",
+        "title": "Enable automatic cleanup",
+        "icon": "$(play)"
+      },
+      {
+        "command": "magento-log-viewer.disablePeriodicCleanup",
+        "title": "Disable automatic cleanup",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "magento-log-viewer.openSettings",
+        "title": "Settings",
+        "icon": "$(gear)"
       },
       {
         "command": "magento-log-viewer.togglePeriodicCleanup",
@@ -290,6 +305,18 @@
         }
       ]
     },
+    "submenus": [
+      {
+        "id": "magentoLogViewer.maintenance",
+        "label": "Maintenance",
+        "icon": "$(menu)"
+      },
+      {
+        "id": "magentoLogViewer.reportMaintenance",
+        "label": "Maintenance",
+        "icon": "$(menu)"
+      }
+    ],
     "menus": {
       "view/title": [
         {
@@ -304,28 +331,18 @@
         },
         {
           "command": "magento-log-viewer.clearAllLogFiles",
-          "when": "view == logFiles && magentoLogViewer.hasLogFiles",
+          "when": "view == logFiles && magentoLogViewer.hasLogFiles && !magentoLogViewer.autoCleanupEnabled",
           "group": "navigation@3"
         },
         {
-          "command": "magento-log-viewer.refreshLogFiles",
+          "command": "magento-log-viewer.clearAllLogFilesAuto",
+          "when": "view == logFiles && magentoLogViewer.hasLogFiles && magentoLogViewer.autoCleanupEnabled",
+          "group": "navigation@3"
+        },
+        {
+          "submenu": "magentoLogViewer.maintenance",
           "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
           "group": "navigation@4"
-        },
-        {
-          "command": "magento-log-viewer.showCacheStatistics",
-          "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
-          "group": "navigation@5"
-        },
-        {
-          "command": "magento-log-viewer.cleanupOldLogFiles",
-          "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
-          "group": "navigation@6"
-        },
-        {
-          "command": "magento-log-viewer.togglePeriodicCleanup",
-          "when": "view == logFiles && magentoLogViewer.hasMagentoRoot",
-          "group": "navigation@7"
         },
         {
           "command": "magento-log-viewer.searchReports",
@@ -343,9 +360,48 @@
           "group": "navigation@3"
         },
         {
-          "command": "magento-log-viewer.refreshReportFiles",
+          "submenu": "magentoLogViewer.reportMaintenance",
           "when": "view == reportFiles && magentoLogViewer.hasMagentoRoot",
           "group": "navigation@4"
+        }
+      ],
+      "magentoLogViewer.maintenance": [
+        {
+          "command": "magento-log-viewer.refreshLogFiles",
+          "when": "magentoLogViewer.hasMagentoRoot",
+          "group": "refresh@1"
+        },
+        {
+          "command": "magento-log-viewer.cleanupOldLogFiles",
+          "when": "magentoLogViewer.hasMagentoRoot",
+          "group": "cleanup@1"
+        },
+        {
+          "command": "magento-log-viewer.enablePeriodicCleanup",
+          "when": "magentoLogViewer.hasMagentoRoot && !magentoLogViewer.periodicCleanupEnabled",
+          "group": "cleanup@2"
+        },
+        {
+          "command": "magento-log-viewer.disablePeriodicCleanup",
+          "when": "magentoLogViewer.hasMagentoRoot && magentoLogViewer.periodicCleanupEnabled",
+          "group": "cleanup@2"
+        },
+        {
+          "command": "magento-log-viewer.openSettings",
+          "when": "magentoLogViewer.hasMagentoRoot",
+          "group": "settings@1"
+        }
+      ],
+      "magentoLogViewer.reportMaintenance": [
+        {
+          "command": "magento-log-viewer.refreshReportFiles",
+          "when": "magentoLogViewer.hasMagentoRoot",
+          "group": "refresh@1"
+        },
+        {
+          "command": "magento-log-viewer.openSettings",
+          "when": "magentoLogViewer.hasMagentoRoot",
+          "group": "settings@1"
         }
       ],
       "view/item/context": [
