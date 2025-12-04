@@ -175,11 +175,26 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
             // Get children synchronously for now (can be optimized later)
             const children = this.getLogFileLines(filePath);
 
-            // Count the actual number of log entries
-            const logEntryCount = children.reduce((total, level) => {
-              const match = level.label.match(/\((\d+)(?:,\s*grouped)?\)/);
-              return total + (match ? parseInt(match[1], 10) : 0);
-            }, 0);
+            // Count log entries directly from file content to avoid search filter issues
+            let logEntryCount = 0;
+            try {
+              const fileContent = getCachedFileContent(filePath);
+              if (fileContent) {
+                const lines = fileContent.split('\n');
+                lines.forEach(line => {
+                  if (line.match(/\.(\w+):/)) { // Same regex as in groupLogEntries
+                    logEntryCount++;
+                  }
+                });
+              }
+            } catch (error) {
+              console.error(`Error counting entries in ${filePath}:`, error);
+              // Fallback to children count
+              logEntryCount = children.reduce((total, level) => {
+                const match = level.label.match(/\((\d+)(?:,\s*grouped)?\)/);
+                return total + (match ? parseInt(match[1], 10) : 0);
+              }, 0);
+            }
 
             const displayCount = logEntryCount > 0 ? logEntryCount : 0;
             const logFile = new LogItem(`${file} (${displayCount})`,
@@ -235,7 +250,9 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       const filePath = path.join(dir, file);
       if (!fs.lstatSync(filePath).isFile()) {
         return null;
-      }      // First determine the children (log entries)
+      }
+
+      // First determine the children (log entries)
       const children = this.getLogFileLines(filePath);
 
       // Then count the actual number of log entries (instead of line count)
@@ -269,6 +286,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     if (!fileContent) {
       return [];
     }
+
     const lines = fileContent.split('\n');
     const groupedLines = this.groupLogEntries(lines, filePath);
     return groupedLines;
@@ -277,9 +295,13 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   public groupLogEntries(lines: string[], filePath: string): LogItem[] {
     const groupedByType = new Map<string, { message: string, line: string, lineNumber: number }[]>();
 
+    console.log(`[DEBUG] Processing ${lines.length} lines for ${filePath}`);
+    let matchCount = 0;
+
     lines.forEach((line, index) => {
       const match = line.match(/\.(\w+):/);
       if (match) {
+        matchCount++;
         const level = match[1].toUpperCase();
         const message = line.replace(/^\[.*?\]\s*\.\w+:\s*/, '');
 
@@ -294,52 +316,39 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
 
     return Array.from(groupedByType.entries()).map(([level, entries]) => {
       if (this.groupByMessage) {
-        // Erste Gruppierung nach Themen (z.B. "Broken reference")
+        // Group by topics (e.g. "Broken reference")
         const groupedByTopic = this.groupByTopics(entries);
 
         const topicGroups = Array.from(groupedByTopic.entries()).map(([topic, topicEntries]) => {
-          // Zweite Gruppierung nach spezifischen Nachrichten innerhalb des Themas
-          const groupedByMessage = new Map<string, { line: string, lineNumber: number }[]>();
 
-          topicEntries.forEach(entry => {
-            // Apply additional search filtering on message level
-            if (this.matchesSearchTerm(entry.message) || this.matchesSearchTerm(entry.line)) {
-              const messageGroup = groupedByMessage.get(entry.message) || [];
-              messageGroup.push({ line: entry.line, lineNumber: entry.lineNumber });
-              groupedByMessage.set(entry.message, messageGroup);
-            }
+          // Create the individual log entries directly for this topic
+          const logEntries = topicEntries.map(entry => {
+            const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
+            const formattedLine = formatTimestamp(entry.line);
+            return new LogItem(
+              `Line ${lineNumber}:  ${formattedLine}`,
+              vscode.TreeItemCollapsibleState.None,
+              {
+                command: 'magento-log-viewer.openFileAtLine',
+                title: 'Open Log File at Line',
+                arguments: [filePath, entry.lineNumber]
+              }
+            );
+          }).sort((a, b) => {
+            const aLine = parseInt(a.label.match(/Line (\d+)/)?.[1] || '0');
+            const bLine = parseInt(b.label.match(/Line (\d+)/)?.[1] || '0');
+            return aLine - bLine;
           });
 
-          const messageGroups = Array.from(groupedByMessage.entries()).map(([message, messageEntries]) => {
-            const count = messageEntries.length;
-            const label = `${message} (${count})`;
-            return new LogItem(label, vscode.TreeItemCollapsibleState.Collapsed, undefined,
-              messageEntries.map(entry => {
-                const lineNumber = (entry.lineNumber + 1).toString().padStart(2, '0');
-                // Format the timestamp in the log entry
-                const formattedLine = formatTimestamp(entry.line);
-                return new LogItem(
-                  `Line ${lineNumber}:  ${formattedLine}`,
-                  vscode.TreeItemCollapsibleState.None,
-                  {
-                    command: 'magento-log-viewer.openFileAtLine',
-                    title: 'Open Log File at Line',
-                    arguments: [filePath, entry.lineNumber]
-                  }
-                );
-              }).sort((a, b) => a.label.localeCompare(b.label)) // Sort entries alphabetically
-            );
-          }).sort((a, b) => a.label.localeCompare(b.label)); // Sort message groups alphabetically
-
-          // Erstelle Themen-Gruppe nur wenn sie Nachrichten enthält
-          if (messageGroups.length > 0) {
+          // Create topic group with direct log entries as children
+          if (topicEntries.length > 0) {
             const topicCount = topicEntries.length;
-            const topicLabel = topic === 'Other' ? `${topic} (${topicCount})` : `${topic} (${topicCount})`;
-            return new LogItem(topicLabel, vscode.TreeItemCollapsibleState.Collapsed, undefined, messageGroups);
+            const topicLabel = `${topic} (${topicCount})`;
+            return new LogItem(topicLabel, vscode.TreeItemCollapsibleState.Collapsed, undefined, logEntries);
           }
           return null;
         }).filter((item): item is LogItem => item !== null).sort((a, b) => {
-          // "Other" immer am Ende
+          // "Other" always at the end
           if (a.label.startsWith('Other')) { return 1; }
           if (b.label.startsWith('Other')) { return -1; }
           return a.label.localeCompare(b.label);
@@ -347,7 +356,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
 
         // Only add log level if it has matching entries after filtering
         if (topicGroups.length > 0) {
-          const logFile = new LogItem(`${level} (${entries.length}, grouped)`, vscode.TreeItemCollapsibleState.Collapsed, undefined, topicGroups);
+          const logFile = new LogItem(`${level} (${entries.length})`, vscode.TreeItemCollapsibleState.Collapsed, undefined, topicGroups);
           logFile.iconPath = getIconForLogLevel(level);
           return logFile;
         }
@@ -429,7 +438,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   }
 
   /**
-   * Gruppiert Log-Einträge nach wiederkehrenden Themen
+   * Groups log entries by recurring topics
    */
   private groupByTopics(entries: { message: string, line: string, lineNumber: number }[]): Map<string, { message: string, line: string, lineNumber: number }[]> {
     const groupedByTopic = new Map<string, { message: string, line: string, lineNumber: number }[]>();
@@ -437,7 +446,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     entries.forEach(entry => {
       let assigned = false;
 
-      // Erste Priorität: Dynamische Erkennung von Themen im Format "[Thema]:"
+      // First priority: Dynamic detection of topics in the format "[Topic]:"
       const dynamicTopicMatch = entry.message.match(/^([^:]+):/);
       if (dynamicTopicMatch) {
         const topic = dynamicTopicMatch[1].trim();
@@ -447,7 +456,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
         assigned = true;
       }
 
-      // Fallback: Statische Themen-Muster für Nachrichten ohne ":" Format
+      // Fallback: Static topic patterns for messages without ":" format
       if (!assigned) {
         const fallbackPatterns = [
           { pattern: /database|sql|transaction/i, topic: 'Database' },
@@ -491,7 +500,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
         }
       }
 
-      // Falls kein Thema gefunden wurde, füge zu "Other" hinzu
+      // If no topic was found, add to "Other"
       if (!assigned) {
         const otherEntries = groupedByTopic.get('Other') || [];
         otherEntries.push(entry);
