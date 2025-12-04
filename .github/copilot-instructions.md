@@ -5,9 +5,24 @@
 This is a VS Code extension that provides intelligent viewing and management of Magento log files. The extension follows a modular architecture with clear separation of concerns:
 
 - **`src/extension.ts`** - Entry point with asynchronous initialization pattern to avoid blocking VS Code startup
-- **`src/logViewer.ts`** - Core TreeDataProvider implementations (`LogViewerProvider`, `ReportViewerProvider`)
-- **`src/helpers.ts`** - Utility functions, caching system, file operations, and command handlers
+- **`src/logViewer.ts`** - Core TreeDataProvider implementations (`LogViewerProvider`, `ReportViewerProvider`) with theme grouping and message deduplication
+- **`src/helpers.ts`** - Utility functions, multi-layered caching system, auto-cleanup functionality, and command handlers
 - **`src/updateNotifier.ts`** - Version update notifications and changelog integration
+
+## New Major Features (v1.23+)
+
+### Auto-Cleanup System
+The extension now includes sophisticated automatic log management:
+- **Time-based cleanup**: Configurable age thresholds (`autoCleanupMaxAge`: "30min", "2h", "7d", "2w", "3M")
+- **Periodic cleanup**: Background cleanup with intervals from 5min to 24h (`periodicCleanupInterval`)
+- **Smart parsing**: `parseTimeDuration()` function with extensive validation (see `autoCleanup.test.ts`)
+- Functions: `autoCleanupOldLogFiles()`, `startPeriodicCleanup()`, `stopPeriodicCleanup()`
+
+### Theme-Aware Log Grouping
+Advanced log entry organization with intelligent grouping:
+- **Message grouping**: `groupByMessage` setting reduces duplicate log entries
+- **Theme detection**: Identifies "Broken reference" patterns and similar theme-related issues
+- **Group management**: Automatic expansion/collapse of grouped entries (see `themeGrouping.test.ts`)
 
 ## Key Architectural Patterns
 
@@ -21,17 +36,21 @@ await new Promise(resolve => setTimeout(resolve, 500));
 ```
 
 ### Intelligent File Caching System
-The extension implements a sophisticated caching mechanism in `helpers.ts`:
-- **Line count caching** - Avoids re-reading files for badge counts
-- **File content caching** - Smart memory management with size limits
-- **Cache invalidation** - File system watchers automatically invalidate stale cache entries
-- Use `getCacheStatistics()`, `clearFileContentCache()`, `invalidateFileCache()` for cache management
+The extension implements a sophisticated multi-layered caching mechanism in `helpers.ts`:
+- **Line count caching** - `lineCountCache` Map with timestamp-based invalidation
+- **File content caching** - `fileContentCache` with configurable size limits (`cacheMaxFiles`, `cacheMaxFileSize`)
+- **Report content caching** - `reportCache` for parsed JSON reports with timestamp validation
+- **Dynamic cache configuration** - `getCacheConfig()` adapts to user settings and memory constraints
+- **Cache statistics** - `enableCacheStatistics` setting provides performance metrics
+- Cache management: `getCacheStatistics()`, `clearFileContentCache()`, `invalidateFileCache()`, `optimizeCacheSize()`
 
 ### Context-Driven UI
 Commands are conditionally shown using VS Code's `when` clauses:
 - `magentoLogViewer.hasMagentoRoot` - Controls visibility of most features
-- `magentoLogViewer.hasActiveSearch` - Shows/hides search clear button
+- `magentoLogViewer.hasActiveSearch` / `magentoLogViewer.hasActiveSearchReports` - Shows/hides search clear buttons
 - `magentoLogViewer.hasLogFiles` - Controls log file operations
+- `magentoLogViewer.autoCleanupEnabled` - Toggles cleanup UI commands
+- `magentoLogViewer.periodicCleanupEnabled` - Controls periodic cleanup status
 
 ## Critical Development Workflows
 
@@ -48,6 +67,9 @@ Tests are located in `src/test/` with focused test files:
 - `extension.test.ts` - Basic extension lifecycle
 - `caching.test.ts` - Cache system validation
 - `search.test.ts` - Search functionality
+- `autoCleanup.test.ts` - Time duration parsing and cleanup logic
+- `themeGrouping.test.ts` - Log message grouping and theme detection
+- `cacheConfiguration.test.ts`, `logReader.test.ts`, `reportReader.test.ts` - Component-specific tests
 - Run tests with `npm run test` or F5 debug launch
 
 ### Extension Configuration Flow
@@ -113,5 +135,14 @@ vscode.window.showErrorMessage('Error message', 'Action Button').then(selection 
 - **Throttled badge updates**: Maximum one badge update per second
 - **Smart caching**: File content cached with automatic memory limits
 - **Async file operations**: Uses `fs.promises` for non-blocking I/O where possible
+
+## Release Documentation
+
+### Changelog Updates
+After implementing new features or fixes, update [CHANGELOG.md](../CHANGELOG.md) with user-friendly descriptions:
+- Use simple, non-technical language that end users can understand
+- Focus on benefits and improvements rather than implementation details
+- Group changes by type: Features, Improvements, Bug Fixes
+- Example: "Added automatic cleanup of old log files" instead of "Implemented autoCleanupOldLogFiles() function"
 
 When modifying this extension, prioritize user experience with immediate feedback, maintain the caching system integrity, and ensure proper disposal of resources to prevent memory leaks.
