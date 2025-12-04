@@ -10,6 +10,17 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
+### [1.23.0] - 2025-12-04
+
+- perf: Implement regex caching for improved search performance (50-80% less CPU overhead during regex searches)
+- perf: Cache compiled regex patterns to eliminate redundant compilation on each search operation
+- perf: Add intelligent cache invalidation when search terms or flags change
+- feat: Enhanced log entry counting with more accurate badge numbers showing actual log entries instead of line counts
+- feat: Add comprehensive theme grouping tests to ensure reliable categorization of log entries
+- test: New theme grouping test suite with edge case handling and multi-level validation
+- fix: Improve log entry detection and counting accuracy across different log formats
+- dev: Memory leak prevention with proper regex cache cleanup in dispose methods
+
 ### [1.22.0] - 2024-12-03
 
 - feat: Complete settings reorganization into logical categories for improved user experience
