@@ -14,6 +14,9 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   public searchTerm: string = '';
   public searchCaseSensitive: boolean = false;
   public searchUseRegex: boolean = false;
+  private cachedSearchRegex: RegExp | null = null;
+  private lastSearchTerm: string = '';
+  private lastSearchFlags: string = '';
 
   constructor(private workspaceRoot: string) {
     if (!LogViewerProvider.statusBarItem) {
@@ -66,6 +69,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
 
     if (searchOptions !== undefined) {
       this.searchTerm = searchOptions;
+      // Clear cached regex when search term changes
+      this.cachedSearchRegex = null;
+      this.lastSearchTerm = '';
+      this.lastSearchFlags = '';
       this.updateRefreshButtonVisibility();
       this.refresh();
 
@@ -517,6 +524,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       LogViewerProvider.statusBarItem.dispose();
       LogViewerProvider.statusBarItem = null as any;
     }
+    // Clear regex cache to prevent memory leaks
+    this.cachedSearchRegex = null;
+    this.lastSearchTerm = '';
+    this.lastSearchFlags = '';
     while (this.disposables.length) {
       const disposable = this.disposables.pop();
       if (disposable) {
@@ -535,6 +546,9 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   public searchTerm: string = '';
   public searchCaseSensitive: boolean = false;
   public searchUseRegex: boolean = false;
+  private cachedSearchRegex: RegExp | null = null;
+  private lastSearchTerm: string = '';
+  private lastSearchFlags: string = '';
 
   constructor(private workspaceRoot: string) {
     const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
@@ -580,6 +594,10 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
 
     if (searchOptions !== undefined) {
       this.searchTerm = searchOptions;
+      // Clear cached regex when search term changes
+      this.cachedSearchRegex = null;
+      this.lastSearchTerm = '';
+      this.lastSearchFlags = '';
       this.updateRefreshButtonVisibility();
       this.refresh();
 
@@ -591,6 +609,9 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
 
   public clearSearch(): void {
     this.searchTerm = '';
+    this.cachedSearchRegex = null;
+    this.lastSearchTerm = '';
+    this.lastSearchFlags = '';
     this.updateRefreshButtonVisibility();
     this.refresh();
     vscode.window.showInformationMessage('Search cleared');
@@ -604,15 +625,23 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
     try {
       if (this.searchUseRegex) {
         const flags = this.searchCaseSensitive ? 'g' : 'gi';
-        const regex = new RegExp(this.searchTerm, flags);
-        return regex.test(text);
+
+        // Check if we need to recompile the regex
+        if (!this.cachedSearchRegex || this.lastSearchTerm !== this.searchTerm || this.lastSearchFlags !== flags) {
+          this.cachedSearchRegex = new RegExp(this.searchTerm, flags);
+          this.lastSearchTerm = this.searchTerm;
+          this.lastSearchFlags = flags;
+        }
+
+        return this.cachedSearchRegex.test(text);
       } else {
         const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
         const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
         return searchText.includes(searchTerm);
       }
     } catch (error) {
-      // Invalid regex, fall back to simple string search
+      // Invalid regex, fall back to simple string search and clear cache
+      this.cachedSearchRegex = null;
       const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
       const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
       return searchText.includes(searchTerm);
@@ -745,6 +774,10 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
 
   dispose() {
     this._onDidChangeTreeData.dispose();
+    // Clear regex cache to prevent memory leaks
+    this.cachedSearchRegex = null;
+    this.lastSearchTerm = '';
+    this.lastSearchFlags = '';
     while (this.disposables.length) {
       const disposable = this.disposables.pop();
       if (disposable) {
