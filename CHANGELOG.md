@@ -10,7 +10,7 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Latest Release
 
-### [1.21.0] - 2024-12-03
+### [1.22.0] - 2024-12-03
 
 - feat: Complete settings reorganization into logical categories for improved user experience
 - ui: Settings now organized into 4 categorized sections: Project Setup, Log Viewing, Auto Cleanup, and Performance & Cache
@@ -20,6 +20,10 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - config: Improved default values: workspace folder (./), 50 cached files, 10MB cache size, 6h cleanup interval
 - config: Added path validation with user-friendly error messages for Magento root folder
 - ux: Streamlined folder selection - direct file picker without intermediate confirmation dialogs
+
+### [1.21.0] - 2024-12-03
+
+- test: updated github workflows
 
 ### [1.20.0] - 2024-12-03
 

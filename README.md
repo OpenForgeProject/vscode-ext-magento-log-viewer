@@ -1,59 +1,146 @@
-# Magento Log Viewer
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/04d20d74a4bb4f7fb144d320f7008edb)](https://app.codacy.com/gh/OpenForgeProject/vscode-ext-magento-log-viewer/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![GitHub Actions](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/actions/workflows/test.yml/badge.svg)](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/actions/workflows/test.yml)
-![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/MathiasElle.magento-log-viewer?color=0891B2)
+# 🚀 Magento Log Viewer for VS Code
 
-The Magento Log Viewer extension for Visual Studio Code provides a convenient way to view and manage Magento log files directly in your workspace.
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/04d20d74a4bb4f7fb144d320f7008edb)](https://app.codacy.com/gh/OpenForgeProject/vscode-ext-magento-log-viewer/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![GitHub Actions](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/actions/workflows/test.yml/badge.svg)](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/actions/workflows/test.yml) ![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/MathiasElle.magento-log-viewer?color=0891B2)
+
+**Professional Log Viewer for Magento & Adobe Commerce Developers**
+
+A powerful VS Code extension that enhances your Magento development workflow with intelligent log management, advanced search capabilities, and automated cleanup tools.
 
 ![Magento Log Viewer Screenshot](resources/logVideo.gif)
 
-## Features
+## ✨ Key Features
 
-- Tree view of log files from Magento's `var/log` directory
-- Section for Grouped log entries by severity level (ERROR, WARN, DEBUG, INFO)
-- Section for Report files with parsed and optimized titles
-- **Quick Search/Filter Box** - Real-time filtering of log entries with case-sensitive and regex support
-- **Advanced Search Options** - Search through log entries with pattern matching and text filtering
-- **Intelligent File Caching** - Enhanced performance with smart memory management and ~80% faster file reads
-- Option to group log entries by message content
-- Direct file opening with line highlighting
-- One-click log file clearing with confirmation popup
-- Status bar showing total log entries with active search indicator
-- Real-time log file monitoring with optimized cache invalidation
-- Badge in the tree view showing the total number of log entries
-- Improved report file titles by parsing content for better readability
-- Color-coded icons for different log levels (ERROR, WARN, DEBUG, INFO)
-- Individual report file deletion through context menu
-- Automatic update notifications for new extension versions
-- Line-by-line navigation within log files
-- Collapsible sections for identical report error titles\n- Project setting retention between workspace sessions\n- **Automatic Log File Cleanup** - Configurable auto-deletion of old log files based on age (disabled by default)
-- **Periodic Cleanup (Cron-like)** - Run cleanup automatically at regular intervals (5min to 24h)
+### 📁 **Smart Log Management**
+- **Structured Tree View** - All log files from `var/log/` organized clearly
+- **Color-coded Log Levels** - ERROR (red), WARN (orange), DEBUG (yellow), INFO (blue), CRITICAL (pink)
+- **Report File Integration** - Automatic analysis and grouping of `var/report/` files
+- **Real-time Monitoring** - Live updates when files change
 
-## Setup
+### 🔍 **Advanced Search Capabilities**
+- **Real-time Search** - Instant filtering as you type
+- **Regex Support** - Powerful pattern matching (e.g., `error.*critical`)
+- **Case-sensitive Options** - Precise search with case sensitivity control
+- **Smart Grouping** - Identical log entries are automatically grouped
 
-1. Install the extension from VS Code marketplace
-2. Open your Magento project workspace
-3. When prompted, confirm it's a Magento project
-4. Select your Magento root directory
-5. The extension will now load your log files
+### ⚡ **Performance Optimization**
+- **Intelligent Caching** - Up to 80% faster file access
+- **Memory Management** - Automatic cache memory optimization
+- **Configurable Limits** - Adjust cache size based on project needs
+- **Performance Statistics** - Detailed cache metrics for developers
 
-Note: Settings are workspace-specific, allowing different configurations for each Magento project. The extension features intelligent file caching for improved performance, especially with large log files.
+### 🛠️ **Automated Maintenance**
+- **Auto-Cleanup** - Automatic deletion of old log files by configurable age
+- **Periodic Cleanup** - Cron-like scheduling (5min to 24h intervals)
+- **One-Click Cleanup** - Instant deletion with safety confirmation
+- **Bulk Operations** - Delete report files individually or all at once
 
-## Usage
+## 🚀 Quick Start
 
-- **View Logs**: Open the Magento Log Viewer sidebar (M logo)
-- **Search Logs**: Click the search icon in the log view header to filter entries in real-time
-  - **Text Search**: Enter any text to filter log entries containing that text
-  - **Case-Sensitive**: Enable in settings (`magentoLogViewer.searchCaseSensitive`) for exact case matching
-  - **Regex Support**: Enable in settings (`magentoLogViewer.searchUseRegex`) for pattern matching (e.g., `error.*critical`)
-  - **Clear Search**: Click the clear icon (visible during active search) to remove filters
-- **Clear Logs**: Click the trash icon in the view header. A confirmation popup will appear to confirm the action.
-- **Refresh**: Click the refresh icon or wait for auto-update
-- **Navigate**: Click on log entries to jump to specific lines
-- **Filter**: Expand log files to see entries grouped by severity
-- **Group by Message**: Enable or disable grouping of log entries by message content in the settings. When enabled, the counter will display "grouped" (e.g., `INFO (128, grouped)`).\n- **Delete Reports**: Right-click on a report file entry and select "Delete Report File" from the context menu\n- **Auto Cleanup**: Automatically delete old log files based on configured age\n  - **Enable/Disable**: Control automatic cleanup via `magentoLogViewer.enableAutoCleanup` setting (disabled by default)\n  - **Configure Age**: Set maximum file age with `magentoLogViewer.autoCleanupMaxAge` (default: \"30d\")\n  - **Supported Formats**: Use time formats like \"30min\" (30 minutes), \"2h\" (2 hours), \"7d\" (7 days), \"2w\" (2 weeks), \"3M\" (3 months)\n  - **Manual Cleanup**: Click the clock icon in the log view header to run cleanup manually\n  - **Automatic Run**: Cleanup runs silently on extension startup (if enabled)\n- **View Updates**: Review update notifications when the extension is updated with links to changelog and GitHub
+### Installation & Setup
+1. **Install Extension** - Direct from VS Code Marketplace
+2. **Open Magento Project** - Load workspace in VS Code
+3. **Confirm Project** - Automatic detection with confirmation dialog
+4. **Select Magento Root** - Integrated folder picker for easy configuration
+5. **Done!** - Log files are automatically loaded
 
-## Requirements
+> **💡 Tip:** The extension saves all settings workspace-specific, allowing different configurations for different Magento projects.
 
-- VS Code 1.95.0+
+### Getting Started
+- **Open Log Viewer** - Click the Magento logo (M) in the sidebar
+- **Search Logs** - Search icon in the header for live filtering
+- **Open Files** - Direct click on log entries jumps to the corresponding line
+- **Manage Reports** - Right-click menu for individual report deletion
 
-**Enjoy!**
+## 📖 Detailed Usage
+
+### Log Management
+- **📊 Overview** - All log files with badge display of entry count
+- **🔄 Auto-Refresh** - Automatic updates when files change
+- **📋 Grouping** - Identical messages are summarized (`INFO (128, grouped)`)
+- **🎯 Navigation** - Direct jump to specific lines in code
+
+### Advanced Search
+- **🔍 Text Search** - Simple text input filters all relevant entries
+- **⚡ Real-time Filter** - Instant results while typing
+- **🎯 Case-Sensitive** - Activatable via settings for exact case matching
+- **🔧 Regex Patterns** - Advanced search patterns for complex filtering
+  - Example: `error.*critical` finds all ERROR logs with "critical"
+  - Example: `\[2024-12-\d+\]` for all December 2024 entries
+- **🧹 Clear Search** - Clear button (visible during active search)
+
+### Automatic Cleanup
+- **⏰ Auto-Cleanup** - Configurable deletion by file age
+  - Supported formats: `30min`, `2h`, `7d`, `2w`, `3M`
+  - Disabled by default for safety
+- **🔄 Periodic Cleanup** - Automatic execution at intervals
+  - Intervals: 5min to 24h selectable
+  - Recommended: `1h` for production, `6h` for development
+- **🗑️ Manual Cleanup** - Clock icon for immediate cleanup
+- **⚠️ Safety** - Confirmation dialogs for critical operations
+
+### Report Management
+- **📁 Structured View** - Automatic title optimization through content parsing
+- **🔍 Separate Search** - Independent search function for report files
+- **🗑️ Selective Deletion** - Individual reports via right-click context menu
+- **🧹 Bulk Operations** - Delete all reports at once
+
+## ⚙️ Configuration
+
+### Performance Settings
+```json
+{
+  "magentoLogViewer.cacheMaxFiles": 50,        // Max files in cache
+  "magentoLogViewer.cacheMaxFileSize": 10,     // Max file size in MB
+  "magentoLogViewer.enableCacheStatistics": false  // Debug statistics
+}
+```
+
+### Cleanup Configuration
+```json
+{
+  "magentoLogViewer.enableAutoCleanup": false,           // Enable auto-cleanup
+  "magentoLogViewer.autoCleanupMaxAge": "7d",            // Maximum file age
+  "magentoLogViewer.enablePeriodicCleanup": false,       // Periodic execution
+  "magentoLogViewer.periodicCleanupInterval": "6h"       // Cleanup interval
+}
+```
+
+### Display Options
+```json
+{
+  "magentoLogViewer.groupByMessage": true,         // Group messages
+  "magentoLogViewer.searchCaseSensitive": false,   // Case-sensitive search
+  "magentoLogViewer.searchUseRegex": false         // Regex support
+}
+```
+
+## 🎯 Supported Magento Versions
+
+- ✅ **Magento 2.x** (all versions)
+- ✅ **Adobe Commerce** (On-Premise & Cloud)
+- ✅ **Adobe Commerce Cloud**
+- ✅ **Magento Open Source**
+- ✅ **Custom Log Structures**
+
+## 🔧 System Requirements
+
+- **VS Code** 1.95.0 or higher
+- **Magento Project** with standard `var/log` and `var/report` structure
+- **Node.js** (automatically installed with VS Code)
+
+## 🤝 Support & Contributing
+
+### Report Issues
+- 🐛 **Bug Reports** - [GitHub Issues](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues)
+- 💡 **Feature Requests** - [GitHub Discussions](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/discussions)
+
+### Support Development
+- ⭐ **Rate Extension** - [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=MathiasElle.magento-log-viewer)
+- 💖 **Sponsoring** - [GitHub Sponsors](https://github.com/sponsors/dermatz)
+- 🔧 **Contributing** - Pull requests welcome!
+
+---
+
+**Built with ❤️ for the Magento Community**
+
+*Enhance your productivity with intelligent log management directly in VS Code!*
