@@ -53,14 +53,14 @@ suite('Report Reader Test Suite', () => {
 
         // Interface for accessing private methods for testing
         interface ReportViewerInternals {
-            getLogItems(dir: string, label: string): LogItem[];
+            getLogItems(dir: string): LogItem[];
         }
 
         // Access the provider's internal methods
         const provider = reportProvider as unknown as ReportViewerInternals;
 
         // Get report items from the directory
-        const reportItems = provider.getLogItems(tempDir, 'Reports');
+        const reportItems = provider.getLogItems(tempDir);
 
         // Basic validation that reports were found
         assert.ok(reportItems.length > 0, 'Should find report entries');

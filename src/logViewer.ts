@@ -7,7 +7,7 @@ import { pathExists, pathExistsAsync, getLineCount, getIconForLogLevel, getLogIt
 export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<LogItem | undefined | void> = this._onDidChangeTreeData.event;
-  public static statusBarItem: vscode.StatusBarItem;
+  public static statusBarItem: vscode.StatusBarItem | undefined;
   private groupByMessage: boolean;
   private disposables: vscode.Disposable[] = [];
   private isInitialized: boolean = false;
@@ -243,7 +243,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     return normalizedDir === normalizedLogPath;
   }
 
-  private getLogItems(dir: string, label: string): LogItem[] {
+  private getLogItems(dir: string): LogItem[] {
     if (!pathExists(dir)) {
       return [new LogItem(`No items found`, vscode.TreeItemCollapsibleState.None)];
     }
@@ -303,14 +303,13 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     const groupedByType = new Map<string, { message: string, line: string, lineNumber: number }[]>();
 
     console.log(`[DEBUG] Processing ${lines.length} lines for ${filePath}`);
-    let matchCount = 0;
 
     lines.forEach((line, index) => {
-      const match = line.match(/\.(\w+):/);
+      // Enhanced regex to match both formats: .level: and .LEVEL:
+      const match = line.match(/\.([A-Za-z]+):/);
       if (match) {
-        matchCount++;
         const level = match[1].toUpperCase();
-        const message = line.replace(/^\[.*?\]\s*\.\w+:\s*/, '');
+        const message = line.replace(/^\[.*?\]\s*\.[A-Za-z]+:\s*/, '');
 
         // Apply search filter
         if (this.matchesSearchTerm(line) || this.matchesSearchTerm(message)) {
@@ -413,9 +412,9 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
           if (fileContent) {
             const lines = fileContent.split('\n');
 
-            // Only count valid log entries matching the expected pattern
+            // Only count valid log entries matching the expected pattern (enhanced for both formats)
             lines.forEach(line => {
-              if (line.match(/\.(\w+):/)) { // The pattern for log entries
+              if (line.match(/\.([A-Za-z]+):/)) { // Updated pattern to match both .level: and .LEVEL:
                 logEntryCount++;
               }
             });
@@ -441,7 +440,9 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     const totalEntries = logFiles.reduce((count, file) => count + parseInt(file.description?.match(/\d+/)?.[0] || '0', 10), 0);
 
     const searchInfo = this.searchTerm ? ` | Search: "${this.searchTerm}"` : '';
-    LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}${searchInfo}`;
+    if (LogViewerProvider.statusBarItem) {
+      LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}${searchInfo}`;
+    }
   }
 
   /**
@@ -522,7 +523,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     this._onDidChangeTreeData.dispose();
     if (LogViewerProvider.statusBarItem) {
       LogViewerProvider.statusBarItem.dispose();
-      LogViewerProvider.statusBarItem = null as any;
+      LogViewerProvider.statusBarItem = undefined;
     }
     // Clear regex cache to prevent memory leaks
     this.cachedSearchRegex = null;
@@ -678,7 +679,7 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
         setTimeout(() => {
           try {
             const reportPath = path.join(this.workspaceRoot, 'var', 'report');
-            const reportItems = this.getLogItems(reportPath, 'Reports');
+            const reportItems = this.getLogItems(reportPath);
             if (reportItems.length === 0) {
               resolve([new LogItem('No report files found', vscode.TreeItemCollapsibleState.None)]);
             } else {
@@ -693,7 +694,7 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
     }
   }
 
-  private getLogItems(dir: string, label: string): LogItem[] {
+  private getLogItems(dir: string): LogItem[] {
     const allItems = getLogItems(dir, parseReportTitle, getIconForReport);
 
     // Apply search filter
