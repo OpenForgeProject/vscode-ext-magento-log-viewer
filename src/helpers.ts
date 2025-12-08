@@ -455,7 +455,9 @@ export function updateBadge(treeView: vscode.TreeView<unknown>, logViewerProvide
     vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasLogFiles', totalEntries > 0);
 
     // Update status bar item
-    LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
+    if (LogViewerProvider.statusBarItem) {
+      LogViewerProvider.statusBarItem.text = `Magento Log-Entries: ${totalEntries}`;
+    }
   };
 
   // Debounced event handler
@@ -495,30 +497,6 @@ function countFilesInDirectory(dir: string): number {
   }
 
   return count;
-}
-
-function getAllReportFiles(dir: string): LogItem[] {
-  if (!pathExists(dir)) {
-    return [];
-  }
-
-  const items: LogItem[] = [];
-  const files = fs.readdirSync(dir);
-
-  files.forEach(file => {
-    const filePath = path.join(dir, file);
-    if (fs.lstatSync(filePath).isDirectory()) {
-      items.push(...getAllReportFiles(filePath));
-    } else if (fs.lstatSync(filePath).isFile()) {
-      items.push(new LogItem(file, vscode.TreeItemCollapsibleState.None, {
-        command: 'magento-log-viewer.openFile',
-        title: 'Open Log File',
-        arguments: [filePath]
-      }));
-    }
-  });
-
-  return items;
 }
 
 // Checks if the given path is a valid directory.

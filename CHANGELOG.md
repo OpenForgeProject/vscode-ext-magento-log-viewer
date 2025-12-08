@@ -2,9 +2,19 @@
 
 All notable changes to the "magento-log-viewer" extension will be documented in this file.
 
-
 ## Next release
 
+### [1.23.1] - 2025-12-08
+
+- fix: Enhanced log level detection pattern to support both uppercase and lowercase formats (.WARN:, .warn:, .INFO:, .info: etc.)
+- fix: WARN entries now properly appear in `*.log` file listing and categorization
+- fix: Improved regex pattern matching from `\.(\w+):` to `\.([A-Za-z]+):` for more reliable log parsing
+- fix: Resolved issue where certain log level formats were not being recognized during file analysis
+- fix: Enhanced badge counting accuracy for all log level variations
+- fix: Null safety improvements for status bar item to prevent potential crashes
+- refactor: Removed unused functions and improved code
+- refactor: Cleaned up method signatures by removing unnecessary parameters
+- fix: Updated test interfaces to match current implementation
 
 ---
 
