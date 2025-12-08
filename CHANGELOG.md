@@ -4,6 +4,8 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+---
+
 ### [1.23.1] - 2025-12-08
 
 - fix: Enhanced log level detection pattern to support both uppercase and lowercase formats (.WARN:, .warn:, .INFO:, .info: etc.)
@@ -15,8 +17,6 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - refactor: Removed unused functions and improved code
 - refactor: Cleaned up method signatures by removing unnecessary parameters
 - fix: Updated test interfaces to match current implementation
-
----
 
 ## Latest Release
 
