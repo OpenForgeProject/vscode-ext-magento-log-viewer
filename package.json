@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.23.1",
+  "version": "1.23.2",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -223,7 +223,17 @@
           "magentoLogViewer.periodicCleanupInterval": {
             "type": "string",
             "default": "6h",
-            "enum": ["5min", "10min", "15min", "30min", "1h", "2h", "6h", "12h", "24h"],
+            "enum": [
+              "5min",
+              "10min",
+              "15min",
+              "30min",
+              "1h",
+              "2h",
+              "6h",
+              "12h",
+              "24h"
+            ],
             "enumDescriptions": [
               "Every 5 minutes (very frequent, high performance impact)",
               "Every 10 minutes (frequent)",

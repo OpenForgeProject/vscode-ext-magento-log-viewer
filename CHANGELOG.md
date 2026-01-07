@@ -6,6 +6,16 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ---
 
+### [1.23.2] - 2026-01-07
+
+- chore: Updated npm dependencies to latest versions for improved security and compatibility
+- ci: Added Dependabot configuration for automated dependency updates (weekly schedule for npm and GitHub Actions)
+- ci: Added GitHub Release workflow for automated release creation with changelog extraction
+- ci: Configured auto-approve and auto-merge for Dependabot pull requests
+- dev: Enhanced project maintenance with automated workflows and dependency management
+
+---
+
 ### [1.23.1] - 2025-12-08
 
 - fix: Enhanced log level detection pattern to support both uppercase and lowercase formats (.WARN:, .warn:, .INFO:, .info: etc.)
@@ -201,6 +211,7 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 - update: refactor code to improve performance
 - fix: extend badge counter to include report files
 - fix: fixed issue with empty directories being included in the report list.
+
 ### [1.5.1] - 2024-12-05
 
 - fix: issue that caused the Reload button to not display any results
