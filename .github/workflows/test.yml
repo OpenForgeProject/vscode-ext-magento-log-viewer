@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Set up Xvfb
         run: |
           sudo apt-get update
@@ -30,7 +30,7 @@ jobs:
           export DISPLAY=:99
           sleep 3
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Install dependencies
         run: npm install
       - name: Compile the extension
