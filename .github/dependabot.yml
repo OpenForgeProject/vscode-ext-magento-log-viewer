@@ -9,7 +9,7 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 10
     assignees:
-      - "OpenForgeProject"
+      - "dermatz"
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -23,7 +23,7 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 5
     assignees:
-      - "OpenForgeProject"
+      - "dermatz"
     commit-message:
       prefix: "ci"
       include: "scope"
