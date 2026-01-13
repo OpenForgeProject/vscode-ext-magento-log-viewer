@@ -4,6 +4,37 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+### [1.24.0] - 2026-01-13
+
+#### 🎉 Major Feature: Real-Time Log Tailing
+
+- **feat**: Live monitoring of Magento log files with automatic UI updates
+- **feat**: One-click tailing activation via right-click context menu on log files
+- **feat**: Intelligent incremental file reading - only new content is parsed (no full file re-reads)
+- **feat**: Automatic notification for new ERROR and CRITICAL log entries while tailing
+- **feat**: **Auto-scroll to newest entries** - tree view automatically scrolls to show new log entries
+- **feat**: Memory-safe implementation with configurable update intervals (100ms to 2s)
+- **feat**: Maximum 5 simultaneously tailed files to prevent performance issues
+- **feat**: Persistent tailing across VS Code sessions (optional, disabled by default)
+- **feat**: File size warnings for files >100MB before starting tailing
+- **perf**: Position-tracking system eliminates redundant file reads (massive performance improvement)
+- **perf**: Buffering for partial line reads ensures complete log entry parsing
+- **ui**: Visual tailing indicator with "Stop All Tailing" button in maintenance menu
+- **ui**: Context menu commands: "Start Tailing", "Stop Tailing", "Toggle Tailing"
+- **config**: New settings section "Real-Time Log Tailing" with 5 configuration options:
+  - `enableRealTimeTailing`: Master enable/disable (default: false)
+  - `tailingUpdateInterval`: Update frequency (instant/250ms/500ms/1s/2s, default: 500ms)
+  - `tailingAutoScroll`: Auto-scroll to newest entries (default: true)
+  - `tailingPersistAcrossSessions`: Remember tailed files after restart (default: false)
+  - `tailingShowNotifications`: Show notifications for new error entries (default: true)
+
+#### Developer Experience Improvements
+
+- **feat**: Throttled error notifications (max 1 per minute) with optional disable setting
+- **fix**: Context menu shows only relevant commands based on tailing state (Start/Stop/Toggle)
+- **perf**: Selective tree refresh and smart resource cleanup on deactivation
+- **arch**: New `TailingManager` class with `appendNewEntries()` and `parseIncrementalLines()` methods
+
 ---
 
 ### [1.23.2] - 2026-01-07

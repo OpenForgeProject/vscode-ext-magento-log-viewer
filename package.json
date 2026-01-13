@@ -2,7 +2,7 @@
   "name": "magento-log-viewer",
   "displayName": "Magento Log Viewer",
   "description": "A Visual Studio Code extension to view and manage Magento log files.",
-  "version": "1.23.2",
+  "version": "1.24.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -136,6 +136,30 @@
         "command": "magento-log-viewer.togglePeriodicCleanup",
         "title": "Toggle Periodic Cleanup",
         "icon": "$(sync)"
+      },
+      {
+        "command": "magento-log-viewer.startTailing",
+        "title": "Start Tailing Log File",
+        "icon": "$(eye)",
+        "category": "Magento Log Viewer"
+      },
+      {
+        "command": "magento-log-viewer.stopTailing",
+        "title": "Stop Tailing Log File",
+        "icon": "$(eye-closed)",
+        "category": "Magento Log Viewer"
+      },
+      {
+        "command": "magento-log-viewer.toggleTailing",
+        "title": "Toggle Tailing",
+        "icon": "$(broadcast)",
+        "category": "Magento Log Viewer"
+      },
+      {
+        "command": "magento-log-viewer.stopAllTailing",
+        "title": "Stop All Tailing",
+        "icon": "$(debug-stop)",
+        "category": "Magento Log Viewer"
       }
     ],
     "configuration": [
@@ -191,6 +215,57 @@
             "type": "boolean",
             "default": false,
             "description": "Enable advanced search patterns (regular expressions) for complex log filtering",
+            "scope": "resource"
+          }
+        }
+      },
+      {
+        "order": 2.5,
+        "id": "realtime",
+        "title": "Real-Time Log Tailing",
+        "properties": {
+          "magentoLogViewer.enableRealTimeTailing": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "**Enable live monitoring of log files.**\n\nWhen enabled, you can right-click on log files and select **'Start Tailing'** to see new entries appear in real-time as they are written to the file.\n\n**Use case:** Perfect for debugging live issues - see errors as they happen without manually refreshing.",
+            "scope": "resource"
+          },
+          "magentoLogViewer.tailingUpdateInterval": {
+            "type": "string",
+            "default": "500ms",
+            "enum": [
+              "instant",
+              "250ms",
+              "500ms",
+              "1s",
+              "2s"
+            ],
+            "enumDescriptions": [
+              "Update every 100ms (highest CPU usage, use for critical debugging)",
+              "Update every 250ms (high frequency)",
+              "Update every 500ms (recommended for most cases)",
+              "Update every second (balanced performance)",
+              "Update every 2 seconds (lowest CPU usage)"
+            ],
+            "markdownDescription": "**How often to check for new log entries.**\n\n- **Faster** = see new logs sooner, higher CPU usage\n- **Slower** = better performance, slight delay\n- **Recommended:** `500ms` for development, `1s` for production",
+            "scope": "resource"
+          },
+          "magentoLogViewer.tailingAutoScroll": {
+            "type": "boolean",
+            "default": true,
+            "description": "Automatically scroll to show newest log entries when tailing is active",
+            "scope": "resource"
+          },
+          "magentoLogViewer.tailingPersistAcrossSessions": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "**Remember tailed files after VS Code restart.**\n\n- **Enabled:** Tailing automatically resumes when you reopen VS Code\n- **Disabled:** You need to manually start tailing again\n\n**Tip:** Enable this if you frequently debug the same log files.",
+            "scope": "resource"
+          },
+          "magentoLogViewer.tailingShowNotifications": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "**Show notifications for new ERROR and CRITICAL log entries.**\n\n- **Enabled:** You'll see a notification when new errors are detected (max 1 per minute)\n- **Disabled:** No notifications, silent monitoring\n\n**Tip:** Disable if notifications are distracting during heavy debugging sessions.",
             "scope": "resource"
           }
         }
@@ -439,6 +514,11 @@
           "group": "cleanup@2"
         },
         {
+          "command": "magento-log-viewer.stopAllTailing",
+          "when": "magentoLogViewer.hasMagentoRoot && magentoLogViewer.hasTailedFiles",
+          "group": "tailing@1"
+        },
+        {
           "command": "magento-log-viewer.openSettings",
           "when": "magentoLogViewer.hasMagentoRoot",
           "group": "settings@1"
@@ -461,6 +541,21 @@
           "command": "magento-log-viewer.deleteReportFile",
           "when": "view == reportFiles && viewItem == reportItem",
           "group": "navigation"
+        },
+        {
+          "command": "magento-log-viewer.startTailing",
+          "when": "view == logFiles && viewItem == logItem",
+          "group": "tailing@1"
+        },
+        {
+          "command": "magento-log-viewer.stopTailing",
+          "when": "view == logFiles && viewItem == logItem-tailing",
+          "group": "tailing@2"
+        },
+        {
+          "command": "magento-log-viewer.toggleTailing",
+          "when": "view == logFiles && viewItem =~ /^logItem/",
+          "group": "tailing@3"
         }
       ]
     }

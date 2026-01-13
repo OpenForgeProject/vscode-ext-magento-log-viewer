@@ -17,6 +17,8 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   private cachedSearchRegex: RegExp | null = null;
   private lastSearchTerm: string = '';
   private lastSearchFlags: string = '';
+  private treeView: vscode.TreeView<LogItem> | null = null;
+  private tailingManager: any | null = null;
 
   constructor(private workspaceRoot: string) {
     if (!LogViewerProvider.statusBarItem) {
@@ -34,6 +36,27 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
 
     // Delay initial heavy operations to avoid competing with indexing
     this.initializeAsync();
+  }
+
+  /**
+   * Sets the tree view reference for auto-scroll functionality
+   */
+  public setTreeView(treeView: vscode.TreeView<LogItem>): void {
+    this.treeView = treeView;
+  }
+
+  /**
+   * Sets the tailing manager reference for visual indicators
+   */
+  public setTailingManager(tailingManager: any): void {
+    this.tailingManager = tailingManager;
+  }
+
+  /**
+   * Checks if a file is currently being tailed
+   */
+  private isTailing(filePath: string): boolean {
+    return this.tailingManager?.isTailing(filePath) ?? false;
   }
 
   private async initializeAsync(): Promise<void> {
@@ -112,13 +135,174 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     }
   }
 
-  refresh(): void {
+  refresh(specificFilePath?: string): void {
     if (!this.workspaceRoot) {
       vscode.window.showErrorMessage('No workspace root found. Please open a Magento project.');
       return;
     }
-    this._onDidChangeTreeData.fire();
+
+    // Selective refresh for specific file (used by tailing)
+    if (specificFilePath) {
+      // TODO: Implement selective tree item refresh
+      // For now, fallback to full refresh
+      this._onDidChangeTreeData.fire();
+    } else {
+      // Full refresh
+      this._onDidChangeTreeData.fire();
+    }
+
     this.updateBadge();
+  }
+
+  /**
+   * Appends new log entries to an existing file's tree without full rebuild
+   * Used by real-time tailing to efficiently add new entries
+   */
+  public async appendNewEntries(filePath: string, newLines: string[], startLineNumber: number): Promise<void> {
+    // Parse new lines into log entries
+    const newEntries = this.parseIncrementalLines(newLines, startLineNumber);
+
+    if (newEntries.length > 0) {
+      // Trigger selective refresh
+      this.refresh(filePath);
+
+      // Auto-scroll editor if file is currently open
+      const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+      const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+      const autoScroll = config.get<boolean>('tailingAutoScroll', true);
+
+      if (autoScroll) {
+        // Scroll opened editor to end of file
+        await this.scrollEditorToEnd(filePath);
+
+        // Also scroll tree view
+        if (this.treeView) {
+          // Small delay to let tree refresh complete
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // Find the log file item in tree and reveal it
+          try {
+            // We need to find the actual tree item to reveal
+            // For now, we trigger a reveal on undefined which shows the tree view
+            await this.treeView.reveal(undefined as any, {
+              select: false,
+              focus: false,
+              expand: true
+            });
+          } catch (error) {
+            // Ignore reveal errors (item might not be visible in current filter)
+            console.debug('Auto-scroll tree failed:', error);
+          }
+        }
+      }
+
+      // Show notification for critical errors
+      const criticalCount = newEntries.filter(entry =>
+        entry.message.toLowerCase().includes('critical') ||
+        entry.message.toLowerCase().includes('error')
+      ).length;
+
+      if (criticalCount > 0) {
+        this.notifyNewErrors(path.basename(filePath), criticalCount);
+      }
+    }
+  }
+
+  /**
+   * Scrolls the editor to the end of the file if it's currently open
+   */
+  private async scrollEditorToEnd(filePath: string): Promise<void> {
+    try {
+      // Find all visible text editors
+      const editors = vscode.window.visibleTextEditors;
+
+      // Find editor with matching file path
+      const targetEditor = editors.find(editor => {
+        const editorPath = editor.document.uri.fsPath;
+        return editorPath === filePath;
+      });
+
+      if (targetEditor) {
+        // Get last line of document
+        const lastLine = targetEditor.document.lineCount - 1;
+        const lastCharacter = targetEditor.document.lineAt(lastLine).text.length;
+
+        // Create position at end of document
+        const endPosition = new vscode.Position(lastLine, lastCharacter);
+
+        // Create range to reveal
+        const endRange = new vscode.Range(endPosition, endPosition);
+
+        // Scroll to end without stealing focus
+        targetEditor.revealRange(
+          endRange,
+          vscode.TextEditorRevealType.Default
+        );
+
+        // Optional: Move cursor to end (commented out to not interfere with user's cursor)
+        // targetEditor.selection = new vscode.Selection(endPosition, endPosition);
+      }
+    } catch (error) {
+      console.debug('Error scrolling editor to end:', error);
+    }
+  }
+
+  /**
+   * Parses new log lines incrementally without re-reading entire file
+   */
+  private parseIncrementalLines(lines: string[], startLineNumber: number): Array<{ level: string; message: string; lineNumber: number }> {
+    const parsedEntries: Array<{ level: string; message: string; lineNumber: number }> = [];
+
+    lines.forEach((line, index) => {
+      const match = line.match(/\.([A-Za-z]+):/);
+      if (match) {
+        const level = match[1].toUpperCase();
+        const message = line.replace(/^\[.*?\]\s*\.[A-Za-z]+:\s*/, '');
+
+        // Apply search filter if active
+        if (this.matchesSearchTerm(line) || this.matchesSearchTerm(message)) {
+          parsedEntries.push({
+            level,
+            message,
+            lineNumber: startLineNumber + index
+          });
+        }
+      }
+    });
+
+    return parsedEntries;
+  }
+
+  /**
+   * Throttled notification for new errors (max 1 per minute)
+   */
+  private lastNotificationTime = 0;
+  private readonly NOTIFICATION_THROTTLE = 60000; // 1 minute
+
+  private notifyNewErrors(fileName: string, count: number): void {
+    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+    const showNotifications = config.get<boolean>('tailingShowNotifications', true);
+
+    // Check if notifications are enabled
+    if (!showNotifications) {
+      return;
+    }
+
+    const now = Date.now();
+
+    if (now - this.lastNotificationTime < this.NOTIFICATION_THROTTLE) {
+      return; // Throttled
+    }
+
+    this.lastNotificationTime = now;
+
+    const message = `🔴 ${count} new error(s) in ${fileName}`;
+    vscode.window.showWarningMessage(message, 'Open File').then(selection => {
+      if (selection === 'Open File') {
+        vscode.commands.executeCommand('magento-log-viewer.openFile', path.join(this.workspaceRoot, 'var', 'log', fileName));
+      }
+    });
   }
 
   getTreeItem(element: LogItem): vscode.TreeItem {
@@ -204,7 +388,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
             }
 
             const displayCount = logEntryCount > 0 ? logEntryCount : 0;
-            const logFile = new LogItem(`${file} (${displayCount})`,
+            const isTailingActive = this.isTailing(filePath);
+            const label = isTailingActive ? `${file} (${displayCount}) 📡 Live` : `${file} (${displayCount})`;
+
+            const logFile = new LogItem(label,
               displayCount > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
               {
                 command: 'magento-log-viewer.openFile',
@@ -212,8 +399,12 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
                 arguments: [filePath]
               }
             );
-            logFile.iconPath = new vscode.ThemeIcon('file');
+            // Set broadcast icon for tailed files, otherwise file icon
+            logFile.iconPath = isTailingActive
+              ? new vscode.ThemeIcon('broadcast', new vscode.ThemeColor('charts.green'))
+              : new vscode.ThemeIcon('file');
             logFile.children = displayCount > 0 ? children : [];
+            logFile.contextValue = isTailingActive ? 'logItem-tailing' : 'logItem';
             return logFile;
           } catch (error) {
             console.error(`Error processing file ${filePath}:`, error);
@@ -271,7 +462,10 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
 
       // Only if there are log entries or the file is empty (0)
       const displayCount = logEntryCount > 0 ? logEntryCount : 0;
-      const logFile = new LogItem(`${file} (${displayCount})`,
+      const isTailingActive = this.isTailing(filePath);
+      const label = isTailingActive ? `${file} (${displayCount}) 📡 Live` : `${file} (${displayCount})`;
+
+      const logFile = new LogItem(label,
         // Only make expandable if there are actual entries
         displayCount > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
         {
@@ -280,8 +474,12 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
           arguments: [filePath]
         }
       );
-      logFile.iconPath = new vscode.ThemeIcon('file');
+      // Set broadcast icon for tailed files, otherwise file icon
+      logFile.iconPath = isTailingActive
+        ? new vscode.ThemeIcon('broadcast', new vscode.ThemeColor('charts.green'))
+        : new vscode.ThemeIcon('file');
       logFile.children = displayCount > 0 ? children : [];
+      logFile.contextValue = isTailingActive ? 'logItem-tailing' : 'logItem';
       return logFile;
     }).filter(Boolean) as LogItem[];
 
@@ -420,7 +618,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
             });
           }
         } catch (error) {
-            console.error(`Error reading file ${filePath}:`, error);
+          console.error(`Error reading file ${filePath}:`, error);
         }
 
         return new LogItem(`${file} (${logEntryCount})`, vscode.TreeItemCollapsibleState.None, {
