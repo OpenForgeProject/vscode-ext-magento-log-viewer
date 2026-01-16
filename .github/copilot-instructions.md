@@ -162,3 +162,15 @@ Update [CHANGELOG.md](../CHANGELOG.md) with user-friendly descriptions:
 - Focus on benefits vs implementation
 - Group: Features, Improvements, Bug Fixes
 - Example: "Added automatic cleanup" not "Implemented autoCleanupOldLogFiles()"
+
+## Git Conventions
+
+- **Conventional Commits**: All Pull Requests titles must follow the Conventional Commits specification.
+  - Structure: `type(scope): description`
+  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+  - Examples:
+    - `feat: add real-time log tailing`
+    - `fix: resolve crash on startup`
+    - `docs: update README with new features`
+- **Scopes**: Use file names or feature names (e.g., `logViewer`, `search`, `deps`).
+- **Commits inside PRs**: Can be unstructured, as PRs should be squashed upon merge. The PR title will become the commit message on `main`.
