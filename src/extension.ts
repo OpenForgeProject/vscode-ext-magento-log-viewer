@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (c) 2024-2026 OpenForge Project Contributors
+ */
+
 import * as vscode from 'vscode';
 import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolderDirect, getEffectiveMagentoRoot, selectMagentoRootFromSettings, autoCleanupOldLogFiles, stopPeriodicCleanup, TailingManager } from './helpers';
 import { LogItem, ReportViewerProvider, LogViewerProvider } from './logViewer';

@@ -8,6 +8,7 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 #### 🎉 Major Feature: Real-Time Log Tailing
 
+- **license**: Changed project license to GPL-3.0-or-later
 - **feat**: Live monitoring of Magento log files with automatic UI updates
 - **feat**: One-click tailing activation via right-click context menu on log files
 - **feat**: Intelligent incremental file reading - only new content is parsed (no full file re-reads)

@@ -201,6 +201,11 @@ Perfect for debugging live issues - see errors as they happen!
 - 💖 **Sponsoring** - [GitHub Sponsors](https://github.com/sponsors/dermatz)
 - 🔧 **Contributing** - Pull requests welcome!
 
+## 📄 License
+
+This project is licensed under the **GNU General Public License v3.0**.
+See the [LICENSE](LICENSE) file for details.
+
 ---
 
 **Built with ❤️ for the Magento Community**
