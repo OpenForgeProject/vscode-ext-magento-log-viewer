@@ -4,6 +4,13 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.25.1](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.25.0...magento-log-viewer-v1.25.1) (2026-01-16)
+
+
+### Bug Fixes
+
+* correct action reference and condition in release workflow ([#33](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/33)) ([0c27174](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/0c27174db71a3c40721617bf6640461e0551c48a))
+
 ## [1.25.0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.24.0...magento-log-viewer-v1.25.0) (2026-01-16)
 
 
