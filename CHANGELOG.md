@@ -4,6 +4,100 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.25.0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.24.0...magento-log-viewer-v1.25.0) (2026-01-16)
+
+
+### Features
+
+* add CI workflow for automated testing and update .gitignore ([7b74107](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/7b7410729d9e739cb78afe3e0529771b63a6078d))
+* add color coding for log levels in log viewer ([919b326](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/919b3266b16e689ded05d97b94c15280a5aa90b2))
+* add confirmation popup for deleting all log files and update button visibility based on log file presence ([1fe37f0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/1fe37f04a79bc786a5ac4a165c5b317c00687704))
+* add context menu option to delete report files and enhance report viewer functionality ([d107f2e](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/d107f2ec3311d03ddd1aedf3d4e95da1a3e34a21))
+* add functionality to delete report files and update changelog ([ed5ecf8](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/ed5ecf8f6d5b0fed3a90d97078c000fbcb30e336))
+* add functionality to retrieve report items from directory and handle empty states ([e442c2f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/e442c2f145b56be6f398c2a0af55f24829abc71f))
+* add grouping by topics for log entries and update version to 1.15.0 ([d13d14c](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/d13d14cc71c909688df4d0540d06a91378dbccf5))
+* add option to group log entries by message content in workspace configuration ([b6ec6a6](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/b6ec6a6812fe620b709eb513c64efbb31a3b7ac9))
+* add report title parsing for log files in LogViewer ([1a01324](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/1a01324ac0c1a0911371de83e38de88eaa99d2fb))
+* add support for refreshing report files and update badge count in LogViewer ([a679e0c](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/a679e0c2444a443ab7d4ed7a7da9c1688bc15ac8))
+* add timestamp formatting for log entries ([276c087](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/276c0871e8fad44a742e3922b32b3a2198c6527d))
+* add Trunk support for improved code quality and update version to 1.6.1 ([7c64d91](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/7c64d916523a6097ca33c7ac8f06b3e12c6194cc))
+* add update notification for extension version ([3bfd133](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/3bfd13319a094800863f587bf8a5052e1b5f79ac))
+* add vsce configuration to exclude .trunk/tools directory ([51ef226](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/51ef2265810cac9b3dc42f6598aa02407f9ed264))
+* **cleanup:** automatische & periodische Log‑Aufräumfunktion, Einstellungen, Befehle & Tests ✨ ([f39b79c](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/f39b79c0c27cbd2daf711dd70af40c68497a1c64))
+* **config:** Auswahl des Magento‑Root, relative Pfade & Standard auf Workspace‑Root ✨ ([ff5f1c4](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/ff5f1c41a0e25fdf2dc2478c14368cefd03b4891))
+* enhance copilot instructions with performance guidelines and best practices ([e0f7ea9](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/e0f7ea99e5033f498ff884c2f2427a41ad51360d))
+* enhance log entry counting and add theme grouping tests ([1ada561](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/1ada5619d1aad2f8f1914ac3aca065a0816f4ee4))
+* enhance LogItem with dynamic icon assignment based on report content ([5eeb977](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5eeb97785f832521f9c29f0f2d3ff31cf7009729))
+* implement advanced search functionality with regex support and UI enhancements 🔍 ([805a202](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/805a2021ede64e016f41128322fb451055078da7))
+* implement recursive file retrieval for report files in LogViewer ([c8d54f8](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/c8d54f896d8905532d6b34b5fd9f6bb5d52d9d4a))
+* implement regex caching for improved search performance ([529c5ab](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/529c5ab9387b9d1c98dfd6eec39bc96760cc7aed))
+* improve caching mechanism and add comprehensive test suite 🐛 ([3592048](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/3592048f51c7089a2f55c324a1fcbd51891f0a12))
+* refactor log item retrieval and report title parsing into helper functions ([65f55fc](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/65f55fc78ee5cd9b8ee1c47da79fd7aa44d0e66c))
+* refactor log viewer extension for improved readability and performance ([030f994](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/030f9942de7f98f1fae131deecf82ed109224973))
+* refactor Magento project selection and improve button visibility logic ([5797da1](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5797da1c6fd6fb239fcd53d806a6fb868d7eb85e))
+* remove obsolete Trunk configuration files and markdownlint settings ([65720ce](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/65720ce7ae8cbe951e72885d512cccb53750f220))
+* rename CI workflow to VS Code Extension Tests ([e11b780](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/e11b7805f2acff3651791f0f51d8155ebcafbbe4))
+* **report:** add search and clear functionality for report files ([3155afa](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/3155afa04ed7241064356459552631cf3b28fac3))
+* sort log entries and message groups alphabetically in LogViewer ([590b386](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/590b3869ee981b6d13bc03c5641785f31a390470))
+* update CHANGELOG for version 1.6.0, improve report file titles, and enhance badge counter ([7d32b6f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/7d32b6f1d455c042e1bc6c365edc2af7a0b26ec3))
+* update changelog for version 1.7.0 and add tests for extension features ([a273e47](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/a273e47f94d12f1dfe32b84931cb42cb337dfe91))
+* update changelog for version 1.7.0 and enhance extension tests ([395076a](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/395076a785c770ed261e3f480256083dc6517ccc))
+* update copilot instructions with new features and caching enhancements ([7c4a301](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/7c4a301e6d4d0f04fbc357c86de660d67ff665a3))
+* update markdownlint configuration and format enum values in package.json ([b819ebf](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/b819ebf78bfdb608182e9aaeb5f6b747b60253b3))
+* update Node.js version to 18.x and add workflow_dispatch trigger ([7758280](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/7758280207427efbbe44e77016e0fe300ebd010e))
+* update README to reflect confirmation popup for log clearing and bump version to 1.4.0 ([424e745](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/424e7451eba1ef2894c8c8f13d24130242336ef0))
+* update type for tree view in updateBadge function for better type safety ([42d4286](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/42d4286d6fd2a141a0bdb2f03036d557da9c1996))
+* update version to 1.20.0 and enhance UI with new maintenance features ([81d2d7b](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/81d2d7bb15c96916cde1d78528ba25d18e5b4283))
+* update version to 1.22.0 and enhance settings organization with improved user experience ([f3e78c7](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/f3e78c77abbf3a3c92c073b1923be3304a3c4916))
+* update version to 1.23.1 and enhance changelog with security fixes and log regex improvements ([#21](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/21)) ([c106f11](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/c106f1195f44f1436677687de4926ebbf79660be))
+
+
+### Bug Fixes
+
+* add entry for version 1.10.2 in changelog ([5d01e7a](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5d01e7ac0b4eb8b5647e040c7a7623d860cd0fc5))
+* add GitHub Actions badge to README.md ([fd5db01](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/fd5db01101f339ee167e2f8304f8e535c4608bff))
+* add sleep command and set DISPLAY environment variable for Xvfb in test workflow ([264cdc8](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/264cdc845e5a9844d872996212455e5a2ba59084))
+* add support for Node.js 18.x and automated tests for releases in GitHub Actions ([b68262c](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/b68262cc135823d9769830b12ebd3e9a0c1a2d32))
+* add translations and improve log file handling commands ([f4cb6e3](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/f4cb6e3284d1fd7de1b7e3a7f946fc5b9a08e8d5))
+* change disposables variable from let to const ([fd12d94](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/fd12d94c03d08c468b53bb4926f92eecb3299571))
+* **changelog:** correct link format for contributor in version 1.19.0 ([d393866](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/d3938660c6884e3c52483fed1bf02268a04775eb))
+* **changelog:** update version to 1.22.0 and add missing test updates ([60d4088](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/60d4088dc742778a698a039e1260c7ecd33f48ef))
+* **config:** Revert magentoRoot update ↩️ ([970057f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/970057f87057d9963e1c6554438abf55ef2771ed))
+* disable strict TypeScript rule for no-explicit-any ([2b46cf4](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/2b46cf4c25a32a549db07978d2f29bbf708ab8eb))
+* disable strict TypeScript rules for no-explicit-any and no-unsafe-member-access ([5da2f5a](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5da2f5aa4cb1fb860b6c2d08e1344ae5d5c7559c))
+* enforce stricter TypeScript rules for safer code practices ([5718bd6](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5718bd606440a891c8c1c9349e26790862ada318))
+* enhance badge update logic with throttling and debouncing; optimize file counting and JSON report parsing ([31a5686](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/31a5686b7504f2da82648bf6c3fa1bb96d40df31))
+* ensure vscode and window are defined before accessing lineNumber ([3bb377e](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/3bb377ebaf978c912b1f1d33bdb6c8b2e47e2fd0))
+* ensure vscode and window are defined with explicit type checks before accessing lineNumber ([6d01c8f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/6d01c8f2ed01cd51bdaea1743de75ecd77d92b74))
+* improve error logging for information and error message display ([ee9a767](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/ee9a767ae8ec6c32e21059add9185daa71dde8c9))
+* improve Magento project configuration handling and dispose logic ([b942e4d](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/b942e4da9ec4423fa613621790a1eab5fdfe92ff))
+* improve type safety in report handling functions ([40bfb94](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/40bfb9446c421ebb3e31d7959a9a1e09f25a114e))
+* remove trailing commas in tsconfig.json for consistency ([8d9f56c](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/8d9f56c812ec9f4ce843583454e3b41b8ef9fdb2))
+* remove unused parameter from getLogItems method ([2154095](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/21540952ed71d6a549fc96ed9fe0be1a5a58bfe7))
+* reorder sections in changelog for clarity ([57256c3](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/57256c373e04ba59dd9807bbab4faacfd448d0d8))
+* resolve issue with Reload button not displaying results and update version to 1.5.1 ([01ab3a3](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/01ab3a3b9b3746282a167138590445ed204ac54d))
+* **stream:** Buffer‑Chunks beim Stream‑Lesen großer Dateien korrekt behandeln 🐛 ([83df85b](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/83df85b8900175b198bb3c5b835a1f92811cc566))
+* update changelog for version 1.10.2 and correct README typos ([b43108b](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/b43108b255d93150979aad49602051de0dac8b51))
+* update changelog for version 1.10.2 and improve update notification logic ([91a64bc](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/91a64bc4f1f6547bc430a66a30c63c6ce6aa47db))
+* update configuration keys for Magento project selection ([7b42f6e](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/7b42f6ef755b0aa60da83c65ae1a068d810cc2e3))
+* update GitHub Actions workflow to set up Xvfb for testing ([833774d](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/833774d75f8fccf39cf7d368a798848598d77de6))
+* update package version to 1.7.0 ([21bc1bb](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/21bc1bbf467187bf4634d4f28ca76c770ab879fc))
+* update release date for version 1.7.1 in CHANGELOG.md ([ac1794b](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/ac1794ba8c48149c14e4fe09786b187d549ff983))
+* update status bar item handling and add message for empty report files ([c884416](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/c884416b00647f6f9c013f5d9ea8edbbaab17983))
+* update version to 1.7.1 in package.json ([650397c](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/650397c42b4aa12eb16ec3aecf9013b64dbc91f5))
+* update version to 1.8.0 in package.json ([819917a](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/819917a4ef507e0938f27f5b5cd1067479f1b6cd))
+* update Visual Studio Marketplace badge color in README.md ([d3884df](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/d3884df8a6e8839c51bc94530be4e8a53180a213))
+* update Visual Studio Marketplace badge URL in README.md ([f4ed430](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/f4ed430c6942d6d5aa9851a3543c5c9b6a3a2228))
+* update VS Code engine version to ^1.78.0 ([2ab71a3](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/2ab71a3ba0f4281643c88a65c8a73166952d04f3))
+* update VS Code engine version to ^1.95.0 ([6b8d734](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/6b8d7349cc10af1fa1c3c8a01f88cb62bbbc67e9))
+* validate log directory and file paths in getLogFiles method ([9c50fc2](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/9c50fc23704799d843f744644f91ed409cca854e))
+
+
+### Performance Improvements
+
+* auf asynchrone fs‑Operationen umgestellt; Streaming & Batch‑Lesen für große Dateien ⚡️ ([fab3cf3](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/fab3cf31fc410a38154cca1de2bca24c37a780b1))
+* dynamische Cache‑Konfiguration, Cache‑Statistiken & Management‑Befehle 📈 ([797f061](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/797f061fff9a8022122780ba870920962fbaf0e3))
+
 ### [1.24.0] - 2026-01-13
 
 #### 🎉 Major Feature: Real-Time Log Tailing
