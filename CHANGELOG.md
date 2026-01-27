@@ -4,6 +4,14 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.25.2](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.25.1...magento-log-viewer-v1.25.2) (2026-01-27)
+
+
+### Bug Fixes
+
+* automatic clean-up ([#44](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/44)) ([c0ad513](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/c0ad513131af7949fd07d457a4656bf0020614bb))
+* merge action for Dependabot PRs ([37fdcec](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/37fdcecf0b59607e9a5fc3af9f9b96eeb3584634))
+
 ## [1.25.1](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.25.0...magento-log-viewer-v1.25.1) (2026-01-16)
 
 
