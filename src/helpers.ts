@@ -175,9 +175,6 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
 
   context.subscriptions.push(logWatcher, reportWatcher);
 
-  // Return the logViewerProvider so it can be used for tailing
-  return logViewerProvider;
-
   // Run automatic cleanup on activation (silently in background)
   setTimeout(async () => {
     try {
@@ -207,6 +204,9 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
     }
   });
   context.subscriptions.push(configWatcher);
+
+  // Return the logViewerProvider so it can be used for tailing
+  return logViewerProvider;
 }
 
 // Registers commands for the extension.
