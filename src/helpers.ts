@@ -177,14 +177,16 @@ export function activateExtension(context: vscode.ExtensionContext, magentoRoot:
 
   // Run automatic cleanup on activation (silently in background)
   setTimeout(async () => {
+    console.log('[Magento Log Viewer] Running initial cleanup after activation...');
     try {
       await autoCleanupOldLogFiles(magentoRoot, false); // false = no UI notifications
 
       // Refresh providers after cleanup to update the UI
       logViewerProvider.refresh();
       reportViewerProvider.refresh();
+      console.log('[Magento Log Viewer] Initial cleanup completed');
     } catch (error) {
-      console.error('Error during automatic log cleanup on startup:', error);
+      console.error('[Magento Log Viewer] Error during automatic log cleanup on startup:', error);
     }
   }, 2000); // Wait 2 seconds after activation to avoid interfering with startup
 
@@ -1263,10 +1265,13 @@ export async function autoCleanupOldLogFiles(magentoRoot: string, showNotificati
   const isEnabled = config.get<boolean>('enableAutoCleanup', false);
   const maxAge = config.get<string>('autoCleanupMaxAge', '30d');
 
+  console.log(`[Magento Log Viewer] autoCleanupOldLogFiles called - enabled: ${isEnabled}, maxAge: ${maxAge}, magentoRoot: ${magentoRoot}`);
+
   if (!isEnabled) {
     if (showNotifications) {
       vscode.window.showInformationMessage('Automatic log cleanup is disabled');
     }
+    console.log('[Magento Log Viewer] Auto cleanup is disabled, skipping');
     return { deletedCount: 0, errors: [] };
   }
 
@@ -1375,6 +1380,7 @@ export function startPeriodicCleanup(
   const interval = config.get<string>('periodicCleanupInterval', '1h');
 
   if (!isEnabled) {
+    console.log('[Magento Log Viewer] Periodic cleanup is disabled');
     return;
   }
 
@@ -1385,26 +1391,29 @@ export function startPeriodicCleanup(
     return;
   }
 
-  console.log(`Starting periodic log cleanup every ${interval} (${intervalMs}ms)`);
+  console.log(`[Magento Log Viewer] Starting periodic log cleanup every ${interval} (${intervalMs}ms)`);
 
   // Set up periodic cleanup
   periodicCleanupTimer = setInterval(async () => {
+    console.log(`[Magento Log Viewer] Running periodic cleanup check...`);
     try {
       const result = await autoCleanupOldLogFiles(magentoRoot, false); // Silent cleanup
 
       if (result.deletedCount > 0) {
-        console.log(`Periodic cleanup: Deleted ${result.deletedCount} old log file(s)`);
+        console.log(`[Magento Log Viewer] Periodic cleanup: Deleted ${result.deletedCount} old log file(s)`);
 
         // Refresh UI after cleanup
         logViewerProvider.refresh();
         reportViewerProvider.refresh();
+      } else {
+        console.log(`[Magento Log Viewer] Periodic cleanup: No old files to delete`);
       }
 
       if (result.errors.length > 0) {
-        console.error(`Periodic cleanup errors: ${result.errors.join(', ')}`);
+        console.error(`[Magento Log Viewer] Periodic cleanup errors: ${result.errors.join(', ')}`);
       }
     } catch (error) {
-      console.error('Error during periodic log cleanup:', error);
+      console.error('[Magento Log Viewer] Error during periodic log cleanup:', error);
     }
   }, intervalMs);
 
