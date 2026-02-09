@@ -4,6 +4,13 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.25.4](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.25.3...magento-log-viewer-v1.25.4) (2026-02-09)
+
+
+### Bug Fixes
+
+* update regex to handle optional channel prefix in log messages ([cc1f96b](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/cc1f96b94e2055f1e1ffb17a57beb6b05a07d6fc))
+
 ## [1.25.3](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.25.2...magento-log-viewer-v1.25.3) (2026-02-09)
 
 
