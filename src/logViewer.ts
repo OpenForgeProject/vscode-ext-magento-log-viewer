@@ -262,7 +262,7 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       const match = line.match(/\.([A-Za-z]+):/);
       if (match) {
         const level = match[1].toUpperCase();
-        const message = line.replace(/^\[.*?\]\s*\.[A-Za-z]+:\s*/, '');
+        const message = line.replace(/^\[.*?\]\s*(?:[A-Za-z0-9_]+)?\.[A-Za-z]+:\s*/, '');
 
         // Apply search filter if active
         if (this.matchesSearchTerm(line) || this.matchesSearchTerm(message)) {
@@ -512,7 +512,8 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
       const match = line.match(/\.([A-Za-z]+):/);
       if (match) {
         const level = match[1].toUpperCase();
-        const message = line.replace(/^\[.*?\]\s*\.[A-Za-z]+:\s*/, '');
+        // Updated regex to handle optional channel prefix (e.g. main.INFO)
+        const message = line.replace(/^\[.*?\]\s*(?:[A-Za-z0-9_]+)?\.[A-Za-z]+:\s*/, '');
 
         // Apply search filter
         if (this.matchesSearchTerm(line) || this.matchesSearchTerm(message)) {
