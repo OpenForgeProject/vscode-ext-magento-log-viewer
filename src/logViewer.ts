@@ -9,37 +9,129 @@ import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { pathExists, pathExistsAsync, getLineCount, getIconForLogLevel, getLogItems, parseReportTitle, getIconForReport, formatTimestamp, getCachedFileContent } from './helpers';
 
-export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
-  private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
+export abstract class BaseLogProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
+  protected _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<LogItem | undefined | void> = this._onDidChangeTreeData.event;
-  public static statusBarItem: vscode.StatusBarItem | undefined;
-  private groupByMessage: boolean;
-  private disposables: vscode.Disposable[] = [];
-  private isInitialized: boolean = false;
+  protected groupByMessage: boolean;
+  protected disposables: vscode.Disposable[] = [];
+  protected isInitialized: boolean = false;
   public searchTerm: string = '';
   public searchCaseSensitive: boolean = false;
   public searchUseRegex: boolean = false;
-  private cachedSearchRegex: RegExp | null = null;
-  private lastSearchTerm: string = '';
-  private lastSearchFlags: string = '';
-  private treeView: vscode.TreeView<LogItem> | null = null;
-  private tailingManager: any | null = null;
+  protected cachedSearchRegex: RegExp | null = null;
+  protected lastSearchTerm: string = '';
+  protected lastSearchFlags: string = '';
 
-  constructor(private workspaceRoot: string) {
+  constructor(protected workspaceRoot: string) {
+    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
+    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+    this.groupByMessage = config.get<boolean>('groupByMessage', true);
+    this.searchCaseSensitive = config.get<boolean>('searchCaseSensitive', false);
+    this.searchUseRegex = config.get<boolean>('searchUseRegex', false);
+  }
+
+  protected async initializeAsync(): Promise<void> {
+    try {
+      // Wait a bit for VS Code indexing to settle
+      await new Promise(resolve => setTimeout(resolve, 300));
+      this.onInitializationComplete();
+      this.isInitialized = true;
+      this._onDidChangeTreeData.fire();
+    } catch (error) {
+      console.error(`Error during ${this.constructor.name} initialization:`, error);
+      this.isInitialized = true; // Set to true anyway to prevent blocking
+      this._onDidChangeTreeData.fire();
+    }
+  }
+
+  protected onInitializationComplete(): void {
+    // Override in subclass if needed
+  }
+
+  abstract updateRefreshButtonVisibility(): void;
+
+  public refresh(specificFilePath?: string): void {
+    if (!this.workspaceRoot) {
+      vscode.window.showErrorMessage('No workspace root found. Please open a Magento project.');
+      return;
+    }
+    this._onDidChangeTreeData.fire();
+  }
+
+  public matchesSearchTerm(text: string): boolean {
+    if (!this.searchTerm) {
+      return true; // No search term, show all
+    }
+
+    try {
+      if (this.searchUseRegex) {
+        const flags = this.searchCaseSensitive ? 'g' : 'gi';
+
+        // Cache regex compilation
+        if (!this.cachedSearchRegex || this.lastSearchTerm !== this.searchTerm || this.lastSearchFlags !== flags) {
+          this.cachedSearchRegex = new RegExp(this.searchTerm, flags);
+          this.lastSearchTerm = this.searchTerm;
+          this.lastSearchFlags = flags;
+        }
+
+        return this.cachedSearchRegex.test(text);
+      } else {
+        const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
+        const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
+        return searchText.includes(searchTerm);
+      }
+    } catch (error) {
+      // Invalid regex, fall back to simple string search
+      this.cachedSearchRegex = null;
+      const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
+      const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
+      return searchText.includes(searchTerm);
+    }
+  }
+
+  public clearSearch(): void {
+    this.searchTerm = '';
+    this.cachedSearchRegex = null;
+    this.lastSearchTerm = '';
+    this.lastSearchFlags = '';
+    this.updateRefreshButtonVisibility();
+    this.refresh();
+    vscode.window.showInformationMessage('Search cleared');
+  }
+
+  abstract getTreeItem(element: LogItem): vscode.TreeItem;
+  abstract getChildren(element?: LogItem): Thenable<LogItem[]>;
+
+  dispose() {
+    this._onDidChangeTreeData.dispose();
+    this.cachedSearchRegex = null;
+    this.lastSearchTerm = '';
+    this.lastSearchFlags = '';
+    while (this.disposables.length) {
+      const disposable = this.disposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
+    }
+  }
+}
+
+export class LogViewerProvider extends BaseLogProvider {
+  public static statusBarItem: vscode.StatusBarItem | undefined;
+  private treeView: vscode.TreeView<LogItem> | null = null;
+  private tailingManager: any | null = null; // We'll fix typing in next step if needed, keeping 'any' for now to focus on duplication
+
+  constructor(workspaceRoot: string) {
+    super(workspaceRoot);
+
     if (!LogViewerProvider.statusBarItem) {
       LogViewerProvider.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
       LogViewerProvider.statusBarItem.command = 'magento-log-viewer.refreshLogFiles';
       LogViewerProvider.statusBarItem.show();
     }
 
-    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
-    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
-    this.groupByMessage = config.get<boolean>('groupByMessage', true);
-    this.searchCaseSensitive = config.get<boolean>('searchCaseSensitive', false);
-    this.searchUseRegex = config.get<boolean>('searchUseRegex', false);
     this.updateRefreshButtonVisibility();
-
-    // Delay initial heavy operations to avoid competing with indexing
+    // Initialize asynchronously
     this.initializeAsync();
   }
 
@@ -64,25 +156,12 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     return this.tailingManager?.isTailing(filePath) ?? false;
   }
 
-  private async initializeAsync(): Promise<void> {
-    try {
-      // Wait a bit for VS Code indexing to settle
-      await new Promise(resolve => setTimeout(resolve, 300));
-      this.updateBadge();
-      this.isInitialized = true;
-
-      // Trigger refresh to show the actual log files instead of "Loading log files..."
-      this._onDidChangeTreeData.fire();
-    } catch (error) {
-      console.error('Error during LogViewerProvider initialization:', error);
-      this.isInitialized = true; // Set to true anyway to prevent blocking
-
-      // Still trigger refresh even on error to show the UI
-      this._onDidChangeTreeData.fire();
-    }
+  protected onInitializationComplete(): void {
+    this.updateBadge();
   }
 
-  private updateRefreshButtonVisibility(): void {
+  // Implementation for abstract method
+  updateRefreshButtonVisibility(): void {
     vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasMagentoRoot', !!this.workspaceRoot);
     vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasActiveSearch', !!this.searchTerm);
   }
@@ -110,54 +189,15 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
     }
   }
 
-  public clearSearch(): void {
-    this.searchTerm = '';
-    this.updateRefreshButtonVisibility();
-    this.refresh();
-    vscode.window.showInformationMessage('Search cleared');
-  }
-
-  public matchesSearchTerm(text: string): boolean {
-    if (!this.searchTerm) {
-      return true; // No search term, show all
-    }
-
-    try {
-      if (this.searchUseRegex) {
-        const flags = this.searchCaseSensitive ? 'g' : 'gi';
-        const regex = new RegExp(this.searchTerm, flags);
-        return regex.test(text);
-      } else {
-        const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
-        const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
-        return searchText.includes(searchTerm);
-      }
-    } catch (error) {
-      // Invalid regex, fall back to simple string search
-      const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
-      const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
-      return searchText.includes(searchTerm);
-    }
-  }
-
   refresh(specificFilePath?: string): void {
-    if (!this.workspaceRoot) {
-      vscode.window.showErrorMessage('No workspace root found. Please open a Magento project.');
-      return;
-    }
-
-    // Selective refresh for specific file (used by tailing)
+    super.refresh(specificFilePath);
+    // Selective refresh logic can remain here but calling super fires event
     if (specificFilePath) {
-      // TODO: Implement selective tree item refresh
-      // For now, fallback to full refresh
-      this._onDidChangeTreeData.fire();
-    } else {
-      // Full refresh
-      this._onDidChangeTreeData.fire();
+       // TODO: Implement selective tree item refresh
     }
-
     this.updateBadge();
   }
+
 
   /**
    * Appends new log entries to an existing file's tree without full rebuild
@@ -742,51 +782,16 @@ export class LogViewerProvider implements vscode.TreeDataProvider<LogItem>, vsco
   }
 }
 
-export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, vscode.Disposable {
-  private _onDidChangeTreeData: vscode.EventEmitter<LogItem | undefined | void> = new vscode.EventEmitter<LogItem | undefined | void>();
-  readonly onDidChangeTreeData: vscode.Event<LogItem | undefined | void> = this._onDidChangeTreeData.event;
-  private groupByMessage: boolean;
-  private disposables: vscode.Disposable[] = [];
-  private isInitialized: boolean = false;
-  public searchTerm: string = '';
-  public searchCaseSensitive: boolean = false;
-  public searchUseRegex: boolean = false;
-  private cachedSearchRegex: RegExp | null = null;
-  private lastSearchTerm: string = '';
-  private lastSearchFlags: string = '';
-
-  constructor(private workspaceRoot: string) {
-    const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri || null;
-    const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
-    this.groupByMessage = config.get<boolean>('groupByMessage', true);
-    this.searchCaseSensitive = config.get<boolean>('searchCaseSensitive', false);
-    this.searchUseRegex = config.get<boolean>('searchUseRegex', false);
+export class ReportViewerProvider extends BaseLogProvider {
+  constructor(workspaceRoot: string) {
+    super(workspaceRoot);
     this.updateRefreshButtonVisibility();
-
-    // Initialize asynchronously to avoid competing with indexing
     this.initializeAsync();
   }
 
-  private updateRefreshButtonVisibility(): void {
+  updateRefreshButtonVisibility(): void {
     vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasMagentoRoot', !!this.workspaceRoot);
     vscode.commands.executeCommand('setContext', 'magentoLogViewer.hasActiveSearchReports', !!this.searchTerm);
-  }
-
-  private async initializeAsync(): Promise<void> {
-    try {
-      // Wait a bit for VS Code indexing to settle
-      await new Promise(resolve => setTimeout(resolve, 300));
-      this.isInitialized = true;
-
-      // Trigger refresh to show the actual report files instead of "Loading report files..."
-      this._onDidChangeTreeData.fire();
-    } catch (error) {
-      console.error('Error during ReportViewerProvider initialization:', error);
-      this.isInitialized = true; // Set to true anyway to prevent blocking
-
-      // Still trigger refresh even on error to show the UI
-      this._onDidChangeTreeData.fire();
-    }
   }
 
   // Search functionality
@@ -810,55 +815,6 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
         vscode.window.showInformationMessage(`Searching for: "${this.searchTerm}"`);
       }
     }
-  }
-
-  public clearSearch(): void {
-    this.searchTerm = '';
-    this.cachedSearchRegex = null;
-    this.lastSearchTerm = '';
-    this.lastSearchFlags = '';
-    this.updateRefreshButtonVisibility();
-    this.refresh();
-    vscode.window.showInformationMessage('Search cleared');
-  }
-
-  public matchesSearchTerm(text: string): boolean {
-    if (!this.searchTerm) {
-      return true; // No search term, show all
-    }
-
-    try {
-      if (this.searchUseRegex) {
-        const flags = this.searchCaseSensitive ? 'g' : 'gi';
-
-        // Check if we need to recompile the regex
-        if (!this.cachedSearchRegex || this.lastSearchTerm !== this.searchTerm || this.lastSearchFlags !== flags) {
-          this.cachedSearchRegex = new RegExp(this.searchTerm, flags);
-          this.lastSearchTerm = this.searchTerm;
-          this.lastSearchFlags = flags;
-        }
-
-        return this.cachedSearchRegex.test(text);
-      } else {
-        const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
-        const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
-        return searchText.includes(searchTerm);
-      }
-    } catch (error) {
-      // Invalid regex, fall back to simple string search and clear cache
-      this.cachedSearchRegex = null;
-      const searchText = this.searchCaseSensitive ? text : text.toLowerCase();
-      const searchTerm = this.searchCaseSensitive ? this.searchTerm : this.searchTerm.toLowerCase();
-      return searchText.includes(searchTerm);
-    }
-  }
-
-  refresh(): void {
-    if (!this.workspaceRoot) {
-      vscode.window.showErrorMessage('No workspace root found. Please open a Magento project.');
-      return;
-    }
-    this._onDidChangeTreeData.fire();
   }
 
   getTreeItem(element: LogItem): vscode.TreeItem {
@@ -978,17 +934,7 @@ export class ReportViewerProvider implements vscode.TreeDataProvider<LogItem>, v
   }
 
   dispose() {
-    this._onDidChangeTreeData.dispose();
-    // Clear regex cache to prevent memory leaks
-    this.cachedSearchRegex = null;
-    this.lastSearchTerm = '';
-    this.lastSearchFlags = '';
-    while (this.disposables.length) {
-      const disposable = this.disposables.pop();
-      if (disposable) {
-        disposable.dispose();
-      }
-    }
+    super.dispose();
   }
 }
 
