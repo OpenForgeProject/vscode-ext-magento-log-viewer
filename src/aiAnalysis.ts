@@ -9,16 +9,22 @@ import { LogItem } from './logViewer';
 
 export async function explainError(item?: unknown): Promise<void> {
     let textToAnalyze = '';
+    let filePath = '';
 
     // Check if called from tree view
     if (item instanceof LogItem && item.contextValue === 'logEntry' && item.rawText) {
         textToAnalyze = item.rawText;
+        // Try to obtain file path from command arguments
+        if (item.command?.arguments?.[0]) {
+            filePath = String(item.command.arguments[0]);
+        }
     } else {
         // Fallback to active editor
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             const selection = editor.selection;
             textToAnalyze = editor.document.getText(selection);
+            filePath = editor.document.uri.fsPath;
 
             // If no selection, take the current line
             if (!textToAnalyze.trim()) {
@@ -32,98 +38,30 @@ export async function explainError(item?: unknown): Promise<void> {
         return;
     }
 
-    // Check if Language Model API is available
-    if (!vscode.lm || !vscode.lm.selectChatModels) {
-        const action = await vscode.window.showInformationMessage(
-            'The AI features require VS Code 1.90+ and the "vscode.lm" API availability.',
-            'OK'
-        );
-        return;
-    }
-
     try {
-        // Select a model - prefer GPT-4 or similar high-quality models
-        const models = await vscode.lm.selectChatModels({ family: 'gpt-4' });
-        let model = models[0];
+        // Construct a prompt that includes the error context
+        // We limit the text length to avoid issues with extremely large logs
+        const truncatedText = textToAnalyze.length > 2000
+            ? textToAnalyze.substring(0, 2000) + '... (truncated)'
+            : textToAnalyze;
 
-        // Fallback to any model if specific family not found
-        if (!model) {
-            const allModels = await vscode.lm.selectChatModels();
-            if (allModels.length > 0) {
-                model = allModels[0];
-            }
+        let prompt = `Explain this Magento error and suggest solutions:`;
+
+        if (filePath) {
+            const fileName = vscode.workspace.asRelativePath(filePath);
+            prompt += `\nFile: ${fileName}`;
         }
 
-        if (!model) {
-            const action = await vscode.window.showWarningMessage(
-                'No AI models found. Please ensure you have GitHub Copilot Chat or another AI extension installed and active.',
-                'Install GitHub Copilot Chat'
-            );
-            if (action === 'Install GitHub Copilot Chat') {
-                vscode.commands.executeCommand('workbench.extensions.installExtension', 'GitHub.copilot-chat');
-            }
-            return;
-        }
+        prompt += `\n\n${truncatedText}`;
 
-        // Create a new untitled markdown file for the response
-        const doc = await vscode.workspace.openTextDocument({
-            content: '# Magento Error Analysis\n\nAnalyzing...\n',
-            language: 'markdown'
-        });
-        const editor = await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
-
-        // Prepare the prompt
-        const prompt = `You are an expert Magento 2 developer.
-        Analyze the following error log entry from a Magento application.
-        Provide a clear, concise explanation of what caused the error and suggest 1-3 concrete solutions or debugging steps.
-
-        Error Log:
-        \`\`\`
-        ${textToAnalyze}
-        \`\`\`
-
-        Response format:
-        ## Explanation
-        ...
-
-        ## Potential Solutions
-        1. ...
-        2. ...
-
-        ## Troubleshooting
-        ...
-        `;
-
-        const messages = [
-            vscode.LanguageModelChatMessage.User(prompt)
-        ];
-
-        // Send request and stream response to the document
-        const response = await model.sendRequest(messages, {}, new vscode.CancellationTokenSource().token);
-
-        let fullResponse = '';
-
-        // Clear the initial "Analyzing..." text
-        await editor.edit(edit => {
-            const range = new vscode.Range(new vscode.Position(2, 0), new vscode.Position(3, 0));
-            edit.replace(range, '');
-        });
-
-        // Stream the chunks
-        for await (const chunk of response.text) {
-            fullResponse += chunk;
-            await editor.edit(edit => {
-                const lastLine = editor.document.lineAt(editor.document.lineCount - 1);
-                const position = lastLine.range.end;
-                edit.insert(position, chunk);
-            });
-        }
+        // Attempt to open the Copilot Chat view with the query
+        await vscode.commands.executeCommand('workbench.action.chat.open', { query: prompt });
 
     } catch (error) {
         if (error instanceof Error) {
-            showErrorMessage(`AI Analysis failed: ${error.message}`);
+            showErrorMessage(`Failed to open Chat: ${error.message}`);
         } else {
-            showErrorMessage('AI Analysis failed with an unknown error.');
+            showErrorMessage('Failed to open Chat.');
         }
         console.error(error);
     }

@@ -164,7 +164,7 @@
       },
       {
         "command": "magento-log-viewer.explainError",
-        "title": "Explain with AI",
+        "title": "Ask in AI Chat",
         "icon": "$(sparkle)",
         "category": "Magento Log Viewer"
       }
@@ -360,6 +360,19 @@
             "scope": "resource"
           }
         }
+      },
+      {
+        "order": 5,
+        "id": "ai",
+        "title": "AI Features",
+        "properties": {
+          "magentoLogViewer.showAiFeatures": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show 'Ask AI' buttons in context menus (requires GitHub Copilot Chat or compatible extension)",
+            "scope": "resource"
+          }
+        }
       }
     ],
     "colors": [
@@ -455,7 +468,7 @@
       "editor/context": [
         {
           "command": "magento-log-viewer.explainError",
-          "when": "resourceExtname == .log",
+          "when": "resourceExtname == .log && config.magentoLogViewer.showAiFeatures",
           "group": "magento-log-viewer-analysis@1"
         }
       ],
@@ -573,8 +586,13 @@
         },
         {
           "command": "magento-log-viewer.explainError",
-          "when": "view == logFiles && viewItem == logEntry",
+          "when": "view == logFiles && viewItem == logEntry && config.magentoLogViewer.showAiFeatures",
           "group": "inline"
+        },
+        {
+          "command": "magento-log-viewer.explainError",
+          "when": "view == logFiles && viewItem == logEntry && config.magentoLogViewer.showAiFeatures",
+          "group": "modification@1"
         }
       ]
     }
