@@ -4,6 +4,13 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.27.0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.26.0...magento-log-viewer-v1.27.0) (2026-02-11)
+
+
+### Features
+
+* rename AI command and add configuration for AI features ([5e23330](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5e2333060eed219a38429310457ce6e8269ddd68))
+
 ## [1.26.0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.25.4...magento-log-viewer-v1.26.0) (2026-02-11)
 
 
