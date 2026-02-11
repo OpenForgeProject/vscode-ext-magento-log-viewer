@@ -582,7 +582,11 @@ export class LogViewerProvider extends BaseLogProvider {
                 command: 'magento-log-viewer.openFileAtLine',
                 title: 'Open Log File at Line',
                 arguments: [filePath, entry.lineNumber]
-              }
+              },
+              undefined,
+              undefined,
+              'logEntry',
+              entry.line
             );
           }).sort((a, b) => {
             const aLine = parseInt(a.label.match(/Line (\d+)/)?.[1] || '0');
@@ -630,7 +634,11 @@ export class LogViewerProvider extends BaseLogProvider {
                   command: 'magento-log-viewer.openFileAtLine',
                   title: 'Open Log File at Line',
                   arguments: [filePath, entry.lineNumber]
-                }
+                },
+                undefined,
+                undefined,
+                'logEntry',
+                entry.line
               );
             }).sort((a, b) => a.label.localeCompare(b.label)) // Sort entries alphabetically
           );
@@ -944,9 +952,12 @@ export class LogItem extends vscode.TreeItem {
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly command?: vscode.Command,
     public children?: LogItem[],
-    public iconPath?: vscode.ThemeIcon
+    public iconPath?: vscode.ThemeIcon,
+    public contextValue: string = 'logItem',
+    public rawText?: string
   ) {
     super(label, collapsibleState as vscode.TreeItemCollapsibleState);
+    this.contextValue = contextValue;
     this.description = this.label.match(/\(\d+\)/)?.[0] || '';
     this.label = this.label.replace(/\(\d+\)/, '').trim();
 
@@ -966,6 +977,5 @@ export class LogItem extends vscode.TreeItem {
     }
   }
 
-  contextValue = 'logItem';
   description = '';
 }

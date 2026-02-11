@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolderDirect, getEffectiveMagentoRoot, selectMagentoRootFromSettings, autoCleanupOldLogFiles, stopPeriodicCleanup, TailingManager } from './helpers';
 import { LogItem, ReportViewerProvider, LogViewerProvider } from './logViewer';
 import { showUpdateNotification } from './updateNotifier';
+import { explainError } from './aiAnalysis';
 
 const disposables: vscode.Disposable[] = [];
 
@@ -25,6 +26,13 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   disposables.push(selectMagentoRootCommand);
   context.subscriptions.push(selectMagentoRootCommand);
+
+  // Register AI Analysis command
+  const explainErrorCommand = vscode.commands.registerCommand('magento-log-viewer.explainError', (item?: unknown) => {
+    explainError(item);
+  });
+  disposables.push(explainErrorCommand);
+  context.subscriptions.push(explainErrorCommand);
 
   // Initialize extension in a more intelligent way
   const initializeExtension = async () => {

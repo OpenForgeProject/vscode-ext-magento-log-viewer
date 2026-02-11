@@ -161,6 +161,12 @@
         "title": "Stop All Tailing",
         "icon": "$(debug-stop)",
         "category": "Magento Log Viewer"
+      },
+      {
+        "command": "magento-log-viewer.explainError",
+        "title": "Explain with AI",
+        "icon": "$(sparkle)",
+        "category": "Magento Log Viewer"
       }
     ],
     "configuration": [
@@ -446,6 +452,13 @@
       }
     ],
     "menus": {
+      "editor/context": [
+        {
+          "command": "magento-log-viewer.explainError",
+          "when": "resourceExtname == .log",
+          "group": "magento-log-viewer-analysis@1"
+        }
+      ],
       "view/title": [
         {
           "command": "magento-log-viewer.searchLogs",
@@ -557,6 +570,11 @@
           "command": "magento-log-viewer.toggleTailing",
           "when": "view == logFiles && viewItem =~ /^logItem/",
           "group": "tailing@3"
+        },
+        {
+          "command": "magento-log-viewer.explainError",
+          "when": "view == logFiles && viewItem == logEntry",
+          "group": "inline"
         }
       ]
     }
