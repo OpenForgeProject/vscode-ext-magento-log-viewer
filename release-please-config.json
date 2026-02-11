@@ -3,6 +3,8 @@
     ".": {
       "release-type": "node",
       "package-name": "magento-log-viewer",
+      "pull-request-header": "Next Release ${version}",
+      "pull-request-footer": "If you have any questions about the release, please contact the maintainers.",
       "changelog-path": "CHANGELOG.md",
       "bump-patch-for-minor-pre-major": false,
       "changelog-sections": [
