@@ -4,6 +4,36 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.26.0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.25.4...magento-log-viewer-v1.26.0) (2026-02-11)
+
+
+### Features
+
+* add AI error explanation feature ([913f420](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/913f42023c31d579827b083a9610edb5bf8ae509))
+
+
+### Bug Fixes
+
+* correct error message in showUpdateNotification function ([f6295d9](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/f6295d966098031ad8c220fa33c9f2a4a2860181))
+
+
+### Documentation
+
+* update architecture overview and major features in instructions ([46db5dd](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/46db5ddd11724d89a3cc7ba330b70d6369139d04))
+
+
+### Code Refactoring
+
+* restructure LogViewerProvider to extend BaseLogProvider ([ab4a655](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/ab4a65573debc530feac4431a2b8d4c45fc4acda))
+
+
+### Maintenance
+
+* add 'Maintainance' section to changelog configuration ([3e441e5](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/3e441e5f514a30e3f0e3c66b7ac2229565ad45bc))
+* update changelog sections in release configuration ([89cd935](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/89cd9358daa467af7293e0af1eb41beef208fd26))
+* update dependencies to latest versions in package-lock.json ([c2913a2](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/c2913a2aa1fb8d22806e7491c5a7ee3755cabdfd))
+* update pull request header and footer in release config ([8c49e94](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/8c49e943184681830ebc8db75012e45c33d6d913))
+
 ## [1.25.4](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.25.3...magento-log-viewer-v1.25.4) (2026-02-09)
 
 
