@@ -33,7 +33,13 @@ export async function showUpdateNotification(context: vscode.ExtensionContext): 
 
         const currentVersion = extension.packageJSON.version;
 
-        // check if the extension has been updated
+        // Detect new installation (silent init)
+        if (!lastVersion) {
+            await context.globalState.update(STORAGE_KEY, currentVersion);
+            return;
+        }
+
+        // No update needed
         if (lastVersion === currentVersion) {
             return;
         }
@@ -66,6 +72,6 @@ export async function showUpdateNotification(context: vscode.ExtensionContext): 
         // Update the last version in global state
         await context.globalState.update(STORAGE_KEY, currentVersion);
     } catch (error) {
-        console.error('Fehler in showUpdateNotification:', error);
+        console.error('Error in showUpdateNotification:', error);
     }
 }
