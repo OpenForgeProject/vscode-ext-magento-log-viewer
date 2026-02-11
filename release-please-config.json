@@ -9,7 +9,8 @@
         { "type": "feat", "section": "Features" },
         { "type": "fix", "section": "Bug Fixes" },
         { "type": "perf", "section": "Performance Improvements" },
-        { "type": "docs", "section": "Documentation" }
+        { "type": "docs", "section": "Documentation" },
+        { "type": "chore", "section": "Maintenance" }
       ]
     }
   },
