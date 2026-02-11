@@ -23,11 +23,18 @@
 VS Code extension for intelligent Magento log file viewing and management:
 
 - **`src/extension.ts`** - Entry point with async initialization
-- **`src/logViewer.ts`** - TreeDataProvider implementations with theme grouping
-- **`src/helpers.ts`** - Utilities, multi-layered caching, auto-cleanup
+- **`src/logViewer.ts`** - Log and Report TreeDataProviders, theme grouping logic
+- **`src/helpers.ts`** - Utilities, caching system, auto-cleanup, **real-time tailing engine**
 - **`src/updateNotifier.ts`** - Version update notifications
 
-## Major Features (v1.23+)
+## Major Features (v1.25+)
+
+### Real-Time Log Tailing
+
+- Live monitoring with `TailingManager`
+- Low-overhead incremental updates (only reads new bytes)
+- Visual indicators (📡) and auto-scroll
+- Configurable update intervals (100ms - 2s)
 
 ### Auto-Cleanup System
 
@@ -85,12 +92,14 @@ Commands shown via `when` clauses:
 - `magentoLogViewer.hasActiveSearch/hasActiveSearchReports`
 - `magentoLogViewer.hasLogFiles`
 - `magentoLogViewer.autoCleanupEnabled/periodicCleanupEnabled`
+- `magentoLogViewer.hasTailedFiles/tailingActive`
 
 ### Memory Management
 
 - Dispose pattern: cleanup disposables array
 - Auto optimization: `optimizeCacheSize()`
 - Proper disposal in `deactivate()`
+- `TailingManager` resource cleanup
 
 ### Error Handling
 
