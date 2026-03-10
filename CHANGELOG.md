@@ -4,6 +4,13 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.27.2](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.27.1...magento-log-viewer-v1.27.2) (2026-03-10)
+
+
+### Bug Fixes
+
+* resolve TypeScript compilation failure caused by eslint-scope type conflict ([#72](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/72)) ([4bfd399](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/4bfd399919e48a2f2bd795d782e1265255b2907e))
+
 ## [1.27.1](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/magento-log-viewer-v1.27.0...magento-log-viewer-v1.27.1) (2026-03-10)
 
 
