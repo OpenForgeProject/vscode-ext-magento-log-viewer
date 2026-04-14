@@ -4,7 +4,7 @@
 
 **Professional Log Viewer for Magento & Adobe Commerce Developers**
 
-A powerful VS Code extension that enhances your Magento development workflow with intelligent log management, advanced search capabilities, and automated cleanup tools.
+A powerful VS Code extension designed to enhance your Magento development workflow by providing real-time log monitoring, advanced search capabilities, and intelligent log management directly within your code editor.
 
 ![Magento Log Viewer Screenshot](resources/logVideo.gif)
 
