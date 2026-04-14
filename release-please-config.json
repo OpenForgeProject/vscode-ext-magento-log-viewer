@@ -2,7 +2,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "Release",
+      "package-name": "",
       "pull-request-header": "Next Release",
       "pull-request-footer": "If you have any questions about the release, please contact the maintainers.",
       "changelog-path": "CHANGELOG.md",
