@@ -58,6 +58,10 @@ export async function explainError(item?: unknown): Promise<void> {
         await vscode.commands.executeCommand('workbench.action.chat.open', { query: prompt });
 
     } catch (error) {
+        if (error instanceof Error && error.message.toLowerCase().includes('not found')) {
+            showErrorMessage('GitHub Copilot Chat is not installed. Please install it to use this feature.');
+            return;
+        }
         if (error instanceof Error) {
             showErrorMessage(`Failed to open Chat: ${error.message}`);
         } else {
