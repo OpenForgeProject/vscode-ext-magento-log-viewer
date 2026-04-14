@@ -15,7 +15,9 @@ export async function explainError(item?: unknown): Promise<void> {
     if (item instanceof LogItem && item.contextValue === 'logEntry' && item.rawText) {
         textToAnalyze = item.rawText;
         // Try to obtain file path from command arguments
-        if (item.command?.arguments?.[0]) {
+        if (item.command?.arguments?.[0] instanceof vscode.Uri) {
+            filePath = item.command.arguments[0].fsPath;
+        } else if (item.command?.arguments?.[0]) {
             filePath = String(item.command.arguments[0]);
         }
     } else {
