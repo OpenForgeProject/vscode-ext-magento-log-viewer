@@ -23,14 +23,17 @@ const ACTIONS = {
 export async function showUpdateNotification(context: vscode.ExtensionContext): Promise<void> {
     try {
         const lastVersion = context.globalState.get<string>(STORAGE_KEY);
-        const currentVersion = context.extension.packageJSON.version;
+        const currentVersion = context.extension.packageJSON.version as string | undefined;
+        if (!currentVersion) {
+            return;
+        }
 
         // Always update the stored version immediately to prevent duplicate notifications
         if (lastVersion !== currentVersion) {
             await context.globalState.update(STORAGE_KEY, currentVersion);
         }
 
-        // Detect new installation or unchanged version
+        // Skip on first installation or when version hasn't changed
         if (!lastVersion || lastVersion === currentVersion) {
             return;
         }
