@@ -2,10 +2,11 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "",
+      "package-name": "magento-log-viewer",
       "pull-request-header": "Next Release",
       "pull-request-footer": "If you have any questions about the release, please contact the maintainers.",
       "changelog-path": "CHANGELOG.md",
+      "always-update": true,
       "bump-patch-for-minor-pre-major": false,
       "changelog-sections": [
         { "type": "feat", "section": "Features" },
