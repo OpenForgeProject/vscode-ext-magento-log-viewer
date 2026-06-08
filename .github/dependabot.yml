@@ -11,7 +11,7 @@ updates:
     assignees:
       - "dermatz"
     commit-message:
-      prefix: "chore"
+      prefix: "fix"
       include: "scope"
 
   # Enable version updates for GitHub Actions
