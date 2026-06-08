@@ -4,6 +4,24 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.28.6](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.5...v1.28.6) (2026-06-08)
+
+
+### Bug Fixes
+
+* update commit message prefix for npm dependency updates ([b1ff429](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/b1ff4291da2df41822f90b611292e28e49b4f6c4))
+
+
+### Maintenance
+
+* **deps-dev:** bump @types/node from 25.9.1 to 25.9.2 ([#137](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/137)) ([56a5ef0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/56a5ef0f5d68b82e2ba0286b649ea374cbfdbb54))
+* **deps-dev:** bump @typescript-eslint/eslint-plugin ([#133](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/133)) ([d7e8563](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/d7e85632d3ea3f856c6a548ca3b8a8da727a65f9))
+* **deps-dev:** bump eslint from 10.4.0 to 10.4.1 ([#132](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/132)) ([358aa9e](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/358aa9ef74c62a5ebe7a0d50769613d831a01ec0))
+* **deps-dev:** bump ts-loader from 9.5.7 to 9.6.0 ([#135](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/135)) ([efc1b08](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/efc1b082e5766ce03293bb3835b165dd091f04cd))
+* **deps-dev:** bump webpack from 5.107.1 to 5.107.2 ([#131](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/131)) ([0bb764b](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/0bb764b48c7772a0e1be45110f5a0a0fe982492d))
+* **deps-dev:** bump webpack-cli from 7.0.2 to 7.0.3 ([#134](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/134)) ([9a782ce](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/9a782ce626be209abdf319e60664aabe52d07a47))
+* update commit message prefix for npm dependency updates ([6b88305](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/6b883056a0e3c35e498fa3b4ece1b062082b33d4))
+
 ## [1.28.5](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.4...v1.28.5) (2026-05-26)
 
 
