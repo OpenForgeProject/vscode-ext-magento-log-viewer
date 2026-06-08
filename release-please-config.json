@@ -8,6 +8,7 @@
       "pull-request-footer": "If you have any questions about the release, please contact the maintainers.",
       "changelog-path": "CHANGELOG.md",
       "always-update": true,
+      "versioning-strategy": "always-bump-patch",
       "bump-patch-for-minor-pre-major": false,
       "changelog-sections": [
         { "type": "feat", "section": "Features" },
