@@ -2,21 +2,22 @@
 
 ## Core Principles
 
-**Maintainability is highest priority.** Clean, well-structured code over quick solutions.
+**Maintainability is the primary goal.** Clean, well-structured code over quick solutions. When maintainability and performance conflict, prefer maintainability unless the performance impact is measurable and user-visible.
 
-**Performance is a feature** - every change must consider user experience impact.
+**Performance is a feature** - every change must consider user experience impact. Optimize where profiling shows a real bottleneck, not preemptively.
 
 ## License Compliance
 
 - **License:** GPL-3.0-or-later
-- **Copyright:** Copyright (c) 2024-2026 OpenForge Project Contributors
+- **Copyright:** Copyright (c) 2024-present OpenForge Project Contributors
 - **Headers:** All new source files must include the SPDX identifier:
   ```typescript
   /**
    * SPDX-License-Identifier: GPL-3.0-or-later
-   * Copyright (c) 2024-2026 OpenForge Project Contributors
+   * Copyright (c) 2024-present OpenForge Project Contributors
    */
   ```
+- When modifying an existing file that does not yet contain the SPDX header, add the header at the top of the file as part of the same change.
 
 ## Architecture Overview
 
@@ -25,6 +26,8 @@ VS Code extension for intelligent Magento log file viewing and management:
 - **`src/extension.ts`** - Entry point with async initialization
 - **`src/logViewer.ts`** - Log and Report TreeDataProviders, theme grouping logic
 - **`src/helpers.ts`** - Utilities, caching system, auto-cleanup, **real-time tailing engine**
+
+When a file named in the Architecture Overview must be split, retain the original filename as a re-export barrel (e.g., `helpers.ts` re-exports from `helpers/caching.ts`, `helpers/tailing.ts`) so external imports remain unchanged.
 - **`src/updateNotifier.ts`** - Version update notifications
 
 ## Major Features (v1.25+)
@@ -50,18 +53,20 @@ VS Code extension for intelligent Magento log file viewing and management:
 
 ## Performance Guidelines
 
+When trade-offs are required, apply guidelines in this order: (1) Startup, (2) Memory, (3) File I/O, (4) UI, (5) Background.
+
 - **Startup**: Never block VS Code startup
 - **Memory**: Monitor usage, implement cleanup, avoid leaks
 - **UI**: Use async/await, throttle updates, prevent blocking
 - **File I/O**: Cache reads, stream large files, batch operations
-- **Background**: Move intensive work to background threads
+- **Background**: Offload CPU-intensive work using Node.js `worker_threads` or by deferring with `setImmediate`; do not block the extension host event loop.
 
 ## Code Organization
 
-- Split large functions (max 20-30 lines)
-- Split files when >400-500 lines
+- Split large functions (max 25 lines); exception: orchestration functions that coordinate multiple steps (e.g., the extension activation sequence) may exceed this limit — extract each step into a named helper instead
+- Split files when >450 lines
 - Single responsibility per function/class
-- Clear naming without comments
+- Use self-documenting names instead of inline comments. JSDoc is permitted for exported public APIs; inline comments are not.
 - Testable units
 - Strict TypeScript, avoid `any`
 
@@ -106,6 +111,7 @@ Commands shown via `when` clauses:
 - User-friendly messages with action buttons
 - Graceful degradation with fallbacks
 - Console.error for debugging
+- All file system operations that depend on `magentoRoot` must validate the path exists and is a directory before proceeding; on failure, surface a `vscode.window.showErrorMessage` with an "Open Settings" action button and return early without throwing.
 
 ## Project Conventions
 
@@ -165,12 +171,7 @@ Organization: descriptive names, mock dependencies, test edge cases
 
 ## Release
 
-Update [CHANGELOG.md](../CHANGELOG.md) with user-friendly descriptions:
-
-- Simple language for end users
-- Focus on benefits vs implementation
-- Group: Features, Improvements, Bug Fixes
-- Example: "Added automatic cleanup" not "Implemented autoCleanupOldLogFiles()"
+- never Update [CHANGELOG.md](../CHANGELOG.md) this will be done by the release manager when the release is cut.
 
 ## Git Conventions
 
