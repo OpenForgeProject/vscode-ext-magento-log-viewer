@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolderDirect, getEffectiveMagentoRoot, selectMagentoRootFromSettings, autoCleanupOldLogFiles, stopPeriodicCleanup, TailingManager } from './helpers';
+import { promptMagentoProjectSelection, showErrorMessage, activateExtension, isValidPath, deleteReportFile, clearFileContentCache, selectMagentoRootFolderDirect, getEffectiveMagentoRoot, selectMagentoRootFromSettings, stopPeriodicCleanup, TailingManager } from './helpers';
 import { LogItem, ReportViewerProvider, LogViewerProvider } from './logViewer';
 import { showUpdateNotification } from './updateNotifier';
 import { explainError } from './aiAnalysis';
@@ -21,18 +21,14 @@ export function activate(context: vscode.ExtensionContext): void {
   showUpdateNotification(context);
 
   // Register the settings button command
-  const selectMagentoRootCommand = vscode.commands.registerCommand('magento-log-viewer.selectMagentoRootFromSettings', () => {
+  context.subscriptions.push(vscode.commands.registerCommand('magento-log-viewer.selectMagentoRootFromSettings', () => {
     selectMagentoRootFromSettings();
-  });
-  disposables.push(selectMagentoRootCommand);
-  context.subscriptions.push(selectMagentoRootCommand);
+  }));
 
   // Register AI Analysis command
-  const explainErrorCommand = vscode.commands.registerCommand('magento-log-viewer.explainError', (item?: unknown) => {
+  context.subscriptions.push(vscode.commands.registerCommand('magento-log-viewer.explainError', (item?: unknown) => {
     explainError(item);
-  });
-  disposables.push(explainErrorCommand);
-  context.subscriptions.push(explainErrorCommand);
+  }));
 
   // Initialize extension in a more intelligent way
   const initializeExtension = async () => {
