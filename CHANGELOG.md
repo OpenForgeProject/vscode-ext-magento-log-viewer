@@ -4,6 +4,20 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.28.7](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.6...v1.28.7) (2026-06-11)
+
+
+### Bug Fixes
+
+* update maintainability and performance guidelines in copilot instructions ([c5df115](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/c5df115b99e8d8e84097d1dbc6a5143f69658226))
+
+
+### Code Refactoring
+
+* remove asynchronous log and report item retrieval functions for simplification ([bf5a3dd](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/bf5a3dd8da473feed1d252b0d811b04bd82846d6))
+* remove unused methods and clean up refresh logic in LogViewerProvider ([aa613f9](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/aa613f93530e95900c505e3f9aa303d0d1415d01))
+* simplify command registration in extension activation ([a8fcaee](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/a8fcaeec89e30b810f68cd8c76ac85438c7f0eed))
+
 ## [1.28.6](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.5...v1.28.6) (2026-06-08)
 
 
