@@ -659,63 +659,6 @@ export function getIconForLogLevel(level: string): vscode.ThemeIcon {
   }
 }
 
-// Asynchronous version of getLogItems for better performance
-export async function getLogItemsAsync(dir: string, parseTitle: (filePath: string) => string, getIcon: (filePath: string) => vscode.ThemeIcon): Promise<LogItem[]> {
-  if (!(await pathExistsAsync(dir))) {
-    return [];
-  }
-
-  const items: LogItem[] = [];
-
-  try {
-    const files = await fsPromises.readdir(dir);
-
-    // Process files in batches to avoid overwhelming the system
-    const batchSize = 10;
-    for (let i = 0; i < files.length; i += batchSize) {
-      const batch = files.slice(i, i + batchSize);
-
-      const batchPromises = batch.map(async (file) => {
-        const filePath = path.join(dir, file);
-
-        try {
-          const stats = await fsPromises.stat(filePath);
-
-          if (stats.isDirectory()) {
-            const subItems = await getLogItemsAsync(filePath, parseTitle, getIcon);
-            return subItems.length > 0 ? subItems : [];
-          } else if (stats.isFile()) {
-            const title = parseTitle(filePath);
-            const logFile = new LogItem(title, vscode.TreeItemCollapsibleState.None, {
-              command: 'magento-log-viewer.openFile',
-              title: 'Open Log File',
-              arguments: [filePath]
-            });
-            logFile.iconPath = getIcon(filePath);
-            return [logFile];
-          }
-        } catch (error) {
-          console.error(`Error processing file ${filePath}:`, error);
-        }
-
-        return [];
-      });
-
-      const batchResults = await Promise.all(batchPromises);
-      items.push(...batchResults.flat());
-
-      // Small delay between batches to prevent blocking
-      if (i + batchSize < files.length) {
-        await new Promise(resolve => setTimeout(resolve, 1));
-      }
-    }
-  } catch (error) {
-    console.error(`Error reading directory ${dir}:`, error);
-  }
-
-  return items;
-}
-
 export function getLogItems(dir: string, parseTitle: (filePath: string) => string, getIcon: (filePath: string) => vscode.ThemeIcon): LogItem[] {
   if (!pathExists(dir)) {
     return [];
@@ -1041,36 +984,6 @@ export function getIconForReport(filePath: string): vscode.ThemeIcon {
   } catch (error) {
     return new vscode.ThemeIcon('file');
   }
-}
-
-export function getReportItems(dir: string): LogItem[] {
-  if (!pathExists(dir)) {
-    return [];
-  }
-
-  const items: LogItem[] = [];
-  const files = fs.readdirSync(dir);
-
-  files.forEach(file => {
-    const filePath = path.join(dir, file);
-    if (fs.lstatSync(filePath).isDirectory()) {
-      const subItems = getReportItems(filePath);
-      if (subItems.length > 0) {
-        items.push(...subItems);
-      }
-    } else if (fs.lstatSync(filePath).isFile()) {
-      const title = parseReportTitle(filePath);
-      const reportFile = new LogItem(title, vscode.TreeItemCollapsibleState.None, {
-        command: 'magento-log-viewer.openFile',
-        title: 'Open Report File',
-        arguments: [filePath]
-      });
-      reportFile.iconPath = getIconForReport(filePath);
-      items.push(reportFile);
-    }
-  });
-
-  return items;
 }
 
 // Vorkompilierter regulärer Ausdruck für Zeitstempel
@@ -1453,72 +1366,6 @@ function parsePeriodicInterval(interval: string): number | null {
   };
 
   return validIntervals[interval] || null;
-}
-
-// Shows a dialog to select a log file when no path is provided (sync fallback)
-export function handleOpenFileWithoutPath(magentoRoot: string, lineNumber?: number): void {
-  try {
-    // Collect log and report files
-    const logPath = path.join(magentoRoot, 'var', 'log');
-    const reportPath = path.join(magentoRoot, 'var', 'report');
-    const logFiles: string[] = [];
-    const reportFiles: string[] = [];
-
-    // Check if the directories exist
-    if (pathExists(logPath)) {
-      const files = fs.readdirSync(logPath);
-      files.forEach(file => {
-        const filePath = path.join(logPath, file);
-        if (fs.lstatSync(filePath).isFile()) {
-          logFiles.push(filePath);
-        }
-      });
-    }
-
-    if (pathExists(reportPath)) {
-      const files = fs.readdirSync(reportPath);
-      files.forEach(file => {
-        const filePath = path.join(reportPath, file);
-        if (fs.lstatSync(filePath).isFile()) {
-          reportFiles.push(filePath);
-        }
-      });
-    }
-
-    // Create a list of options for the quick pick
-    const options: { label: string; description: string; filePath: string }[] = [
-      ...logFiles.map(filePath => ({
-        label: path.basename(filePath),
-        description: 'Log File',
-        filePath
-      })),
-      ...reportFiles.map(filePath => ({
-        label: path.basename(filePath),
-        description: 'Report File',
-        filePath
-      }))
-    ];
-
-    // If no files were found
-    if (options.length === 0) {
-      showErrorMessage('No log or report files found.');
-      return;
-    }
-
-    // Show a quick pick dialog
-    vscode.window.showQuickPick(options, {
-      placeHolder: lineNumber !== undefined ?
-        `Select a file to navigate to line ${lineNumber}` :
-        'Select a log or report file'
-    }).then(selection => {
-      if (selection) {
-        openFile(selection.filePath, lineNumber);
-      }
-    });
-  } catch (error) {
-    showErrorMessage(`Error fetching log files: ${error instanceof Error ? error.message : String(error)}`);
-    console.error('Error fetching log files:', error);
-  }
 }
 
 /**
