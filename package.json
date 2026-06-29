@@ -619,7 +619,7 @@
     "eslint": "^10.6.0",
     "ts-loader": "^9.6.2",
     "typescript": "^6.0.3",
-    "webpack": "^5.107.2",
+    "webpack": "^5.108.1",
     "webpack-cli": "^7.1.0"
   },
   "overrides": {
