@@ -4,6 +4,31 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.28.8](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.7...v1.28.8) (2026-06-30)
+
+
+### Bug Fixes
+
+* conditions and debug states ([#155](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/155)) ([47f32dd](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/47f32dd6ff5f6ed6dd2bf70f7b7d5c0e34f92fe5))
+
+
+### Maintenance
+
+* **deps-dev:** bump @types/node from 25.9.3 to 26.0.0 ([#144](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/144)) ([5087762](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5087762633762c2f7dc55bb8a314403107bdd2f4))
+* **deps-dev:** bump @types/node from 26.0.0 to 26.0.1 ([#154](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/154)) ([cc67009](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/cc670091b182c57669493259552dc987208458ab))
+* **deps-dev:** bump @types/vscode from 1.120.0 to 1.125.0 ([#143](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/143)) ([8fcda68](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/8fcda688f36fb3342b9b2ad53d91c65b3b4af2c7))
+* **deps-dev:** bump @typescript-eslint/eslint-plugin ([#146](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/146)) ([c800961](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/c8009612d998c812c8f756bfaa5ba36e19108648))
+* **deps-dev:** bump @typescript-eslint/eslint-plugin ([#151](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/151)) ([b9d0946](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/b9d094601569965c6421e851acd5ace08dfb9b79))
+* **deps-dev:** bump @typescript-eslint/parser from 8.61.0 to 8.61.1 ([#145](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/145)) ([daa12ce](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/daa12ce3cde66ef886d6ae88eddeaffcab3d4675))
+* **deps-dev:** bump @typescript-eslint/parser from 8.61.1 to 8.62.0 ([#150](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/150)) ([a6cfc6f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/a6cfc6f788d8cee6cb4febb505afb5ed8e1c6159))
+* **deps-dev:** bump @vscode/test-cli from 0.0.12 to 0.0.15 ([#153](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/153)) ([335761f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/335761fee631e2240a6a662db4decd989f16f457))
+* **deps-dev:** bump @vscode/test-electron from 2.5.2 to 3.0.0 ([#140](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/140)) ([af925e2](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/af925e26cc33fe3e64e00f8821e862a3fb714239))
+* **deps-dev:** bump eslint from 10.4.1 to 10.5.0 ([#141](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/141)) ([fd74507](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/fd745079f2c74f35c75aac8925c1f5315077e25d))
+* **deps-dev:** bump eslint from 10.5.0 to 10.6.0 ([#152](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/152)) ([b370ce9](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/b370ce9c82d661b78fc9f2c412e0d34f709ba5f0))
+* **deps-dev:** bump ts-loader from 9.6.0 to 9.6.2 ([#147](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/147)) ([53fcbbe](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/53fcbbeeff0a29248d51fbba03546bc957fd569d))
+* **deps-dev:** bump webpack from 5.107.2 to 5.108.1 ([#149](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/149)) ([edb096f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/edb096f8525c7dc060e6a24ab1713f7da8375067))
+* **deps-dev:** bump webpack-cli from 7.0.3 to 7.1.0 ([#148](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/148)) ([544ca64](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/544ca64d352aab59a511bf344437b11c08e76590))
+
 ## [1.28.7](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.6...v1.28.7) (2026-06-11)
 
 
