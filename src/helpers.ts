@@ -249,15 +249,6 @@ export function registerCommands(context: vscode.ExtensionContext, logViewerProv
       return;
     }
 
-    // If it's just a line number (e.g. "/20")
-    if (filePath.startsWith('/') && !filePath.includes('/')) {
-      const possibleLineNumber = parseInt(filePath.substring(1));
-      if (!isNaN(possibleLineNumber)) {
-        await handleOpenFileWithoutPathAsync(magentoRoot, possibleLineNumber);
-        return;
-      }
-    }
-
     openFile(filePath, lineNumber);
   }));
 
@@ -1731,12 +1722,11 @@ export class TailingManager implements vscode.Disposable {
    * Cleanup on disposal
    */
   dispose(): void {
-    this.stopAllTailing();
-
-    // Save state before disposing
     this.saveState().catch(error => {
       console.error('Error saving tailing state:', error);
     });
+
+    this.stopAllTailing();
 
     while (this.disposables.length) {
       const disposable = this.disposables.pop();

@@ -218,20 +218,9 @@ export class LogViewerProvider extends BaseLogProvider {
 
         // Also scroll tree view
         if (this.treeView) {
-          // Small delay to let tree refresh complete
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-          // Find the log file item in tree and reveal it
           try {
-            // We need to find the actual tree item to reveal
-            // For now, we trigger a reveal on undefined which shows the tree view
-            await this.treeView.reveal(undefined as any, {
-              select: false,
-              focus: false,
-              expand: true
-            });
+            this.treeView.message = undefined;
           } catch (error) {
-            // Ignore reveal errors (item might not be visible in current filter)
             console.debug('Auto-scroll tree failed:', error);
           }
         }
@@ -482,8 +471,6 @@ export class LogViewerProvider extends BaseLogProvider {
 
   public groupLogEntries(lines: string[], filePath: string): LogItem[] {
     const groupedByType = new Map<string, { message: string, line: string, lineNumber: number }[]>();
-
-    console.log(`[DEBUG] Processing ${lines.length} lines for ${filePath}`);
 
     lines.forEach((line, index) => {
       // Enhanced regex to match both formats: .level: and .LEVEL:
