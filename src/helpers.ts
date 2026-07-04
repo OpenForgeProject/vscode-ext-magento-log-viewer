@@ -258,6 +258,7 @@ export function activateExtension(
   logWatcher.onDidChange((uri) => {
     invalidateFileCache(uri.fsPath);
     logViewerProvider.refresh();
+    logViewerProvider.checkFileForAlerts(uri.fsPath).catch(console.error);
   });
   logWatcher.onDidCreate(() => logViewerProvider.refresh());
   logWatcher.onDidDelete(() => logViewerProvider.refresh());

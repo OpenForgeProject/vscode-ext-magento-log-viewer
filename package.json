@@ -274,6 +274,15 @@
             "default": true,
             "markdownDescription": "**Show notifications for new ERROR and CRITICAL log entries.**\n\n- **Enabled:** You'll see a notification when new errors are detected (max 1 per minute)\n- **Disabled:** No notifications, silent monitoring\n\n**Tip:** Disable if notifications are distracting during heavy debugging sessions.",
             "scope": "resource"
+          },
+          "magentoLogViewer.tailingAlertPatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "markdownDescription": "**Custom patterns to trigger notifications when new content is written to a log file.**\n\nEach entry is a regex string (case-insensitive). A notification fires whenever a new log line matches a pattern (max 1 per pattern per minute). Works automatically — no tailing required.\n\n**Examples:**\n- `Broken reference`\n- `OutOfMemoryError`\n- `connection refused`\n- `deadlock`\n- `SQLSTATE\\[`",
+            "scope": "resource"
           }
         }
       },
