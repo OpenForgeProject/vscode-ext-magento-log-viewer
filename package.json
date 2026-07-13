@@ -622,7 +622,7 @@
     "@types/node": "26.x",
     "@types/vscode": "^1.125.0",
     "@typescript-eslint/eslint-plugin": "^8.62.1",
-    "@typescript-eslint/parser": "^8.62.1",
+    "@typescript-eslint/parser": "^8.63.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
     "eslint": "^10.7.0",
