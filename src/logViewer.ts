@@ -7,16 +7,19 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import { promises as fsPromises } from "fs";
 import * as path from "path";
+import { pathExists, pathExistsAsync } from "./helpers/pathUtils";
 import {
-  pathExists,
-  pathExistsAsync,
   getIconForLogLevel,
   getLogItems,
-  parseReportTitle,
-  getIconForReport,
   formatTimestamp,
+} from "./helpers/logParser";
+import { parseReportTitle, getIconForReport } from "./helpers/reports";
+import {
   getCachedFileContent,
-} from "./helpers";
+  countLogEntriesAsync,
+} from "./helpers/caching";
+import { TailingManager } from "./helpers/tailing";
+import { LogItem } from "./logItem";
 
 export abstract class BaseLogProvider
   implements vscode.TreeDataProvider<LogItem>, vscode.Disposable
@@ -152,7 +155,7 @@ export abstract class BaseLogProvider
 export class LogViewerProvider extends BaseLogProvider {
   public static statusBarItem: vscode.StatusBarItem | undefined;
   private treeView: vscode.TreeView<LogItem> | null = null;
-  private tailingManager: any | null = null; // We'll fix typing in next step if needed, keeping 'any' for now to focus on duplication
+  private tailingManager: TailingManager | null = null;
 
   constructor(workspaceRoot: string) {
     super(workspaceRoot);
@@ -194,7 +197,7 @@ export class LogViewerProvider extends BaseLogProvider {
   }
 
   protected onInitializationComplete(): void {
-    this.updateBadge();
+    this.updateBadgeAsync().catch(console.error);
   }
 
   // Implementation for abstract method
@@ -238,7 +241,7 @@ export class LogViewerProvider extends BaseLogProvider {
 
   refresh(specificFilePath?: string): void {
     super.refresh(specificFilePath);
-    this.updateBadge();
+    this.updateBadgeAsync().catch(console.error);
   }
 
   /**
@@ -580,19 +583,10 @@ export class LogViewerProvider extends BaseLogProvider {
             // Get children synchronously for now (can be optimized later)
             const children = this.getLogFileLines(filePath);
 
-            // Count log entries directly from file content to avoid search filter issues
+            // Count log entries without loading the full file into memory.
             let logEntryCount = 0;
             try {
-              const fileContent = getCachedFileContent(filePath);
-              if (fileContent) {
-                const lines = fileContent.split("\n");
-                lines.forEach((line) => {
-                  if (line.match(/\.(\w+):/)) {
-                    // Same regex as in groupLogEntries
-                    logEntryCount++;
-                  }
-                });
-              }
+              logEntryCount = await countLogEntriesAsync(filePath);
             } catch (error) {
               console.error(`Error counting entries in ${filePath}:`, error);
               // Fallback to children count
@@ -817,55 +811,46 @@ export class LogViewerProvider extends BaseLogProvider {
       .sort((a, b) => a.label.localeCompare(b.label)); // Sort log files alphabetically
   }
 
-  getLogFilesWithoutUpdatingBadge(dir: string): LogItem[] {
-    if (pathExists(dir)) {
-      const files = fs.readdirSync(dir);
-      return files
-        .map((file) => {
-          const filePath = path.join(dir, file);
-          if (!fs.lstatSync(filePath).isFile()) {
-            return null;
-          } // Count the actual log entries instead of just lines
-          let logEntryCount = 0;
-          try {
-            const fileContent = getCachedFileContent(filePath);
-            if (fileContent) {
-              const lines = fileContent.split("\n");
-
-              // Only count valid log entries matching the expected pattern (enhanced for both formats)
-              lines.forEach((line) => {
-                if (line.match(/\.([A-Za-z]+):/)) {
-                  // Updated pattern to match both .level: and .LEVEL:
-                  logEntryCount++;
-                }
-              });
-            }
-          } catch (error) {
-            console.error(`Error reading file ${filePath}:`, error);
-          }
-
-          return new LogItem(
-            `${file} (${logEntryCount})`,
-            vscode.TreeItemCollapsibleState.None,
-            {
-              command: "magento-log-viewer.openFile",
-              title: "Open Log File",
-              arguments: [filePath],
-            },
-          );
-        })
-        .filter(Boolean) as LogItem[];
-    } else {
+  async getLogFilesWithoutUpdatingBadge(dir: string): Promise<LogItem[]> {
+    if (!pathExists(dir)) {
       return [];
     }
+
+    const files = fs.readdirSync(dir);
+    const items = await Promise.all(
+      files.map(async (file) => {
+        const filePath = path.join(dir, file);
+        if (!fs.lstatSync(filePath).isFile()) {
+          return null;
+        }
+
+        let logEntryCount = 0;
+        try {
+          logEntryCount = await countLogEntriesAsync(filePath);
+        } catch (error) {
+          console.error(`Error counting entries in ${filePath}:`, error);
+        }
+
+        return new LogItem(
+          `${file} (${logEntryCount})`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            command: "magento-log-viewer.openFile",
+            title: "Open Log File",
+            arguments: [filePath],
+          },
+        );
+      }),
+    );
+
+    return items.filter(Boolean) as LogItem[];
   }
 
-  private updateBadge(): void {
+  private async updateBadgeAsync(): Promise<void> {
     const logPath = path.join(this.workspaceRoot, "var", "log");
-    const logFiles = this.getLogFilesWithoutUpdatingBadge(logPath);
+    const logFiles = await this.getLogFilesWithoutUpdatingBadge(logPath);
     const totalEntries = logFiles.reduce(
-      (count, file) =>
-        count + parseInt(file.description?.match(/\d+/)?.[0] || "0", 10),
+      (count, file) => count + (file.entryCount || 0),
       0,
     );
 
@@ -1144,36 +1129,4 @@ export class ReportViewerProvider extends BaseLogProvider {
   }
 }
 
-export class LogItem extends vscode.TreeItem {
-  constructor(
-    public readonly label: string,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly command?: vscode.Command,
-    public children?: LogItem[],
-    public iconPath?: vscode.ThemeIcon,
-    public contextValue: string = "logItem",
-    public rawText?: string,
-  ) {
-    super(label, collapsibleState as vscode.TreeItemCollapsibleState);
-    this.contextValue = contextValue;
-    this.description = this.label.match(/\(\d+\)/)?.[0] || "";
-    this.label = this.label.replace(/\(\d+\)/, "").trim();
-
-    // Add colors based on log level
-    if (this.label.includes("ERROR")) {
-      this.tooltip = "Error Message";
-      this.resourceUri = vscode.Uri.parse("error");
-    } else if (this.label.includes("WARN")) {
-      this.tooltip = "Warning Message";
-      this.resourceUri = vscode.Uri.parse("warning");
-    } else if (this.label.includes("DEBUG")) {
-      this.tooltip = "Debug Message";
-      this.resourceUri = vscode.Uri.parse("debug");
-    } else if (this.label.includes("INFO")) {
-      this.tooltip = "Info Message";
-      this.resourceUri = vscode.Uri.parse("info");
-    }
-  }
-
-  description = "";
-}
+export { LogItem } from "./logItem";

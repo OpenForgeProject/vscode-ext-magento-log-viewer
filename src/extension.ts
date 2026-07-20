@@ -89,6 +89,10 @@ export function activate(context: vscode.ExtensionContext): void {
         // Activate extension and store the logViewerProvider
         logViewerProviderGlobal = activateExtension(context, magentoRoot, reportViewerProvider);
 
+        if (!logViewerProviderGlobal) {
+          return;
+        }
+
         // Set tailing manager reference for visual indicators
         logViewerProviderGlobal.setTailingManager(tailingManager);
 
