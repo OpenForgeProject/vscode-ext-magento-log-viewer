@@ -5,8 +5,9 @@
 
 import * as vscode from "vscode";
 import * as fs from "fs";
+import { promises as fsPromises } from "fs";
 import * as path from "path";
-import { pathExists } from "./pathUtils";
+import { pathExists, pathExistsAsync } from "./pathUtils";
 import { LogItem } from "../logItem";
 
 // Returns the appropriate icon for the given log level.
@@ -42,6 +43,54 @@ export function getIconForLogLevel(level: string): vscode.ThemeIcon {
   }
 }
 
+export async function getLogItemsAsync(
+  dir: string,
+  parseTitle: (filePath: string) => string,
+  getIcon: (filePath: string) => vscode.ThemeIcon,
+): Promise<LogItem[]> {
+  if (!(await pathExistsAsync(dir))) {
+    return [];
+  }
+
+  const items: LogItem[] = [];
+  const files = await fsPromises.readdir(dir);
+
+  const processEntries = await Promise.all(
+    files.map(async (file) => {
+      const filePath = path.join(dir, file);
+      const stats = await fsPromises.lstat(filePath);
+
+      if (stats.isDirectory()) {
+        const subItems = await getLogItemsAsync(filePath, parseTitle, getIcon);
+        return subItems.length > 0 ? subItems : null;
+      } else if (stats.isFile()) {
+        const title = parseTitle(filePath);
+        const logFile = new LogItem(
+          title,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            command: "magento-log-viewer.openFile",
+            title: "Open Log File",
+            arguments: [filePath],
+          },
+        );
+        logFile.iconPath = getIcon(filePath);
+        return [logFile];
+      }
+      return null;
+    }),
+  );
+
+  for (const entry of processEntries) {
+    if (entry) {
+      items.push(...entry);
+    }
+  }
+
+  return items;
+}
+
+// Synchronous fallback for compatibility with existing synchronous callers.
 export function getLogItems(
   dir: string,
   parseTitle: (filePath: string) => string,

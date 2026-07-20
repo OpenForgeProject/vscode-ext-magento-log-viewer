@@ -53,6 +53,7 @@ export {
 export {
   getIconForLogLevel,
   getLogItems,
+  getLogItemsAsync,
   formatTimestamp,
 } from "./helpers/logParser";
 
