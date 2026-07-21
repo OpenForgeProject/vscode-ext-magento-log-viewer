@@ -4,6 +4,30 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.29.0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.9...v1.29.0) (2026-07-21)
+
+
+### Features
+
+* add custom alert patterns for log file notifications ([87b61c5](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/87b61c555424445b1314929be4cf9ed3900cb348))
+* refactor helper and Log-File utilities for better performance and codebase ([#172](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/172)) ([2d9c3f0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/2d9c3f02499e9e348c0f52503372241c35623eea))
+
+
+### Maintenance
+
+* **deps-dev:** bump @types/node from 26.0.1 to 26.1.0 ([#161](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/161)) ([41f87dd](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/41f87dd2a810a56afee4a76edbe4ce3bc4421197))
+* **deps-dev:** bump @types/node from 26.1.0 to 26.1.1 ([#165](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/165)) ([5f5ac40](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5f5ac40a710f92ea83bac6ebd044373138965600))
+* **deps-dev:** bump @typescript-eslint/eslint-plugin ([#160](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/160)) ([333c24e](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/333c24e41f56ec38c865459845624779c0746191))
+* **deps-dev:** bump @typescript-eslint/eslint-plugin ([#167](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/167)) ([5143fe9](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/5143fe975f999a6fdda50537584a246a9a5c6e28))
+* **deps-dev:** bump @typescript-eslint/eslint-plugin ([#171](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/171)) ([7f6868b](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/7f6868b3bfc60182feda817389a84a90d7330667))
+* **deps-dev:** bump @typescript-eslint/parser from 8.62.0 to 8.62.1 ([#159](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/159)) ([be2820d](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/be2820d7070fa27d0ef672f586c4374e3fda953b))
+* **deps-dev:** bump @typescript-eslint/parser from 8.62.1 to 8.63.0 ([#166](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/166)) ([f7c3ac3](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/f7c3ac39eb63c5ebd1c7aeccef91bf5aed042cea))
+* **deps-dev:** bump @typescript-eslint/parser from 8.63.0 to 8.64.0 ([#170](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/170)) ([f32ce0f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/f32ce0f8983b141343f5347313f4decfa4693a40))
+* **deps-dev:** bump eslint from 10.6.0 to 10.7.0 ([#168](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/168)) ([da6f6ef](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/da6f6ef2887a4ce989fbf8db81f65200aaf5f37d))
+* **deps-dev:** bump typescript from 6.0.3 to 7.0.2 ([#164](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/164)) ([d166912](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/d166912f39eab61a27697b02a266336a53b52beb))
+* **deps-dev:** bump webpack from 5.108.1 to 5.108.4 ([#163](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/163)) ([7f5df7f](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/7f5df7fc4a5923948816f4f32036bac4b82a7b9a))
+* **deps-dev:** bump webpack-cli from 7.1.0 to 7.2.1 ([#162](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/issues/162)) ([a76377c](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/a76377c7213ee334b46e21af3acd91deb040e4b3))
+
 ## [1.28.9](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.8...v1.28.9) (2026-07-04)
 
 
