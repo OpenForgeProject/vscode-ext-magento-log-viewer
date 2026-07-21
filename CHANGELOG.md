@@ -4,6 +4,13 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [1.29.1](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.29.0...v1.29.1) (2026-07-21)
+
+
+### Bug Fixes
+
+* **deps:** regenerate package-lock.json for TypeScript 6.0.3 compatibility ([8b27327](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/commit/8b273277b3ceb3cd1eecf56b2df2088e19cf991c))
+
 ## [1.29.0](https://github.com/OpenForgeProject/vscode-ext-magento-log-viewer/compare/v1.28.9...v1.29.0) (2026-07-21)
 
 
