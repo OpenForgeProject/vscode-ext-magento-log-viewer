@@ -69,16 +69,22 @@ suite('Async File Operations Test Suite', () => {
         assert.strictEqual(content, null, 'Should return null for non-existent files');
     });
 
-    test('getCachedFileContentAsync should handle large files with streaming', async () => {
+    test('getCachedFileContentAsync should summarize large files without loading them fully', async () => {
         // Create a large test file (>50MB)
         const largeFilePath = path.join(tempDir, 'large-async-test.log');
-        const largeContent = 'x'.repeat(51 * 1024 * 1024); // 51MB of content
+        const head = 'HEAD:'.padEnd(1000, 'a');
+        const tail = 'TAIL:'.padEnd(1000, 'b');
+        const middle = 'x'.repeat(51 * 1024 * 1024 - head.length - tail.length);
+        const largeContent = head + middle + tail;
 
         fs.writeFileSync(largeFilePath, largeContent);
 
         try {
             const content = await getCachedFileContentAsync(largeFilePath);
-            assert.strictEqual(content, largeContent, 'Should read large file content correctly using streaming');
+            assert.notStrictEqual(content, largeContent, 'Should not return the full large file content');
+            assert.ok(content?.includes(head), 'Summary should include the head of the large file');
+            assert.ok(content?.includes(tail), 'Summary should include the tail of the large file');
+            assert.ok(content?.includes('File too large to display'), 'Summary should inform the user that the file was truncated');
         } finally {
             // Clean up large file
             if (fs.existsSync(largeFilePath)) {
