@@ -127,7 +127,12 @@ export class LogViewerProvider extends BaseLogProvider {
 
   getChildren(element?: LogItem): Thenable<LogItem[]> {
     if (!this.workspaceRoot) {
-      return Promise.resolve([]);
+      return Promise.resolve([
+        new LogItem(
+          "Magento root not configured. Run: Select Root Folder",
+          vscode.TreeItemCollapsibleState.None,
+        ),
+      ]);
     }
 
     if (!this.isInitialized) {
