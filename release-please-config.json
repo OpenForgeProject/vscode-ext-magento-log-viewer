@@ -16,7 +16,7 @@
         { "type": "perf", "section": "Performance Improvements" },
         { "type": "docs", "section": "Documentation" },
         { "type": "refactor", "section": "Code Refactoring" },
-        { "type": "chore", "section": "Maintenance" }
+        { "type": "chore", "section": "Maintenance", "hidden": false }
       ]
     }
   },
