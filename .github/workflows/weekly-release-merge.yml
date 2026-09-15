@@ -1,0 +1,44 @@
+name: Weekly Release Merge
+
+on:
+  schedule:
+    - cron: "0 9 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge-release-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Find and merge release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_number=$(gh pr list --repo "${{ github.repository }}" \
+            --author "github-actions[bot]" \
+            --json number,title,body \
+            --jq '.[] | select(.title | startswith("chore(main): release")) | .number' | head -n 1)
+
+          if [ -z "$pr_number" ]; then
+            echo "No open release PR found. Skipping."
+            exit 0
+          fi
+
+          echo "Found release PR #${pr_number}"
+
+          pr_body=$(gh pr view "$pr_number" --repo "${{ github.repository }}" --json body --jq '.body')
+
+          if echo "$pr_body" | grep -qE "^### Features" || echo "$pr_body" | grep -qE "^### Bug Fixes"; then
+            echo "Release PR contains Features or Bug Fixes. Skipping automatic merge."
+            exit 0
+          fi
+
+          echo "Release PR contains only maintenance changes. Enabling auto-merge..."
+          gh pr merge "$pr_number" --repo "${{ github.repository }}" --squash --auto
