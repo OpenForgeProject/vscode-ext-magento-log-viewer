@@ -29,8 +29,6 @@ jobs:
           Xvfb :99 -screen 0 1024x768x24 &
           export DISPLAY=:99
           sleep 3
-      - name: Checkout code
-        uses: actions/checkout@v7
       - name: Install dependencies
         run: npm install
       - name: Compile the extension
