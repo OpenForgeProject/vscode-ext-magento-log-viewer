@@ -78,6 +78,36 @@ suite('Magento Root Configuration Test Suite', () => {
         }
     });
 
+    test('getEffectiveMagentoRoot should treat Windows absolute paths as absolute', async () => {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            const workspaceUri = workspaceFolders[0].uri;
+            const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+            const windowsPath = 'C:\\magento\\app';
+
+            await config.update('magentoRoot', windowsPath, vscode.ConfigurationTarget.Workspace);
+
+            const effectivePath = getEffectiveMagentoRoot(workspaceUri);
+            assert.strictEqual(effectivePath, windowsPath, 'Should preserve Windows absolute paths without resolving against the workspace');
+        }
+    });
+
+    test('getEffectiveMagentoRoot should treat UNC paths as absolute', async () => {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            const workspaceUri = workspaceFolders[0].uri;
+            const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+            const uncPath = '\\\\\server\\share\\magento';
+
+            await config.update('magentoRoot', uncPath, vscode.ConfigurationTarget.Workspace);
+
+            const effectivePath = getEffectiveMagentoRoot(workspaceUri);
+            assert.strictEqual(effectivePath, uncPath, 'Should preserve UNC paths without resolving against the workspace');
+        }
+    });
+
     test('getEffectiveMagentoRoot should resolve relative paths against the provided workspaceUri', async () => {
         const workspaceFolders = vscode.workspace.workspaceFolders;
 
