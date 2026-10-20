@@ -203,10 +203,14 @@ function isAbsolutePath(value: string): boolean {
     return false;
   }
 
+  const trimmed = value.trim();
+
   return (
-    path.isAbsolute(value) ||
-    /^[A-Za-z]:[\\/]/.test(value) ||
-    /^\\\\/.test(value)
+    path.posix.isAbsolute(trimmed) ||
+    path.win32.isAbsolute(trimmed) ||
+    /^\\\\/.test(trimmed) ||
+    /^\\\\\\?\\/.test(trimmed) ||
+    /^\/\//.test(trimmed)
   );
 }
 

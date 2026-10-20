@@ -194,8 +194,8 @@
           "magentoLogViewer.magentoRoot": {
             "type": "string",
             "default": "./",
-            "pattern": "^([A-Za-z]:\\\\|/|\\.\\/).*$",
-            "patternErrorMessage": "Please enter a valid folder path (e.g., /var/www/magento or C:\\xampp\\htdocs\\magento)",
+            "pattern": "^((\\\\\\\\[^\\\\/]+[\\\\/][^\\\\/]+)|([A-Za-z]:[\\\\/])|(/)|((\\.?\\.?[\\\\/]).*)|([^\\s].*))$",
+            "patternErrorMessage": "Please enter a valid folder path (e.g., /var/www/magento, C:\\xampp\\htdocs\\magento, or \\\\server\\share\\magento)",
             "markdownDescription": "**Magento installation folder path.**  \n\n[Browse for Magento Root Folder](command:magento-log-viewer.selectMagentoRootFromSettings)  \n\nOr enter the path manually below (default: current workspace folder):",
             "scope": "resource"
           }
