@@ -198,6 +198,18 @@ export function updateConfig(
  * @param workspaceUri The workspace URI to get configuration from
  * @returns string - The effective Magento root path
  */
+function isAbsolutePath(value: string): boolean {
+  if (!value || !value.trim()) {
+    return false;
+  }
+
+  return (
+    path.isAbsolute(value) ||
+    /^[A-Za-z]:[\\/]/.test(value) ||
+    /^\\\\/.test(value)
+  );
+}
+
 export function getEffectiveMagentoRoot(
   workspaceUri?: vscode.Uri | null,
 ): string {
@@ -207,17 +219,22 @@ export function getEffectiveMagentoRoot(
   );
   const configuredRoot = config.get<string>("magentoRoot", "");
   const workspaceFolders = vscode.workspace.workspaceFolders;
+  const baseWorkspacePath = workspaceUri
+    ? workspaceUri.fsPath
+    : workspaceFolders && workspaceFolders.length > 0
+      ? workspaceFolders[0].uri.fsPath
+      : undefined;
 
   // If configured root is not empty, resolve it
   if (configuredRoot && configuredRoot.trim()) {
-    // If it's already an absolute path, use it as is
-    if (path.isAbsolute(configuredRoot)) {
+    // If it's already an absolute path (including Windows/UNC paths), use it as is
+    if (isAbsolutePath(configuredRoot)) {
       return configuredRoot;
     }
 
-    // If it's a relative path, resolve it against the workspace root
-    if (workspaceFolders && workspaceFolders.length > 0) {
-      return path.resolve(workspaceFolders[0].uri.fsPath, configuredRoot);
+    // If it's a relative path, resolve it against the active workspace root
+    if (baseWorkspacePath) {
+      return path.resolve(baseWorkspacePath, configuredRoot);
     }
 
     // Fallback: return the configured path as is
@@ -225,8 +242,8 @@ export function getEffectiveMagentoRoot(
   }
 
   // Otherwise, use workspace root as default
-  if (workspaceFolders && workspaceFolders.length > 0) {
-    return workspaceFolders[0].uri.fsPath;
+  if (baseWorkspacePath) {
+    return baseWorkspacePath;
   }
 
   // Fallback: return empty string if no workspace

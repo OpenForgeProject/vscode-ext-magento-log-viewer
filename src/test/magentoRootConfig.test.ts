@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import * as path from "path";
 import { getEffectiveMagentoRoot } from '../helpers';
-
 suite('Magento Root Configuration Test Suite', () => {
 
     setup(() => {
@@ -75,6 +75,25 @@ suite('Magento Root Configuration Test Suite', () => {
 
             const effectivePath = getEffectiveMagentoRoot(workspaceUri);
             assert.strictEqual(effectivePath, testPath, 'Should return workspace-specific configured path');
+        }
+    });
+
+    test('getEffectiveMagentoRoot should resolve relative paths against the provided workspaceUri', async () => {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            const workspaceUri = workspaceFolders[0].uri;
+            const config = vscode.workspace.getConfiguration('magentoLogViewer', workspaceUri);
+            const relativePath = 'subdir/magento';
+
+            await config.update('magentoRoot', relativePath, vscode.ConfigurationTarget.Workspace);
+
+            const effectivePath = getEffectiveMagentoRoot(workspaceUri);
+            assert.strictEqual(
+                effectivePath,
+                path.resolve(workspaceUri.fsPath, relativePath),
+                'Should resolve relative paths against the specific workspace root',
+            );
         }
     });
 
